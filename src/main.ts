@@ -9,14 +9,23 @@ import * as path from "node:path";
 import * as utils from "@iobroker/adapter-core";
 
 import { parseSelectedDeviceIds } from "./lib/configHelpers";
+import { ControlQueue } from "./lib/controlQueue";
 import { runPythonInstaller } from "./lib/ensurePython";
 import { runBridge } from "./lib/pythonBridge";
 import { SERVICE_STATES, setupServiceStates } from "./lib/services";
 import { parseControlStateId, syncDevices } from "./lib/stateSync";
-import type { BridgeConfig, BridgeDevice, BridgeServiceConfig } from "./lib/types";
+import type {
+	BridgeConfig,
+	BridgeDevice,
+	BridgeServiceConfig,
+	DeviceControlContext,
+} from "./lib/types";
 
 class AnkerSolix extends utils.Adapter {
 	private pollTimer: ioBroker.Interval | undefined;
+	private readonly controlQueue = new ControlQueue();
+	private readonly deviceContexts = new Map<string, DeviceControlContext>();
+	private pollAfterControlTimer: NodeJS.Timeout | undefined;
 
 	public constructor(options: Partial<utils.AdapterOptions> = {}) {
 		super({
@@ -105,6 +114,7 @@ class AnkerSolix extends utils.Adapter {
 
 			const pollDevices = result.devices as BridgeDevice[] | undefined;
 			if (pollDevices?.length) {
+				this.rememberDeviceContexts(pollDevices);
 				await syncDevices(this, pollDevices);
 			}
 
@@ -205,6 +215,29 @@ class AnkerSolix extends utils.Adapter {
 		}
 	}
 
+	private rememberDeviceContexts(devices: BridgeDevice[]): void {
+		for (const device of devices) {
+			const info = device.info;
+			this.deviceContexts.set(info.id, {
+				type: info.type,
+				site_id: info.site_id,
+				device_pn: info.device_pn || info.model || "",
+				station_sn: info.station_sn || "",
+				generation: info.generation ?? 0,
+			});
+		}
+	}
+
+	private schedulePollAfterControl(): void {
+		if (this.pollAfterControlTimer) {
+			clearTimeout(this.pollAfterControlTimer);
+		}
+		this.pollAfterControlTimer = setTimeout(() => {
+			this.pollAfterControlTimer = undefined;
+			void this.pollOnce();
+		}, 12_000);
+	}
+
 	private async onStateChange(id: string, state: ioBroker.State | null | undefined): Promise<void> {
 		if (!state || state.ack) {
 			return;
@@ -220,25 +253,52 @@ class AnkerSolix extends utils.Adapter {
 			return;
 		}
 
-		try {
-			await runBridge(
-				"set",
-				{
-					...this.getBridgeConfig(),
-					deviceId: control.deviceId,
-					control: control.control,
-					value: state.val as string | number | boolean,
-				},
-				this.config.pythonPath || "",
-				this.log,
-			);
+		const current = await this.getStateAsync(id);
+		if (
+			current?.ack &&
+			current.val !== null &&
+			current.val !== undefined &&
+			String(current.val) === String(state.val)
+		) {
 			await this.setState(id, { val: state.val, ack: true });
-			this.log.info(`Applied ${control.control} on ${control.deviceId}`);
-			await this.pollOnce();
-		} catch (error) {
-			this.log.error(`Control failed for ${id}: ${(error as Error).message}`);
-			await this.setState(id, { val: state.val, ack: false });
+			return;
 		}
+
+		const value = state.val as string | number | boolean;
+		const deviceContext = this.deviceContexts.get(control.deviceId);
+
+		this.controlQueue.enqueue({
+			stateId: id,
+			execute: async () => {
+				try {
+					await runBridge(
+						"set",
+						{
+							...this.getBridgeConfig(),
+							deviceId: control.deviceId,
+							control: control.control,
+							value,
+							deviceContext,
+						},
+						this.config.pythonPath || "",
+						this.log,
+					);
+					await this.setState(id, { val: value, ack: true });
+					this.log.info(`Applied ${control.control} on ${control.deviceId}`);
+					this.schedulePollAfterControl();
+				} catch (error) {
+					const message = (error as Error).message;
+					if (message.includes("429") || message.includes("Too Many Requests")) {
+						this.log.warn(
+							`Control rate-limited for ${id} – wait ~1 minute before retrying (Anker API limit).`,
+						);
+					} else {
+						this.log.error(`Control failed for ${id}: ${message}`);
+					}
+					await this.setState(id, { val: value, ack: false });
+				}
+			},
+		});
 	}
 
 	private async onMessage(obj: ioBroker.Message): Promise<void> {

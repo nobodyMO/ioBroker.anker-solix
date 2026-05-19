@@ -25,12 +25,16 @@ var fs = __toESM(require("node:fs"));
 var path = __toESM(require("node:path"));
 var utils = __toESM(require("@iobroker/adapter-core"));
 var import_configHelpers = require("./lib/configHelpers");
+var import_controlQueue = require("./lib/controlQueue");
 var import_ensurePython = require("./lib/ensurePython");
 var import_pythonBridge = require("./lib/pythonBridge");
 var import_services = require("./lib/services");
 var import_stateSync = require("./lib/stateSync");
 class AnkerSolix extends utils.Adapter {
   pollTimer;
+  controlQueue = new import_controlQueue.ControlQueue();
+  deviceContexts = /* @__PURE__ */ new Map();
+  pollAfterControlTimer;
   constructor(options = {}) {
     super({
       ...options,
@@ -109,6 +113,7 @@ class AnkerSolix extends utils.Adapter {
       );
       const pollDevices = result.devices;
       if (pollDevices == null ? void 0 : pollDevices.length) {
+        this.rememberDeviceContexts(pollDevices);
         await (0, import_stateSync.syncDevices)(this, pollDevices);
       }
       if (result.nickname) {
@@ -195,6 +200,28 @@ class AnkerSolix extends utils.Adapter {
       await this.setState(stateId, false, true);
     }
   }
+  rememberDeviceContexts(devices) {
+    var _a;
+    for (const device of devices) {
+      const info = device.info;
+      this.deviceContexts.set(info.id, {
+        type: info.type,
+        site_id: info.site_id,
+        device_pn: info.device_pn || info.model || "",
+        station_sn: info.station_sn || "",
+        generation: (_a = info.generation) != null ? _a : 0
+      });
+    }
+  }
+  schedulePollAfterControl() {
+    if (this.pollAfterControlTimer) {
+      clearTimeout(this.pollAfterControlTimer);
+    }
+    this.pollAfterControlTimer = setTimeout(() => {
+      this.pollAfterControlTimer = void 0;
+      void this.pollOnce();
+    }, 12e3);
+  }
   async onStateChange(id, state) {
     if (!state || state.ack) {
       return;
@@ -207,25 +234,45 @@ class AnkerSolix extends utils.Adapter {
     if (!control) {
       return;
     }
-    try {
-      await (0, import_pythonBridge.runBridge)(
-        "set",
-        {
-          ...this.getBridgeConfig(),
-          deviceId: control.deviceId,
-          control: control.control,
-          value: state.val
-        },
-        this.config.pythonPath || "",
-        this.log
-      );
+    const current = await this.getStateAsync(id);
+    if ((current == null ? void 0 : current.ack) && current.val !== null && current.val !== void 0 && String(current.val) === String(state.val)) {
       await this.setState(id, { val: state.val, ack: true });
-      this.log.info(`Applied ${control.control} on ${control.deviceId}`);
-      await this.pollOnce();
-    } catch (error) {
-      this.log.error(`Control failed for ${id}: ${error.message}`);
-      await this.setState(id, { val: state.val, ack: false });
+      return;
     }
+    const value = state.val;
+    const deviceContext = this.deviceContexts.get(control.deviceId);
+    this.controlQueue.enqueue({
+      stateId: id,
+      execute: async () => {
+        try {
+          await (0, import_pythonBridge.runBridge)(
+            "set",
+            {
+              ...this.getBridgeConfig(),
+              deviceId: control.deviceId,
+              control: control.control,
+              value,
+              deviceContext
+            },
+            this.config.pythonPath || "",
+            this.log
+          );
+          await this.setState(id, { val: value, ack: true });
+          this.log.info(`Applied ${control.control} on ${control.deviceId}`);
+          this.schedulePollAfterControl();
+        } catch (error) {
+          const message = error.message;
+          if (message.includes("429") || message.includes("Too Many Requests")) {
+            this.log.warn(
+              `Control rate-limited for ${id} \u2013 wait ~1 minute before retrying (Anker API limit).`
+            );
+          } else {
+            this.log.error(`Control failed for ${id}: ${message}`);
+          }
+          await this.setState(id, { val: value, ack: false });
+        }
+      }
+    });
   }
   async onMessage(obj) {
     if (!(obj == null ? void 0 : obj.command)) {

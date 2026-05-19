@@ -79,6 +79,11 @@ This is **not** an official Anker product. The cloud API may change or break at 
 
 ## Changelog
 
+### 0.4.1
+
+- Control writes are debounced and serialized (avoids Anker API 429 when changing several Solarbanks)
+- AC charge limit prefers MQTT when available; poll runs 12 s after the last control (not after each write)
+
 ### 0.4.0
 
 - **Sensors:** total PV generation (`total_pv_power`) on system/combiner (Power Dock), per-device PV/AC limit readouts

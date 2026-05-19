@@ -1,6 +1,6 @@
 {
   "name": "iobroker.anker-solix",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "ioBroker adapter for Anker Solix (based on ha-anker-solix)",
   "author": {
     "name": "MatthiasUlrich1",

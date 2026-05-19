@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.4.0",
+		"version": "0.4.1",
 		"messagebox": true,
 		"news": {
+			"0.4.1": {
+				"en": "Rate-limit fix: debounced/serialized controls, MQTT-first AC charge limit, delayed poll after writes",
+				"de": "Rate-Limit-Fix: entprellte/serialisierte Steuerungen, MQTT zuerst für AC-Ladelimit, verzögertes Poll nach Schreibvorgängen",
+				"ru": "Исправление лимита запросов API",
+				"pt": "Correção de limite de taxa da API",
+				"nl": "API rate-limit fix",
+				"fr": "Correction limite API",
+				"it": "Fix limite API",
+				"es": "Corrección límite API",
+				"pl": "Naprawa limitu API",
+				"uk": "Виправлення ліміту API",
+				"zh-cn": "API 限速修复"
+			},
 			"0.4.0": {
 				"en": "Multisystem controls: total PV, SOC reserve, PV/AC limits, AC output limit, grid export switch/limit (Power Dock/combiner)",
 				"de": "Multisystem-Steuerungen: Gesamt-PV, SOC-Reserve, PV/AC-Limits, AC-Ausgangs-Limit, Netzeinspeisung Schalter/Limit (Power Dock/Combiner)",

@@ -4,6 +4,18 @@ export interface DeviceInfo {
 	name: string;
 	site_id: string;
 	model: string;
+	device_pn?: string;
+	station_sn?: string;
+	generation?: number;
+}
+
+/** Cached from last poll so set-bridge can use MQTT without extra site refresh. */
+export interface DeviceControlContext {
+	type: string;
+	site_id: string;
+	device_pn: string;
+	station_sn: string;
+	generation: number;
 }
 
 export interface BridgeDevice {
@@ -47,6 +59,7 @@ export interface BridgeSetConfig extends BridgeConfig {
 	deviceId: string;
 	control: string;
 	value: string | number | boolean;
+	deviceContext?: DeviceControlContext;
 }
 
 export interface BridgeServiceConfig extends BridgeConfig {

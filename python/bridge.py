@@ -27,6 +27,8 @@ from solixapi.export import AnkerSolixApiExport  # noqa: E402
 from solixapi import errors  # noqa: E402
 from solixapi.api import AnkerSolixApi  # noqa: E402
 from solixapi.apitypes import ApiCategories, SolixDeviceType  # noqa: E402
+from solixapi.mqtt_factory import SolixMqttDeviceFactory  # noqa: E402
+from solixapi.mqttcmdmap import SolixMqttCommands  # noqa: E402
 
 _LOGGER = logging.getLogger("anker-solix-bridge")
 
@@ -52,7 +54,7 @@ def _json_safe(value: Any) -> Any:
     return str(value)
 
 
-def device_info(ctx_id: str, data: dict) -> dict[str, str]:
+def device_info(ctx_id: str, data: dict) -> dict[str, str | int]:
     dev_type = str(data.get("type") or data.get("device_type") or "unknown").lower()
     name = (
         data.get("device_name")
@@ -60,12 +62,16 @@ def device_info(ctx_id: str, data: dict) -> dict[str, str]:
         or data.get("alias")
         or ctx_id
     )
+    generation = data.get("generation")
     return {
         "id": ctx_id,
         "type": dev_type,
         "name": str(name),
         "site_id": str(data.get("site_id") or ""),
         "model": str(data.get("model") or data.get("product_code") or ""),
+        "device_pn": str(data.get("device_pn") or data.get("product_code") or ""),
+        "station_sn": str(data.get("station_sn") or ""),
+        "generation": int(generation) if generation is not None else 0,
     }
 
 
@@ -114,6 +120,52 @@ def _control_context(api: AnkerSolixApi, device_id: str) -> tuple[str, str, str,
     else:
         control_sn = device_id
     return site_id, control_sn, device_id, device
+
+
+def _seed_device_context(api: AnkerSolixApi, device_id: str, config: dict) -> None:
+    """Populate API device cache from adapter poll context (avoids extra site refresh on set)."""
+    meta = config.get("deviceContext") or {}
+    if not meta:
+        return
+    entry = {
+        "device_sn": device_id,
+        "type": meta.get("type") or "",
+        "site_id": meta.get("site_id") or "",
+        "device_pn": meta.get("device_pn") or "",
+        "product_code": meta.get("device_pn") or "",
+        "station_sn": meta.get("station_sn") or "",
+        "generation": int(meta.get("generation") or 0),
+        "mqtt_supported": True,
+    }
+    api.devices[device_id] = {**(api.devices.get(device_id) or {}), **entry}
+    site_id = entry.get("site_id")
+    if site_id and site_id not in api.sites:
+        api.sites[site_id] = {"site_id": site_id}
+
+
+async def _ensure_mqtt(api: AnkerSolixApi) -> bool:
+    try:
+        session = await api.startMqttSession()
+        return session is not None and session.is_connected()
+    except Exception as exc:  # noqa: BLE001
+        _LOGGER.warning("MQTT session unavailable for control: %s", exc)
+        return False
+
+
+async def _mqtt_command(
+    api: AnkerSolixApi,
+    device_sn: str,
+    cmd: str,
+    value: int,
+    parm: str,
+) -> bool:
+    mdev = SolixMqttDeviceFactory(api, device_sn).create_device()
+    if not mdev or cmd not in (mdev.controls or {}):
+        return False
+    if not await _ensure_mqtt(api):
+        return False
+    resp = await mdev.run_command(cmd=cmd, value=value, parm=parm)
+    return bool(resp)
 
 
 async def _set_min_soc(
@@ -192,11 +244,22 @@ async def apply_control(api: AnkerSolixApi, device_id: str, control: str, value:
             pv_input=int(value),
         )
     elif control == "ac_charge_limit":
-        result = await api.set_power_limit(
-            siteId=site_id,
-            deviceSn=device_id,
-            ac_input=int(value),
+        limit = int(value)
+        mqtt_ok = await _mqtt_command(
+            api,
+            device_id,
+            SolixMqttCommands.sb_ac_input_limit,
+            limit,
+            "set_ac_input_limit",
         )
+        if mqtt_ok:
+            result = {"mqtt": True}
+        else:
+            result = await api.set_power_limit(
+                siteId=site_id,
+                deviceSn=device_id,
+                ac_input=limit,
+            )
     elif control == "min_soc":
         result = await _set_min_soc(
             api, site_id, control_sn, device_id, device, int(value)
@@ -364,10 +427,17 @@ async def run_poll(config: dict) -> dict:
 
 async def run_set(config: dict) -> dict:
     api, session = await _get_api(config)
+    device_id = str(config["deviceId"])
     try:
+        _seed_device_context(api, device_id, config)
+        site_id = str((config.get("deviceContext") or {}).get("site_id") or "")
+        if site_id and site_id not in api.sites:
+            await api.update_sites(exclude=set(config.get("exclude") or DEFAULT_EXCLUDE))
+        if bool(config.get("mqttUsage", True)):
+            await _ensure_mqtt(api)
         await apply_control(
             api,
-            str(config["deviceId"]),
+            device_id,
             str(config["control"]),
             config["value"],
         )
