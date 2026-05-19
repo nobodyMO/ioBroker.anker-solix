@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../src/lib/types.ts"],
+  "sourcesContent": ["export interface BridgeContext {\n\tmeta: Record<string, string>;\n\tstates: Record<string, string | number | boolean | null>;\n}\n\nexport interface BridgePollResult {\n\tok: boolean;\n\terror?: string;\n\tnickname?: string;\n\tcontexts?: Record<string, BridgeContext>;\n}\n\nexport interface BridgeConfig {\n\tusername: string;\n\tpassword: string;\n\tcountry: string;\n\tmqttUsage: boolean;\n\tcacheDir: string;\n\texclude?: string[];\n}\n"],
+  "mappings": ";;;;;;;;;;;;;;AAAA;AAAA;",
+  "names": []
+}

@@ -1,0 +1,111 @@
+{
+	"common": {
+		"name": "anker-solix",
+		"version": "0.0.1",
+		"news": {
+			"0.0.1": {
+				"en": "Initial release based on ha-anker-solix",
+				"de": "Erstveröffentlichung basierend auf ha-anker-solix",
+				"ru": "Начальная версия",
+				"pt": "lançamento inicial",
+				"nl": "Eerste uitgave",
+				"fr": "Première version",
+				"it": "Versione iniziale",
+				"es": "Versión inicial",
+				"pl": "Pierwsze wydanie",
+				"uk": "Початкова версія",
+				"zh-cn": "首次出版"
+			}
+		},
+		"titleLang": {
+			"en": "Anker Solix",
+			"de": "Anker Solix",
+			"ru": "Anker Solix",
+			"pt": "Anker Solix",
+			"nl": "Anker Solix",
+			"fr": "Anker Solix",
+			"it": "Anker Solix",
+			"es": "Anker Solix",
+			"pl": "Anker Solix",
+			"uk": "Anker Solix",
+			"zh-cn": "Anker Solix"
+		},
+		"desc": {
+			"en": "Anker Solix power systems via cloud API (based on ha-anker-solix)",
+			"de": "Anker Solix Energiesysteme über Cloud-API (basierend auf ha-anker-solix)",
+			"ru": "Anker Solix через облачный API",
+			"pt": "Anker Solix via API na nuvem",
+			"nl": "Anker Solix via cloud API",
+			"fr": "Anker Solix via API cloud",
+			"it": "Anker Solix tramite API cloud",
+			"es": "Anker Solix mediante API en la nube",
+			"pl": "Anker Solix przez API w chmurze",
+			"uk": "Anker Solix через хмарний API",
+			"zh-cn": "通过云 API 的 Anker Solix"
+		},
+		"authors": ["Miro1310 <michael.roling@gmx.de>"],
+		"keywords": ["anker", "solix", "solarbank", "energy", "solar", "battery"],
+		"licenseInformation": {
+			"type": "free",
+			"license": "MIT"
+		},
+		"platform": "Javascript/Node.js",
+		"icon": "anker-solix.png",
+		"enabled": true,
+		"extIcon": "https://raw.githubusercontent.com/MatthiasUlrich1/AnkerSolix/main/admin/anker-solix.png",
+		"readme": "https://github.com/MatthiasUlrich1/AnkerSolix/blob/main/README.md",
+		"loglevel": "info",
+		"tier": 3,
+		"mode": "daemon",
+		"type": "energy",
+		"compact": true,
+		"connectionType": "cloud",
+		"dataSource": "poll",
+		"adminUI": {
+			"config": "json"
+		},
+		"dependencies": [
+			{
+				"js-controller": ">=6.0.11"
+			}
+		],
+		"globalDependencies": [
+			{
+				"admin": ">=7.0.23"
+			}
+		]
+	},
+	"native": {
+		"username": "",
+		"password": "",
+		"country": "DE",
+		"scanInterval": 60,
+		"mqttUsage": true,
+		"acceptTerms": false,
+		"pythonPath": ""
+	},
+	"objects": [],
+	"instanceObjects": [
+		{
+			"_id": "info",
+			"type": "channel",
+			"common": {
+				"name": "Information"
+			},
+			"native": {}
+		},
+		{
+			"_id": "info.connection",
+			"type": "state",
+			"common": {
+				"role": "indicator.connected",
+				"name": "Cloud connected",
+				"type": "boolean",
+				"read": true,
+				"write": false,
+				"def": false
+			},
+			"native": {}
+		}
+	]
+}

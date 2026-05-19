@@ -1,0 +1,14 @@
+{
+	"anker-solix adapter config": "Anker Solix adapter configuration",
+	"Account": "Account",
+	"Options": "Options",
+	"Terms": "Terms",
+	"username": "Anker e-mail",
+	"password": "Anker password",
+	"country": "Country code (e.g. DE)",
+	"scanInterval": "Poll interval (seconds)",
+	"mqttUsage": "Use MQTT connection (like HA integration)",
+	"pythonPath": "Python command (empty = py/python3)",
+	"acceptTerms": "Accept terms of use",
+	"terms_hint": "This adapter uses the unofficial Anker cloud API (see https://github.com/thomluther/ha-anker-solix). Use at your own risk. Requires Python 3.12+ and packages from python/requirements.txt."
+}

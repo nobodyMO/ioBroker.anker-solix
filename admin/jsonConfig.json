@@ -1,0 +1,100 @@
+{
+	"i18n": true,
+	"type": "tabs",
+	"items": {
+		"_tab_account": {
+			"type": "panel",
+			"label": "Account",
+			"items": {
+				"username": {
+					"type": "text",
+					"label": "username",
+					"xs": 12,
+					"sm": 12,
+					"md": 6,
+					"lg": 4,
+					"xl": 4
+				},
+				"password": {
+					"type": "password",
+					"label": "password",
+					"xs": 12,
+					"sm": 12,
+					"md": 6,
+					"lg": 4,
+					"xl": 4
+				},
+				"country": {
+					"type": "text",
+					"label": "country",
+					"xs": 12,
+					"sm": 12,
+					"md": 6,
+					"lg": 4,
+					"xl": 4
+				}
+			}
+		},
+		"_tab_options": {
+			"type": "panel",
+			"label": "Options",
+			"items": {
+				"scanInterval": {
+					"type": "number",
+					"label": "scanInterval",
+					"min": 30,
+					"max": 600,
+					"default": 60,
+					"xs": 12,
+					"sm": 12,
+					"md": 6,
+					"lg": 4,
+					"xl": 4
+				},
+				"mqttUsage": {
+					"type": "checkbox",
+					"label": "mqttUsage",
+					"default": true,
+					"xs": 12,
+					"sm": 12,
+					"md": 6,
+					"lg": 4,
+					"xl": 4
+				},
+				"pythonPath": {
+					"type": "text",
+					"label": "pythonPath",
+					"xs": 12,
+					"sm": 12,
+					"md": 6,
+					"lg": 4,
+					"xl": 4
+				}
+			}
+		},
+		"_tab_terms": {
+			"type": "panel",
+			"label": "Terms",
+			"items": {
+				"acceptTerms": {
+					"type": "checkbox",
+					"label": "acceptTerms",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+				"_terms_hint": {
+					"type": "staticText",
+					"text": "terms_hint",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				}
+			}
+		}
+	}
+}
