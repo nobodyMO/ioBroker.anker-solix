@@ -61,7 +61,7 @@ class AnkerSolix extends utils.Adapter {
 	/** Admin tile: use npm-style installedFrom so title is not "AnkerSolix" from GitHub URL. */
 	private async normalizeAdapterRegistryEntry(): Promise<void> {
 		const adapterObj = `system.adapter.${this.name}`;
-		const version = this.common.version || "0.0.0";
+		const version = this.common?.version || "0.0.0";
 		const installedFrom = `iobroker.${this.name}@${version}`;
 		try {
 			const obj = await this.getObjectAsync(adapterObj);
