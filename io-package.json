@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.2.3",
+		"version": "0.2.4",
 		"messagebox": true,
 		"news": {
+			"0.2.4": {
+				"en": "Fix GitHub install: symlink iobroker.AnkerSolix for repo name mismatch",
+				"de": "GitHub-Installationsfix: Symlink iobroker.AnkerSolix bei Repo-Namen Abweichung",
+				"ru": "Исправление установки GitHub",
+				"pt": "Correção instalação GitHub",
+				"nl": "GitHub-installatie fix",
+				"fr": "Correctif installation GitHub",
+				"it": "Fix installazione GitHub",
+				"es": "Corrección instalación GitHub",
+				"pl": "Poprawka instalacji GitHub",
+				"uk": "Виправлення GitHub-встановлення",
+				"zh-cn": "修复 GitHub 安装"
+			},
 			"0.2.3": {
 				"en": "Remove npm postinstall (fix ioBroker install); Python setup only on adapter start",
 				"de": "npm postinstall entfernt (ioBroker-Installation); Python-Setup erst beim Adapterstart",

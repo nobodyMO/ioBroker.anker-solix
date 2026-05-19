@@ -29,6 +29,18 @@ Since **v0.2.0**, dependencies are installed automatically on adapter start (see
 
 ## Installation (GitHub / Multihost)
 
+### GitHub repo name vs. npm package name
+
+This repository is named **`AnkerSolix`** on GitHub, but the npm/ioBroker package is **`iobroker.anker-solix`**. ioBroker’s installer looks for `node_modules/iobroker.AnkerSolix` after `iob url` – that caused `Cannot install … : 0` even when npm succeeded. **v0.2.4+** creates a symlink automatically in `postinstall`. Manual fix (older versions):
+
+```bash
+cd /opt/iobroker/node_modules
+ln -sfn iobroker.anker-solix iobroker.AnkerSolix
+iobroker url https://github.com/MatthiasUlrich1/AnkerSolix
+```
+
+Long-term: rename the GitHub repository to **`ioBroker.anker-solix`** (ioBroker convention).
+
 **npm install succeeded but adapter missing in Admin?** This is usually **not** a Python issue.
 
 1. Check the package exists:
@@ -94,6 +106,10 @@ This is **not** an official Anker product. The cloud API may change or break at 
 - [thomluther/anker-solix-api](https://github.com/thomluther/anker-solix-api) – Python API library
 
 ## Changelog
+
+### 0.2.4
+
+- **Fix `iob url` / GitHub install:** symlink `iobroker.AnkerSolix` → `iobroker.anker-solix` (repo name `AnkerSolix` vs package name)
 
 ### 0.2.3
 

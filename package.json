@@ -1,6 +1,6 @@
 {
   "name": "iobroker.anker-solix",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "ioBroker adapter for Anker Solix (based on ha-anker-solix)",
   "author": {
     "name": "MatthiasUlrich1",
@@ -70,7 +70,8 @@
     "check": "tsc --noEmit",
     "lint": "eslint -c eslint.config.mjs .",
     "translate": "translate-adapter",
-    "release": "release-script"
+    "release": "release-script",
+    "postinstall": "node tools/link-github-folder.js"
   },
   "bugs": {
     "url": "https://github.com/MatthiasUlrich1/AnkerSolix/issues"
