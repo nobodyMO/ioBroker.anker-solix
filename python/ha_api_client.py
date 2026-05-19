@@ -105,9 +105,30 @@ class IoBrokerAnkerApiClient:
             self._logger.warning("Could not save poll state: %s", exc)
 
     async def authenticate(self) -> None:
-        if not await self.api.async_authenticate():
-            if not await self.api.async_authenticate(restart=True):
-                raise RuntimeError("Authentication failed")
+        import asyncio
+        from solixapi import errors  # noqa: PLC0415
+
+        last_exc: Exception | None = None
+        for attempt in range(3):
+            try:
+                if await self.api.async_authenticate():
+                    return
+                if await self.api.async_authenticate(restart=True):
+                    return
+                last_exc = RuntimeError("Authentication failed")
+            except errors.RequestError as exc:
+                last_exc = exc
+                if "26161" in str(exc) or "429" in str(exc):
+                    delay = 15 * (attempt + 1)
+                    self._logger.warning(
+                        "Auth rate-limited, retry %s/3 in %ss", attempt + 2, delay
+                    )
+                    await asyncio.sleep(delay)
+                    continue
+                raise
+        if last_exc:
+            raise last_exc
+        raise RuntimeError("Authentication failed")
 
     async def async_get_data(self) -> dict[str, Any]:
         """Same sequence as HA AnkerSolixApiClient.async_get_data (normal poll path)."""

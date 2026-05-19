@@ -432,15 +432,11 @@ class AnkerSolix extends utils.Adapter {
 
 		await this.ensurePythonDeps();
 
-		try {
-			await ensureBridgeDaemon(
-				this.getBridgeConfig(),
-				this.config.pythonPath || "",
-				this.log,
-			);
-		} catch (error) {
-			this.log.error(`Bridge daemon start failed: ${(error as Error).message}`);
-		}
+		await ensureBridgeDaemon(
+			this.getBridgeConfig(),
+			this.config.pythonPath || "",
+			this.log,
+		);
 
 		this.subscribeStates(`${this.namespace}.*.control.*`);
 		this.subscribeStates(`${this.namespace}.services.*`);

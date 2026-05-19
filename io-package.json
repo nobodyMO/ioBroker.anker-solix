@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.6.0",
+		"version": "0.6.1",
 		"messagebox": true,
 		"news": {
+			"0.6.1": {
+				"en": "Daemon: deferred auth on start, one-shot fallback if API rate-limited (26161)",
+				"de": "Daemon: Auth erst beim Poll, One-Shot-Fallback bei API-Limit (26161)",
+				"ru": "Отложенная авторизация и резервный режим",
+				"pt": "Autenticação adiada e fallback",
+				"nl": "Uitgestelde auth en fallback",
+				"fr": "Auth différée et repli",
+				"it": "Auth differita e fallback",
+				"es": "Auth diferida y respaldo",
+				"pl": "Opóźniona autoryzacja i fallback",
+				"uk": "Відкладена авторизація",
+				"zh-cn": "延迟认证与回退模式"
+			},
 			"0.6.0": {
 				"en": "Persistent Python bridge daemon: API and MQTT session stay open like Home Assistant",
 				"de": "Persistenter Python-Bridge-Daemon: API- und MQTT-Session bleiben wie in Home Assistant offen",

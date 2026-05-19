@@ -37,17 +37,24 @@ class BridgeRuntime:
             str(config.get("country") or "DE").upper(),
         )
 
-    async def ensure_client(self, config: dict) -> IoBrokerAnkerApiClient:
+    async def ensure_client(
+        self, config: dict, *, authenticate: bool = True
+    ) -> IoBrokerAnkerApiClient:
         cred = self._credential_key(config)
         if self.client and self._credentials == cred:
             self.client.apply_runtime_config(config)
+            if authenticate and not self.client.api.apisession._loggedIn:
+                await self.client.authenticate()
             return self.client
         await self.close()
         self.session = ClientSession()
         self.client = IoBrokerAnkerApiClient(config, self.session, _LOGGER)
-        await self.client.authenticate()
         self._credentials = cred
-        _LOGGER.info("Persistent API/MQTT session started for %s", cred[0])
+        if authenticate:
+            await self.client.authenticate()
+            _LOGGER.info("Persistent API session authenticated for %s", cred[0])
+        else:
+            _LOGGER.debug("Persistent API session prepared for %s (auth deferred)", cred[0])
         return self.client
 
     async def dispatch(self, request: dict[str, Any]) -> dict[str, Any]:
@@ -59,7 +66,8 @@ class BridgeRuntime:
             return {"ok": True}
 
         if action == "configure":
-            await self.ensure_client(config)
+            # Do not login here – avoids duplicate auth while another adapter polls (26161)
+            await self.ensure_client(config, authenticate=False)
             return {"ok": True, "persistent": True}
 
         # Lazy import avoids circular dependency

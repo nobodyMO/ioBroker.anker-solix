@@ -42,6 +42,9 @@ var import_pythonPaths = require("./pythonPaths");
 function bridgeScriptPath() {
   return path.join(__dirname, "..", "..", "python", "bridge.py");
 }
+function isTransientApiError(message) {
+  return message.includes("26161") || message.includes("429") || message.includes("Too Many Requests") || message.includes("Failed to request") || message.includes("Busy");
+}
 async function runBridgeOnce(action, config, pythonPath, log) {
   const script = bridgeScriptPath();
   if (!fs.existsSync(script)) {
@@ -99,36 +102,57 @@ ${stdout}`
 }
 async function ensureBridgeDaemon(config, pythonPath, log) {
   const daemon = (0, import_bridgeDaemon.getBridgeDaemon)(pythonPath, log);
+  try {
+    if (!daemon.isRunning) {
+      await daemon.start(config);
+    } else {
+      await daemon.request("configure", config);
+    }
+    return true;
+  } catch (error) {
+    const msg = error.message;
+    log == null ? void 0 : log.warn(`Bridge daemon not ready (${msg}) \u2013 will use direct Python bridge for polls`);
+    await daemon.stop().catch(() => void 0);
+    return false;
+  }
+}
+async function runBridgeDaemon(action, config, pythonPath, log) {
+  const daemon = (0, import_bridgeDaemon.getBridgeDaemon)(pythonPath, log);
   if (!daemon.isRunning) {
-    await daemon.start(config);
+    const started = await ensureBridgeDaemon(config, pythonPath, log);
+    if (!started) {
+      throw new Error("Bridge daemon is not running");
+    }
   } else {
     await daemon.request("configure", config);
   }
+  return daemon.request(action, config);
 }
 async function runBridge(action, config, pythonPath, log, options) {
   const useDaemon = (options == null ? void 0 : options.useDaemon) !== false;
-  if (useDaemon) {
-    try {
-      const daemon = (0, import_bridgeDaemon.getBridgeDaemon)(pythonPath, log);
-      if (!daemon.isRunning && action !== "poll" && action !== "login") {
-        await daemon.start(config);
-      } else if (!daemon.isRunning) {
-        await daemon.start(config);
-      } else {
-        await daemon.request("configure", config);
-      }
-      return await daemon.request(action, config);
-    } catch (error) {
-      log == null ? void 0 : log.warn(
-        `Bridge daemon failed (${error.message}), restarting daemon\u2026`
-      );
-      const daemon = (0, import_bridgeDaemon.getBridgeDaemon)(pythonPath, log);
-      await daemon.stop();
-      await daemon.start(config);
-      return await daemon.request(action, config);
-    }
+  if (!useDaemon) {
+    return runBridgeOnce(action, config, pythonPath, log);
   }
-  return runBridgeOnce(action, config, pythonPath, log);
+  try {
+    return await runBridgeDaemon(action, config, pythonPath, log);
+  } catch (error) {
+    const msg = error.message;
+    const daemon = (0, import_bridgeDaemon.getBridgeDaemon)(pythonPath, log);
+    if (daemon.isRunning && isTransientApiError(msg)) {
+      log == null ? void 0 : log.warn(
+        `Bridge daemon API error (${msg}) \u2013 retrying once after 15s\u2026`
+      );
+      await new Promise((r) => setTimeout(r, 15e3));
+      try {
+        return await runBridgeDaemon(action, config, pythonPath, log);
+      } catch (retryErr) {
+        log == null ? void 0 : log.warn(`Daemon retry failed: ${retryErr.message}`);
+      }
+    }
+    await daemon.stop().catch(() => void 0);
+    log == null ? void 0 : log.warn(`Using one-shot Python bridge (daemon unavailable: ${msg})`);
+    return runBridgeOnce(action, config, pythonPath, log);
+  }
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {

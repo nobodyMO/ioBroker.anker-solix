@@ -385,15 +385,11 @@ class AnkerSolix extends utils.Adapter {
       `Anker Solix adapter started (poll every ${intervalSec}s, MQTT: ${this.config.mqttUsage !== false})`
     );
     await this.ensurePythonDeps();
-    try {
-      await (0, import_pythonBridge.ensureBridgeDaemon)(
-        this.getBridgeConfig(),
-        this.config.pythonPath || "",
-        this.log
-      );
-    } catch (error) {
-      this.log.error(`Bridge daemon start failed: ${error.message}`);
-    }
+    await (0, import_pythonBridge.ensureBridgeDaemon)(
+      this.getBridgeConfig(),
+      this.config.pythonPath || "",
+      this.log
+    );
     this.subscribeStates(`${this.namespace}.*.control.*`);
     this.subscribeStates(`${this.namespace}.services.*`);
     await this.pollOnce();
