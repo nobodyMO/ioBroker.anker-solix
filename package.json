@@ -1,13 +1,13 @@
 {
   "name": "iobroker.anker-solix",
-  "version": "0.2.7",
+  "version": "0.3.0",
   "description": "ioBroker adapter for Anker Solix (based on ha-anker-solix)",
   "author": {
     "name": "MatthiasUlrich1",
     "email": "info@my-smart-home-support.de"
   },
   "contributors": [],
-  "homepage": "https://github.com/MatthiasUlrich1/AnkerSolix",
+  "homepage": "https://github.com/MatthiasUlrich1/ioBroker.anker-solix",
   "license": "MIT",
   "keywords": [
     "iobroker",
@@ -21,7 +21,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/MatthiasUlrich1/AnkerSolix.git"
+    "url": "https://github.com/MatthiasUlrich1/ioBroker.anker-solix.git"
   },
   "engines": {
     "node": ">= 20"
@@ -70,11 +70,10 @@
     "check": "tsc --noEmit",
     "lint": "eslint -c eslint.config.mjs .",
     "translate": "translate-adapter",
-    "release": "release-script",
-    "postinstall": "node tools/link-github-folder.js"
+    "release": "release-script"
   },
   "bugs": {
-    "url": "https://github.com/MatthiasUlrich1/AnkerSolix/issues"
+    "url": "https://github.com/MatthiasUlrich1/ioBroker.anker-solix/issues"
   },
   "readmeFilename": "README.md"
 }

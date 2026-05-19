@@ -55,29 +55,13 @@ class AnkerSolix extends utils.Adapter {
       selectedDeviceIds: selectedIds
     };
   }
-  /** GitHub repo is "AnkerSolix" but package is iobroker.anker-solix – remove install-only symlink. */
-  cleanupGithubInstallSymlink() {
+  /** Remove legacy install symlink from old GitHub repo name "AnkerSolix". */
+  cleanupLegacyInstallSymlink() {
     const alias = path.join(this.adapterDir, "..", "iobroker.AnkerSolix");
     try {
       if (fs.existsSync(alias) && fs.lstatSync(alias).isSymbolicLink()) {
         fs.unlinkSync(alias);
-        this.log.debug("Removed install symlink iobroker.AnkerSolix (display uses anker-solix only)");
-      }
-    } catch {
-    }
-  }
-  /** Admin tile: use npm-style installedFrom so title is not "AnkerSolix" from GitHub URL. */
-  async normalizeAdapterRegistryEntry() {
-    var _a;
-    const adapterObj = `system.adapter.${this.name}`;
-    const version = ((_a = this.common) == null ? void 0 : _a.version) || "0.0.0";
-    const installedFrom = `iobroker.${this.name}@${version}`;
-    try {
-      const obj = await this.getObjectAsync(adapterObj);
-      if ((obj == null ? void 0 : obj.common) && obj.common.installedFrom !== installedFrom) {
-        await this.extendObject(adapterObj, {
-          common: { installedFrom }
-        });
+        this.log.info("Removed legacy symlink iobroker.AnkerSolix");
       }
     } catch {
     }
@@ -297,8 +281,7 @@ class AnkerSolix extends utils.Adapter {
     }
   }
   async onReady() {
-    this.cleanupGithubInstallSymlink();
-    await this.normalizeAdapterRegistryEntry();
+    this.cleanupLegacyInstallSymlink();
     await this.setObjectNotExistsAsync("account", {
       type: "channel",
       common: { name: "Account" },

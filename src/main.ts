@@ -45,30 +45,13 @@ class AnkerSolix extends utils.Adapter {
 		};
 	}
 
-	/** GitHub repo is "AnkerSolix" but package is iobroker.anker-solix – remove install-only symlink. */
-	private cleanupGithubInstallSymlink(): void {
+	/** Remove legacy install symlink from old GitHub repo name "AnkerSolix". */
+	private cleanupLegacyInstallSymlink(): void {
 		const alias = path.join(this.adapterDir, "..", "iobroker.AnkerSolix");
 		try {
 			if (fs.existsSync(alias) && fs.lstatSync(alias).isSymbolicLink()) {
 				fs.unlinkSync(alias);
-				this.log.debug("Removed install symlink iobroker.AnkerSolix (display uses anker-solix only)");
-			}
-		} catch {
-			// ignore
-		}
-	}
-
-	/** Admin tile: use npm-style installedFrom so title is not "AnkerSolix" from GitHub URL. */
-	private async normalizeAdapterRegistryEntry(): Promise<void> {
-		const adapterObj = `system.adapter.${this.name}`;
-		const version = this.common?.version || "0.0.0";
-		const installedFrom = `iobroker.${this.name}@${version}`;
-		try {
-			const obj = await this.getObjectAsync(adapterObj);
-			if (obj?.common && obj.common.installedFrom !== installedFrom) {
-				await this.extendObject(adapterObj, {
-					common: { installedFrom },
-				});
+				this.log.info("Removed legacy symlink iobroker.AnkerSolix");
 			}
 		} catch {
 			// ignore
@@ -318,8 +301,7 @@ class AnkerSolix extends utils.Adapter {
 	}
 
 	private async onReady(): Promise<void> {
-		this.cleanupGithubInstallSymlink();
-		await this.normalizeAdapterRegistryEntry();
+		this.cleanupLegacyInstallSymlink();
 
 		await this.setObjectNotExistsAsync("account", {
 			type: "channel",

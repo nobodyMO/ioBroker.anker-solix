@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.2.7",
+		"version": "0.3.0",
 		"messagebox": true,
 		"news": {
+			"0.3.0": {
+				"en": "GitHub repository renamed to ioBroker.anker-solix (fixes install and Admin display)",
+				"de": "GitHub-Repository umbenannt in ioBroker.anker-solix (Installation und Admin-Anzeige)",
+				"ru": "Репозиторий переименован в ioBroker.anker-solix",
+				"pt": "Repositório renomeado para ioBroker.anker-solix",
+				"nl": "Repository hernoemd naar ioBroker.anker-solix",
+				"fr": "Dépôt renommé en ioBroker.anker-solix",
+				"it": "Repository rinominato in ioBroker.anker-solix",
+				"es": "Repositorio renombrado a ioBroker.anker-solix",
+				"pl": "Repozytorium przemianowane na ioBroker.anker-solix",
+				"uk": "Репозиторій перейменовано на ioBroker.anker-solix",
+				"zh-cn": "仓库重命名为 ioBroker.anker-solix"
+			},
 			"0.2.7": {
 				"en": "Admin tile: remove GitHub install symlink, normalize display name (Anker Solix)",
 				"de": "Admin-Kachel: GitHub-Symlink entfernt, einheitlicher Anzeigename (Anker Solix)",
@@ -170,8 +183,8 @@
 		"platform": "Javascript/Node.js",
 		"icon": "anker-solix.png",
 		"enabled": true,
-		"extIcon": "https://raw.githubusercontent.com/MatthiasUlrich1/AnkerSolix/main/admin/anker-solix.png",
-		"readme": "https://github.com/MatthiasUlrich1/AnkerSolix/blob/main/README.md",
+		"extIcon": "https://raw.githubusercontent.com/MatthiasUlrich1/ioBroker.anker-solix/main/admin/anker-solix.png",
+		"readme": "https://github.com/MatthiasUlrich1/ioBroker.anker-solix/blob/main/README.md",
 		"loglevel": "info",
 		"tier": 3,
 		"mode": "daemon",
