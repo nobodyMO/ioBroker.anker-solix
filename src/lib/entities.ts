@@ -22,6 +22,15 @@ const SENSOR_ENTITIES: EntityMeta[] = [
 	{ id: "set_output_power", kind: "sensor", role: "value.power", unit: "W" },
 	{ id: "cloud_state", kind: "sensor", role: "indicator" },
 	{ id: "wifi_state", kind: "sensor", role: "indicator" },
+	// Smart meter
+	{ id: "grid_to_home_power", kind: "sensor", role: "value.power", unit: "W" },
+	{ id: "grid_status_desc", kind: "sensor", role: "text" },
+	{ id: "grid_import_energy", kind: "sensor", role: "value.energy", unit: "kWh" },
+	{ id: "grid_export_energy", kind: "sensor", role: "value.energy", unit: "kWh" },
+	{ id: "daily_grid_import", kind: "sensor", role: "value.energy", unit: "kWh" },
+	{ id: "daily_grid_export", kind: "sensor", role: "value.energy", unit: "kWh" },
+	{ id: "phase", kind: "sensor", role: "text" },
+	{ id: "smartmeter_list", kind: "sensor", role: "value" },
 ];
 
 const CONTROL_ENTITIES: EntityMeta[] = [

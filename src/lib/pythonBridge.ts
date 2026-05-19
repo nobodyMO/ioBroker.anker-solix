@@ -3,7 +3,12 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 
-import type { BridgeConfig, BridgePollResult, BridgeSetConfig } from "./types";
+import type {
+	BridgeConfig,
+	BridgePollResult,
+	BridgeServiceConfig,
+	BridgeSetConfig,
+} from "./types";
 
 function resolvePython(pythonPath: string): string {
 	if (pythonPath?.trim()) {
@@ -20,8 +25,8 @@ function bridgeScriptPath(): string {
 }
 
 export async function runBridge(
-	action: "poll" | "login" | "set",
-	config: BridgeConfig | BridgeSetConfig,
+	action: "poll" | "login" | "set" | "list_devices" | "service",
+	config: BridgeConfig | BridgeSetConfig | BridgeServiceConfig,
 	pythonPath: string,
 	log?: ioBroker.Logger,
 ): Promise<BridgePollResult> {

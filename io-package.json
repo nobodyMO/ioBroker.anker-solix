@@ -1,8 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.1.0",
+		"version": "0.2.0",
+		"messagebox": true,
 		"news": {
+			"0.2.0": {
+				"en": "Python auto-install, smart meter entities, HA services, device selection in admin",
+				"de": "Python-Auto-Installation, Smart-Meter-Entitäten, HA-Services, Geräteauswahl in der Admin-Oberfläche",
+				"ru": "Автоустановка Python, счётчик, сервисы, выбор устройств",
+				"pt": "Instalação Python, smart meter, serviços, seleção de dispositivos",
+				"nl": "Python-installatie, slimme meter, services, apparaatkeuze",
+				"fr": "Installation Python, compteur, services, sélection d'appareils",
+				"it": "Installazione Python, smart meter, servizi, selezione dispositivi",
+				"es": "Instalación Python, contador, servicios, selección de dispositivos",
+				"pl": "Instalacja Python, licznik, usługi, wybór urządzeń",
+				"uk": "Python, лічильник, сервіси, вибір пристроїв",
+				"zh-cn": "Python 自动安装、智能电表、服务、设备选择"
+			},
 			"0.1.0": {
 				"en": "HA-aligned Solarbank sensors and control entities; author update",
 				"de": "HA-ähnliche Solarbank-Sensoren und Steuerungen; Autor aktualisiert",
@@ -95,7 +109,12 @@
 		"scanInterval": 60,
 		"mqttUsage": true,
 		"acceptTerms": false,
-		"pythonPath": ""
+		"pythonPath": "",
+		"autoInstallPython": true,
+		"enableAllDevices": true,
+		"selectedSiteId": "",
+		"selectedDeviceIds": "",
+		"deviceListJson": ""
 	},
 	"objects": [],
 	"instanceObjects": [
@@ -113,6 +132,19 @@
 			"common": {
 				"role": "indicator.connected",
 				"name": "Cloud connected",
+				"type": "boolean",
+				"read": true,
+				"write": false,
+				"def": false
+			},
+			"native": {}
+		},
+		{
+			"_id": "info.pythonReady",
+			"type": "state",
+			"common": {
+				"role": "indicator",
+				"name": "Python dependencies ready",
 				"type": "boolean",
 				"read": true,
 				"write": false,

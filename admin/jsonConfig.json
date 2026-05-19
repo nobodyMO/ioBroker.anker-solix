@@ -10,28 +10,82 @@
 					"type": "text",
 					"label": "username",
 					"xs": 12,
-					"sm": 12,
-					"md": 6,
-					"lg": 4,
-					"xl": 4
+					"sm": 6,
+					"md": 4
 				},
 				"password": {
 					"type": "password",
 					"label": "password",
 					"xs": 12,
-					"sm": 12,
-					"md": 6,
-					"lg": 4,
-					"xl": 4
+					"sm": 6,
+					"md": 4
 				},
 				"country": {
 					"type": "text",
 					"label": "country",
+					"default": "DE",
+					"xs": 12,
+					"sm": 6,
+					"md": 4
+				}
+			}
+		},
+		"_tab_devices": {
+			"type": "panel",
+			"label": "Devices",
+			"items": {
+				"_devices_hint": {
+					"type": "staticText",
+					"text": "devices_hint",
+					"xs": 12
+				},
+				"loadDevices": {
+					"type": "sendTo",
+					"label": "loadDevices",
+					"command": "loadDevices",
+					"variant": "contained",
+					"showProcess": true,
+					"xs": 12,
+					"sm": 6,
+					"md": 4
+				},
+				"installPython": {
+					"type": "sendTo",
+					"label": "installPython",
+					"command": "installPython",
+					"variant": "outlined",
+					"showProcess": true,
+					"xs": 12,
+					"sm": 6,
+					"md": 4
+				},
+				"enableAllDevices": {
+					"type": "checkbox",
+					"label": "enableAllDevices",
+					"default": true,
+					"xs": 12,
+					"sm": 6,
+					"md": 4
+				},
+				"selectedSiteId": {
+					"type": "text",
+					"label": "selectedSiteId",
+					"xs": 12,
+					"sm": 6,
+					"md": 4
+				},
+				"selectedDeviceIds": {
+					"type": "text",
+					"label": "selectedDeviceIds",
 					"xs": 12,
 					"sm": 12,
-					"md": 6,
-					"lg": 4,
-					"xl": 4
+					"md": 8
+				},
+				"deviceListJson": {
+					"type": "json",
+					"label": "deviceListJson",
+					"disabled": true,
+					"xs": 12
 				}
 			}
 		},
@@ -46,29 +100,47 @@
 					"max": 600,
 					"default": 60,
 					"xs": 12,
-					"sm": 12,
-					"md": 6,
-					"lg": 4,
-					"xl": 4
+					"sm": 6,
+					"md": 4
 				},
 				"mqttUsage": {
 					"type": "checkbox",
 					"label": "mqttUsage",
 					"default": true,
 					"xs": 12,
-					"sm": 12,
-					"md": 6,
-					"lg": 4,
-					"xl": 4
+					"sm": 6,
+					"md": 4
+				},
+				"autoInstallPython": {
+					"type": "checkbox",
+					"label": "autoInstallPython",
+					"default": true,
+					"xs": 12,
+					"sm": 6,
+					"md": 4
 				},
 				"pythonPath": {
 					"type": "text",
 					"label": "pythonPath",
 					"xs": 12,
-					"sm": 12,
-					"md": 6,
-					"lg": 4,
-					"xl": 4
+					"sm": 6,
+					"md": 4
+				}
+			}
+		},
+		"_tab_services": {
+			"type": "panel",
+			"label": "Services",
+			"items": {
+				"_services_hint": {
+					"type": "staticText",
+					"text": "services_hint",
+					"xs": 12
+				},
+				"_service_note": {
+					"type": "staticText",
+					"text": "services_note",
+					"xs": 12
 				}
 			}
 		},
@@ -79,20 +151,12 @@
 				"acceptTerms": {
 					"type": "checkbox",
 					"label": "acceptTerms",
-					"xs": 12,
-					"sm": 12,
-					"md": 12,
-					"lg": 12,
-					"xl": 12
+					"xs": 12
 				},
 				"_terms_hint": {
 					"type": "staticText",
 					"text": "terms_hint",
-					"xs": 12,
-					"sm": 12,
-					"md": 12,
-					"lg": 12,
-					"xl": 12
+					"xs": 12
 				}
 			}
 		}

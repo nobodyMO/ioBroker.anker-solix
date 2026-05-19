@@ -8,6 +8,8 @@ SOLARBANK = "solarbank"
 SYSTEM = "system"
 SITE = "site"
 COMBINER = "combiner_box"
+SMARTMETER = "smartmeter"
+SMARTPLUG = "smartplug"
 
 SENSOR_ENTITIES: list[dict[str, Any]] = [
     {
@@ -76,7 +78,61 @@ SENSOR_ENTITIES: list[dict[str, Any]] = [
         "id": "wifi_state",
         "keys": ["wifi_state", "wifi_online"],
         "role": "indicator",
-        "types": [SOLARBANK, SYSTEM, SITE, COMBINER],
+        "types": [SOLARBANK, SYSTEM, SITE, COMBINER, SMARTMETER],
+    },
+    # Smart meter (HA)
+    {
+        "id": "grid_to_home_power",
+        "keys": ["grid_to_home_power"],
+        "unit": "W",
+        "role": "value.power",
+        "types": [SMARTMETER, SYSTEM, SITE],
+    },
+    {
+        "id": "grid_status_desc",
+        "keys": ["grid_status_desc", "grid_status"],
+        "role": "text",
+        "types": [SMARTMETER, SYSTEM],
+    },
+    {
+        "id": "grid_import_energy",
+        "keys": ["grid_import_energy", "daily_grid_import"],
+        "unit": "kWh",
+        "role": "value.energy",
+        "types": [SMARTMETER, SYSTEM, SITE],
+    },
+    {
+        "id": "grid_export_energy",
+        "keys": ["grid_export_energy", "daily_grid_export"],
+        "unit": "kWh",
+        "role": "value.energy",
+        "types": [SMARTMETER, SYSTEM, SITE],
+    },
+    {
+        "id": "daily_grid_import",
+        "keys": ["grid_import", "daily_grid_import"],
+        "unit": "kWh",
+        "role": "value.energy",
+        "types": [SMARTMETER, SYSTEM],
+    },
+    {
+        "id": "daily_grid_export",
+        "keys": ["grid_export", "daily_grid_export"],
+        "unit": "kWh",
+        "role": "value.energy",
+        "types": [SMARTMETER, SYSTEM],
+    },
+    {
+        "id": "phase",
+        "keys": ["phase"],
+        "role": "text",
+        "types": [SMARTMETER],
+    },
+    {
+        "id": "smartmeter_list",
+        "keys": ["smartmeter_list"],
+        "role": "value",
+        "types": [SYSTEM, SITE],
     },
 ]
 
@@ -147,6 +203,24 @@ def pick_value(data: dict, keys: list[str]) -> Any:
                     return not bool(disabled)
             return val
     return None
+
+
+def should_include_device(
+    ctx_id: str,
+    data: dict,
+    info: dict[str, str],
+    config: dict,
+) -> bool:
+    if config.get("enableAllDevices", True):
+        return True
+    selected = set(config.get("selectedDeviceIds") or [])
+    site_id = config.get("selectedSiteId") or ""
+    if site_id and info.get("site_id") and info.get("site_id") != site_id:
+        if ctx_id != site_id:
+            return False
+    if not selected:
+        return True
+    return ctx_id in selected or info.get("site_id") in selected
 
 
 def extract_entities(data: dict) -> dict[str, Any]:
