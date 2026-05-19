@@ -66,7 +66,7 @@ function channelForDevice(info) {
   return `${typePart}.${idPart}`;
 }
 async function syncDevices(adapter, devices) {
-  var _a, _b;
+  var _a, _b, _c;
   for (const device of devices) {
     const base = channelForDevice(device.info);
     const channelPath = `${adapter.namespace}.${base}`;
@@ -91,21 +91,27 @@ async function syncDevices(adapter, devices) {
     if (device.info.model) {
       await adapter.setState(`${channelPath}.info.model`, device.info.model, true);
     }
-    for (const [entityId, value] of Object.entries(device.entities)) {
-      if (value === null || value === void 0) {
-        continue;
-      }
+    const entityIds = /* @__PURE__ */ new Set([
+      ...Object.keys(device.entities),
+      ...device.writable.filter((id) => {
+        var _a2;
+        return ((_a2 = import_entities.ENTITY_MAP.get(id)) == null ? void 0 : _a2.kind) !== "sensor";
+      })
+    ]);
+    for (const entityId of entityIds) {
+      const value = device.entities[entityId];
       const meta = import_entities.ENTITY_MAP.get(entityId);
       const writable = meta ? (0, import_entities.isWritable)(entityId, device.writable) : false;
       const kind = (_a = meta == null ? void 0 : meta.kind) != null ? _a : "sensor";
       const subfolder = kind === "sensor" ? "sensors" : "control";
       const stateId = `${channelPath}.${subfolder}.${entityId}`;
       const stateType = resolveStateType(meta, value);
-      const stateVal = coerceStateValue(stateType, value);
+      const hasValue = value !== null && value !== void 0;
+      const stateVal = hasValue ? coerceStateValue(stateType, value) : (meta == null ? void 0 : meta.kind) === "switch" ? false : (meta == null ? void 0 : meta.kind) === "number" ? (_b = meta.min) != null ? _b : 0 : "";
       const common = {
         name: entityId,
         type: stateType,
-        role: (_b = meta == null ? void 0 : meta.role) != null ? _b : "value",
+        role: (_c = meta == null ? void 0 : meta.role) != null ? _c : "value",
         read: true,
         write: writable
       };
@@ -128,7 +134,9 @@ async function syncDevices(adapter, devices) {
       if ((meta == null ? void 0 : meta.kind) === "number" || (meta == null ? void 0 : meta.kind) === "switch") {
         await adapter.extendObject(stateId, { common });
       }
-      await adapter.setState(stateId, stateVal, true);
+      if (hasValue || writable) {
+        await adapter.setState(stateId, stateVal, true);
+      }
     }
   }
 }

@@ -79,6 +79,12 @@ This is **not** an official Anker product. The cloud API may change or break at 
 
 ## Changelog
 
+### 0.4.0
+
+- **Sensors:** total PV generation (`total_pv_power`) on system/combiner (Power Dock), per-device PV/AC limit readouts
+- **Controls (HA-aligned, multisystem):** SOC reserve (`min_soc`), grid export switch/limit, AC output limit (max home load), PV input limit and AC charge limit per Solarbank
+- Station/Power Dock/combiner targets use the same API logic as the Home Assistant integration (3rd-party PV switch is not exposed)
+
 ### 0.3.0
 
 - **GitHub repository renamed** to `ioBroker.anker-solix` (fixes `iob url` install and Admin tile name)

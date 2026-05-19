@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.3.0",
+		"version": "0.4.0",
 		"messagebox": true,
 		"news": {
+			"0.4.0": {
+				"en": "Multisystem controls: total PV, SOC reserve, PV/AC limits, AC output limit, grid export switch/limit (Power Dock/combiner)",
+				"de": "Multisystem-Steuerungen: Gesamt-PV, SOC-Reserve, PV/AC-Limits, AC-Ausgangs-Limit, Netzeinspeisung Schalter/Limit (Power Dock/Combiner)",
+				"ru": "Управление мультисистемой: общая PV, резерв SOC, лимиты",
+				"pt": "Controles multisistema: PV total, reserva SOC, limites",
+				"nl": "Multisysteem: totaal PV, SOC-reserve, limieten",
+				"fr": "Multisystème : PV total, réserve SOC, limites",
+				"it": "Multisistema: PV totale, riserva SOC, limiti",
+				"es": "Multisistema: PV total, reserva SOC, límites",
+				"pl": "Multisystem: PV łącznie, rezerwa SOC, limity",
+				"uk": "Мультисистема: загальна PV, резерв SOC, ліміти",
+				"zh-cn": "多系统控制：总光伏、SOC 储备、限额"
+			},
 			"0.3.0": {
 				"en": "GitHub repository renamed to ioBroker.anker-solix (fixes install and Admin display)",
 				"de": "GitHub-Repository umbenannt in ioBroker.anker-solix (Installation und Admin-Anzeige)",

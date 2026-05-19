@@ -7,7 +7,7 @@ from typing import Any
 SOLARBANK = "solarbank"
 SYSTEM = "system"
 SITE = "site"
-COMBINER = "combiner_box"
+COMBINER = "combiner_box"  # includes Power Dock (same device type in API)
 SMARTMETER = "smartmeter"
 SMARTPLUG = "smartplug"
 
@@ -18,6 +18,14 @@ SENSOR_ENTITIES: list[dict[str, Any]] = [
         "unit": "W",
         "role": "value.power",
         "types": [SOLARBANK, COMBINER, SYSTEM],
+    },
+    {
+        "id": "total_pv_power",
+        "keys": ["total_photovoltaic_power"],
+        "unit": "W",
+        "role": "value.power",
+        "types": [SYSTEM, SITE, COMBINER],
+        "nested": True,
     },
     {
         "id": "dc_output_power",
@@ -32,6 +40,13 @@ SENSOR_ENTITIES: list[dict[str, Any]] = [
         "unit": "W",
         "role": "value.power",
         "types": [SOLARBANK, SYSTEM, SITE, COMBINER],
+    },
+    {
+        "id": "preset_system_output_power",
+        "keys": ["preset_system_output_power", "legal_power_limit"],
+        "unit": "W",
+        "role": "value.power",
+        "types": [SOLARBANK, SYSTEM, COMBINER],
     },
     {
         "id": "battery_power",
@@ -67,6 +82,20 @@ SENSOR_ENTITIES: list[dict[str, Any]] = [
         "unit": "W",
         "role": "value.power",
         "types": [SOLARBANK, COMBINER],
+    },
+    {
+        "id": "pv_input_limit",
+        "keys": ["pv_power_limit", "pv_limit"],
+        "unit": "W",
+        "role": "value.power",
+        "types": [SOLARBANK],
+    },
+    {
+        "id": "ac_charge_limit",
+        "keys": ["ac_input_limit", "ac_power_limit"],
+        "unit": "W",
+        "role": "value.power",
+        "types": [SOLARBANK],
     },
     {
         "id": "cloud_state",
@@ -139,9 +168,9 @@ SENSOR_ENTITIES: list[dict[str, Any]] = [
 CONTROL_ENTITIES: list[dict[str, Any]] = [
     {
         "id": "allow_grid_export",
-        "keys": ["allow_grid_export"],
+        "keys": ["allow_grid_export", "switch_0w", "grid_export_disabled"],
         "role": "switch",
-        "types": [SOLARBANK, COMBINER],
+        "types": [SOLARBANK, COMBINER, SYSTEM],
         "control": "allow_grid_export",
     },
     {
@@ -161,8 +190,22 @@ CONTROL_ENTITIES: list[dict[str, Any]] = [
         "max": 1200,
     },
     {
+        "id": "ac_output_limit",
+        "keys": [
+            "preset_system_output_power",
+            "parallel_home_load",
+            "legal_power_limit",
+            "max_load",
+        ],
+        "role": "level.power",
+        "types": [SOLARBANK, COMBINER, SYSTEM],
+        "control": "ac_output_limit",
+        "min": 0,
+        "max": 800,
+    },
+    {
         "id": "min_soc",
-        "keys": ["min_soc", "soc_reserve"],
+        "keys": ["min_soc", "soc_reserve", "power_cutoff"],
         "role": "level.battery",
         "types": [SOLARBANK, COMBINER, SYSTEM],
         "control": "min_soc",
@@ -170,37 +213,74 @@ CONTROL_ENTITIES: list[dict[str, Any]] = [
         "max": 100,
     },
     {
+        "id": "pv_input_limit",
+        "keys": ["pv_power_limit", "pv_limit"],
+        "role": "level.power",
+        "types": [SOLARBANK],
+        "control": "pv_input_limit",
+        "min": 0,
+        "max": 4000,
+    },
+    {
+        "id": "ac_charge_limit",
+        "keys": ["ac_input_limit", "ac_power_limit"],
+        "role": "level.power",
+        "types": [SOLARBANK],
+        "control": "ac_charge_limit",
+        "min": 0,
+        "max": 4000,
+    },
+    {
         "id": "grid_export_limit",
         "keys": ["grid_export_limit", "feed-in_power_limit"],
         "role": "level.power",
         "types": [SOLARBANK, COMBINER, SYSTEM],
         "control": "grid_export_limit",
-        "min": 0,
+        "min": 100,
         "max": 100000,
     },
 ]
 
+_NESTED_KEYS = ("solarbank_info", "solarbank_pps_info", "average_power")
 
-def _nested_get(data: dict, key: str) -> Any:
+
+def _nested_get(data: dict, key: str, nested: bool = False) -> Any:
     if key in data:
         return data.get(key)
     avg = data.get("average_power")
     if isinstance(avg, dict) and key in avg:
         return avg.get(key)
+    if nested:
+        for nested_key in _NESTED_KEYS:
+            sub = data.get(nested_key)
+            if isinstance(sub, dict) and key in sub:
+                return sub.get(key)
+    schedule = data.get("schedule")
+    if isinstance(schedule, dict) and key in schedule:
+        return schedule.get(key)
     return None
 
 
-def pick_value(data: dict, keys: list[str]) -> Any:
+def pick_value(data: dict, keys: list[str], nested: bool = False) -> Any:
     for key in keys:
-        val = _nested_get(data, key)
+        val = _nested_get(data, key, nested=nested)
         if val is not None and val != "":
-            if key == "set_output_power" and isinstance(val, str):
+            if key in ("set_output_power", "preset_system_output_power") and isinstance(
+                val, str
+            ):
                 cleaned = val.replace("W", "").strip()
                 return int(cleaned) if cleaned.isdigit() else val
-            if key == "allow_grid_export" and "grid_export_disabled" in data:
-                disabled = data.get("grid_export_disabled")
-                if disabled is not None:
-                    return not bool(disabled)
+            if key in ("allow_grid_export", "switch_0w", "grid_export_disabled"):
+                if key == "switch_0w":
+                    return not bool(int(val) if str(val).isdigit() else val)
+                if key == "grid_export_disabled":
+                    return not bool(val)
+                return bool(val) if not isinstance(val, str) else val.lower() in (
+                    "1",
+                    "true",
+                    "on",
+                    "yes",
+                )
             return val
     return None
 
@@ -223,6 +303,16 @@ def should_include_device(
     return ctx_id in selected or info.get("site_id") in selected
 
 
+def controls_for_type(dev_type: str) -> list[str]:
+    if not dev_type:
+        return []
+    return [
+        spec["id"]
+        for spec in CONTROL_ENTITIES
+        if dev_type in spec.get("types", [])
+    ]
+
+
 def extract_entities(data: dict) -> dict[str, Any]:
     dev_type = str(data.get("type") or data.get("device_type") or "").lower()
     if not dev_type:
@@ -234,7 +324,7 @@ def extract_entities(data: dict) -> dict[str, Any]:
     for spec in SENSOR_ENTITIES:
         if dev_type and dev_type not in spec.get("types", []):
             continue
-        val = pick_value(data, spec["keys"])
+        val = pick_value(data, spec["keys"], nested=bool(spec.get("nested")))
         if val is not None:
             entities[spec["id"]] = val
     for spec in CONTROL_ENTITIES:

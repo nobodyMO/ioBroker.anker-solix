@@ -75,17 +75,27 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 			await adapter.setState(`${channelPath}.info.model`, device.info.model, true);
 		}
 
-		for (const [entityId, value] of Object.entries(device.entities)) {
-			if (value === null || value === undefined) {
-				continue;
-			}
+		const entityIds = new Set([
+			...Object.keys(device.entities),
+			...device.writable.filter((id) => ENTITY_MAP.get(id)?.kind !== "sensor"),
+		]);
+
+		for (const entityId of entityIds) {
+			const value = device.entities[entityId];
 			const meta = ENTITY_MAP.get(entityId);
 			const writable = meta ? isWritable(entityId, device.writable) : false;
 			const kind = meta?.kind ?? "sensor";
 			const subfolder = kind === "sensor" ? "sensors" : "control";
 			const stateId = `${channelPath}.${subfolder}.${entityId}`;
 			const stateType = resolveStateType(meta, value);
-			const stateVal = coerceStateValue(stateType, value);
+			const hasValue = value !== null && value !== undefined;
+			const stateVal = hasValue
+				? coerceStateValue(stateType, value)
+				: meta?.kind === "switch"
+					? false
+					: meta?.kind === "number"
+						? (meta.min ?? 0)
+						: "";
 
 			const common: ioBroker.StateCommon = {
 				name: entityId,
@@ -115,7 +125,9 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 			if (meta?.kind === "number" || meta?.kind === "switch") {
 				await adapter.extendObject(stateId, { common });
 			}
-			await adapter.setState(stateId, stateVal, true);
+			if (hasValue || writable) {
+				await adapter.setState(stateId, stateVal, true);
+			}
 		}
 	}
 }

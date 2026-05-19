@@ -16,11 +16,17 @@ from aiohttp import ClientSession
 # solixapi is vendored from https://github.com/thomluther/ha-anker-solix
 sys.path.insert(0, str(Path(__file__).parent))
 
-from entities import CONTROL_ENTITIES, extract_entities, should_include_device  # noqa: E402
+from entities import (  # noqa: E402
+    COMBINER,
+    SOLARBANK,
+    controls_for_type,
+    extract_entities,
+    should_include_device,
+)
 from solixapi.export import AnkerSolixApiExport  # noqa: E402
 from solixapi import errors  # noqa: E402
 from solixapi.api import AnkerSolixApi  # noqa: E402
-from solixapi.apitypes import ApiCategories  # noqa: E402
+from solixapi.apitypes import ApiCategories, SolixDeviceType  # noqa: E402
 
 _LOGGER = logging.getLogger("anker-solix-bridge")
 
@@ -95,12 +101,59 @@ async def _get_api(config: dict) -> tuple[AnkerSolixApi, ClientSession]:
     return api, session
 
 
-async def apply_control(api: AnkerSolixApi, device_id: str, control: str, value: Any) -> None:
+def _control_context(api: AnkerSolixApi, device_id: str) -> tuple[str, str, str, dict]:
+    """Resolve site_id, station/control SN, and device cache entry (HA multisystem logic)."""
     device = api.devices.get(device_id) or api.sites.get(device_id) or {}
-    site_id = device.get("site_id") or device_id
+    site_id = str(device.get("site_id") or device_id)
+    dev_type = str(device.get("type") or "").lower()
+    station_sn = str(device.get("station_sn") or "")
+    if dev_type == COMBINER or dev_type == SolixDeviceType.COMBINER_BOX.value:
+        control_sn = device_id
+    elif station_sn:
+        control_sn = station_sn
+    else:
+        control_sn = device_id
+    return site_id, control_sn, device_id, device
+
+
+async def _set_min_soc(
+    api: AnkerSolixApi,
+    site_id: str,
+    control_sn: str,
+    device_id: str,
+    device: dict,
+    soc: int,
+) -> bool | dict:
+    dev_type = str(device.get("type") or "").lower()
+    station_sn = device.get("station_sn")
+    if dev_type == COMBINER or station_sn:
+        return await api.set_station_parm(
+            siteId=site_id,
+            deviceSn=control_sn,
+            socReserve=soc,
+        )
+    cutoff_data = device.get("power_cutoff_data") or []
+    set_id = next(
+        (
+            item.get("id")
+            for item in cutoff_data
+            if str(item.get("soc") or item.get("output_cutoff_data") or "") == str(soc)
+        ),
+        None,
+    )
+    if set_id is None and cutoff_data:
+        set_id = cutoff_data[0].get("id")
+    if set_id is None:
+        return False
+    return await api.set_power_cutoff(deviceSn=device_id, setId=int(set_id))
+
+
+async def apply_control(api: AnkerSolixApi, device_id: str, control: str, value: Any) -> None:
+    site_id, control_sn, device_id, device = _control_context(api, device_id)
     dev_type = str(device.get("type") or "").lower()
 
     if control == "allow_grid_export":
+        # Station/combiner + all related devices via set_power_limit (HA switch.py)
         result = await api.set_power_limit(
             siteId=site_id,
             deviceSn=device_id,
@@ -114,7 +167,7 @@ async def apply_control(api: AnkerSolixApi, device_id: str, control: str, value:
         )
     elif control == "set_output_power":
         load = int(value)
-        if dev_type in ("solarbank",):
+        if dev_type == SOLARBANK and int(device.get("generation") or 0) < 2:
             result = await api.set_home_load(
                 siteId=site_id,
                 deviceSn=device_id,
@@ -126,17 +179,36 @@ async def apply_control(api: AnkerSolixApi, device_id: str, control: str, value:
                 deviceSn=device_id,
                 preset=load,
             )
-    elif control == "min_soc":
-        result = await api.set_station_parm(
+    elif control == "ac_output_limit":
+        result = await api.set_power_limit(
+            siteId=site_id,
+            deviceSn=control_sn,
+            ac_output=int(value),
+        )
+    elif control == "pv_input_limit":
+        result = await api.set_power_limit(
             siteId=site_id,
             deviceSn=device_id,
-            socReserve=int(value),
+            pv_input=int(value),
+        )
+    elif control == "ac_charge_limit":
+        result = await api.set_power_limit(
+            siteId=site_id,
+            deviceSn=device_id,
+            ac_input=int(value),
+        )
+    elif control == "min_soc":
+        result = await _set_min_soc(
+            api, site_id, control_sn, device_id, device, int(value)
         )
     elif control == "grid_export_limit":
+        limit = int(value)
+        if limit < 100 or limit > 100000:
+            raise ValueError("grid_export_limit must be between 100 and 100000 W")
         result = await api.set_station_parm(
             siteId=site_id,
-            deviceSn=device_id,
-            gridExportLimit=int(value),
+            deviceSn=control_sn,
+            gridExportLimit=limit,
         )
     else:
         raise ValueError(f"Unsupported control: {control}")
@@ -266,18 +338,13 @@ async def run_poll(config: dict) -> dict:
         for ctx_id, ctx_data in caches.items():
             if not isinstance(ctx_data, dict):
                 continue
-            entities = extract_entities(ctx_data)
-            if not entities:
-                continue
             info = device_info(str(ctx_id), ctx_data)
             if not should_include_device(str(ctx_id), ctx_data, info, config):
                 continue
-            writable = [
-                spec["id"]
-                for spec in CONTROL_ENTITIES
-                if spec["id"] in entities
-                and (not info["type"] or info["type"] in spec.get("types", []))
-            ]
+            entities = extract_entities(ctx_data)
+            writable = controls_for_type(info["type"])
+            if not entities and not writable:
+                continue
             devices.append(
                 {
                     "info": info,
