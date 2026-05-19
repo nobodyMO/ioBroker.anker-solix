@@ -35,6 +35,7 @@ class AnkerSolix extends utils.Adapter {
   controlQueue = new import_controlQueue.ControlQueue();
   deviceContexts = /* @__PURE__ */ new Map();
   pollAfterControlTimer;
+  pollCounter = 0;
   constructor(options = {}) {
     super({
       ...options,
@@ -56,7 +57,13 @@ class AnkerSolix extends utils.Adapter {
       cacheDir,
       enableAllDevices: this.config.enableAllDevices !== false,
       selectedSiteId: this.config.selectedSiteId || "",
-      selectedDeviceIds: selectedIds
+      selectedDeviceIds: selectedIds,
+      pollCounter: this.pollCounter,
+      deviceDetailMultiplier: Math.max(
+        2,
+        Number(this.config.deviceDetailMultiplier) || 5
+      ),
+      requestDelay: Number(this.config.requestDelay) || 0.5
     };
   }
   /** Remove legacy install symlink from old GitHub repo name "AnkerSolix". */
@@ -111,6 +118,11 @@ class AnkerSolix extends utils.Adapter {
         this.config.pythonPath || "",
         this.log
       );
+      if (typeof result.pollCounter === "number") {
+        this.pollCounter = result.pollCounter;
+      } else {
+        this.pollCounter += 1;
+      }
       const pollDevices = result.devices;
       if (pollDevices == null ? void 0 : pollDevices.length) {
         this.rememberDeviceContexts(pollDevices);
@@ -120,13 +132,18 @@ class AnkerSolix extends utils.Adapter {
         await this.setState("account.nickname", result.nickname, true);
       }
       await this.setState("info.connection", true, true);
-      this.log.debug(`Poll OK (${(_c = pollDevices == null ? void 0 : pollDevices.length) != null ? _c : 0} devices)`);
+      const detailHint = result.refreshDetails ? "full" : "sites";
+      this.log.debug(`Poll OK (${(_c = pollDevices == null ? void 0 : pollDevices.length) != null ? _c : 0} devices, ${detailHint})`);
     } catch (error) {
       await this.setState("info.connection", false, true);
       const msg = error.message || String(error);
       if (msg.includes("InvalidCredentials") || msg.includes("Authentication failed")) {
         this.log.error(
           `Poll failed: ${msg} \u2013 Check e-mail, password and country (${this.config.country || "DE"}). In Admin use \u201CInstall Python dependencies\u201D tab or restart after saving config; try country matching your Anker account region.`
+        );
+      } else if (msg.includes("26161") || msg.includes("429") || msg.includes("Too Many Requests") || msg.includes("Failed to request")) {
+        this.log.warn(
+          `Poll failed (Anker API limit or temporary error): ${msg} \u2013 adapter will retry; increase scan interval (e.g. 120 s) if this persists.`
         );
       } else {
         this.log.error(`Poll failed: ${msg}`);

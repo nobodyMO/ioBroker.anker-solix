@@ -41,6 +41,8 @@ export interface BridgePollResult {
 	schedule?: unknown;
 	path?: string;
 	system?: unknown;
+	pollCounter?: number;
+	refreshDetails?: boolean;
 }
 
 export interface BridgeConfig {
@@ -53,6 +55,10 @@ export interface BridgeConfig {
 	enableAllDevices?: boolean;
 	selectedSiteId?: string;
 	selectedDeviceIds?: string[];
+	/** Poll counter (adapter-side); device details fetched every Nth poll. */
+	pollCounter?: number;
+	deviceDetailMultiplier?: number;
+	requestDelay?: number;
 }
 
 export interface BridgeSetConfig extends BridgeConfig {

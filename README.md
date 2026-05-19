@@ -79,6 +79,11 @@ This is **not** an official Anker product. The cloud API may change or break at 
 
 ## Changelog
 
+### 0.4.2
+
+- Poll matches HA load pattern: `update_sites` every interval, `update_device_details` / `update_site_details` only every 5th poll (configurable via `deviceDetailMultiplier`)
+- Retries on transient API errors (429, 26161, busy); 0.5 s delay between requests
+
 ### 0.4.1
 
 - Control writes are debounced and serialized (avoids Anker API 429 when changing several Solarbanks)

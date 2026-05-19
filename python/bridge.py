@@ -8,8 +8,10 @@ import asyncio
 import json
 import logging
 import sys
+from collections.abc import Awaitable, Callable
 from pathlib import Path
-from typing import Any
+from random import randrange
+from typing import Any, TypeVar
 
 from aiohttp import ClientSession
 
@@ -31,6 +33,17 @@ from solixapi.mqtt_factory import SolixMqttDeviceFactory  # noqa: E402
 from solixapi.mqttcmdmap import SolixMqttCommands  # noqa: E402
 
 _LOGGER = logging.getLogger("anker-solix-bridge")
+
+# HA default: device/site details only every Nth poll (not every scan)
+DEFAULT_DEVICE_DETAIL_MULTIPLIER = 5
+RETRYABLE_ERRORS = (
+    errors.RequestError,
+    errors.RequestLimitError,
+    errors.BusyError,
+    errors.NetworkError,
+    errors.ConnectError,
+    errors.ServerError,
+)
 
 DEFAULT_EXCLUDE = [
     ApiCategories.solarbank_energy,
@@ -99,12 +112,58 @@ async def _get_api(config: dict) -> tuple[AnkerSolixApi, ClientSession]:
     session = ClientSession()
     api = AnkerSolixApi(email, password, country, session, _LOGGER)
     api.apisession._authFile = str(cache_dir / f"{email}.json")
+    api.apisession.requestDelay(float(config.get("requestDelay") or 0.5))
 
     # Cached token may be expired/invalid – retry once with fresh login (like HA integration)
     if not await api.async_authenticate():
         if not await api.async_authenticate(restart=True):
             raise errors.InvalidCredentialsError(_auth_error_message(api, country))
     return api, session
+
+
+T = TypeVar("T")
+
+
+async def _api_retry(
+    label: str,
+    func: Callable[[], Awaitable[T]],
+    *,
+    attempts: int = 3,
+) -> T:
+    """Retry transient Anker API failures (rate limit, busy, generic request errors)."""
+    last_exc: Exception | None = None
+    for attempt in range(attempts):
+        try:
+            return await func()
+        except RETRYABLE_ERRORS as exc:
+            last_exc = exc
+            if attempt >= attempts - 1:
+                break
+            if isinstance(exc, errors.RequestLimitError):
+                delay = 60
+            else:
+                delay = randrange(5, 16) * (attempt + 1)
+            _LOGGER.warning(
+                "%s failed (%s), retry %s/%s in %ss",
+                label,
+                exc,
+                attempt + 2,
+                attempts,
+                delay,
+            )
+            await asyncio.sleep(delay)
+    assert last_exc is not None
+    raise last_exc
+
+
+async def _api_optional(label: str, func: Callable[[], Awaitable[Any]]) -> bool:
+    """Run API step; log and continue poll on failure."""
+    try:
+        await _api_retry(label, func, attempts=2)
+        return True
+    except RETRYABLE_ERRORS as exc:
+        _LOGGER.warning("%s skipped: %s", label, exc)
+        return False
 
 
 def _control_context(api: AnkerSolixApi, device_id: str) -> tuple[str, str, str, dict]:
@@ -383,17 +442,33 @@ async def run_service(config: dict) -> dict:
 async def run_poll(config: dict) -> dict:
     mqtt_usage = bool(config.get("mqttUsage", True))
     exclude = config.get("exclude") or DEFAULT_EXCLUDE
+    multiplier = max(
+        2, int(config.get("deviceDetailMultiplier") or DEFAULT_DEVICE_DETAIL_MULTIPLIER)
+    )
+    poll_counter = int(config.get("pollCounter") or 0)
+    refresh_details = poll_counter % multiplier == 0
+
     api, session = await _get_api(config)
     try:
-        await api.update_sites(exclude=set(exclude))
-        await api.update_device_details(exclude=set(exclude))
-        await api.update_site_details(exclude=set(exclude))
+        await _api_retry(
+            "update_sites",
+            lambda: api.update_sites(exclude=set(exclude)),
+        )
 
-        if mqtt_usage:
-            try:
-                await api.startMqttSession()
-            except Exception as mqtt_exc:  # noqa: BLE001
-                _LOGGER.warning("MQTT session not started: %s", mqtt_exc)
+        if refresh_details:
+            await _api_optional(
+                "update_device_details",
+                lambda: api.update_device_details(exclude=set(exclude)),
+            )
+            await _api_optional(
+                "update_site_details",
+                lambda: api.update_site_details(exclude=set(exclude)),
+            )
+            if mqtt_usage:
+                try:
+                    await api.startMqttSession()
+                except Exception as mqtt_exc:  # noqa: BLE001
+                    _LOGGER.warning("MQTT session not started: %s", mqtt_exc)
 
         caches = api.getCaches()
         devices: list[dict] = []
@@ -420,6 +495,8 @@ async def run_poll(config: dict) -> dict:
             "ok": True,
             "nickname": api.apisession.nickname or config["username"],
             "devices": devices,
+            "refreshDetails": refresh_details,
+            "pollCounter": poll_counter + 1,
         }
     finally:
         await session.close()

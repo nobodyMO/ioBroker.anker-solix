@@ -26,6 +26,7 @@ class AnkerSolix extends utils.Adapter {
 	private readonly controlQueue = new ControlQueue();
 	private readonly deviceContexts = new Map<string, DeviceControlContext>();
 	private pollAfterControlTimer: NodeJS.Timeout | undefined;
+	private pollCounter = 0;
 
 	public constructor(options: Partial<utils.AdapterOptions> = {}) {
 		super({
@@ -51,6 +52,12 @@ class AnkerSolix extends utils.Adapter {
 			enableAllDevices: this.config.enableAllDevices !== false,
 			selectedSiteId: this.config.selectedSiteId || "",
 			selectedDeviceIds: selectedIds,
+			pollCounter: this.pollCounter,
+			deviceDetailMultiplier: Math.max(
+				2,
+				Number(this.config.deviceDetailMultiplier) || 5,
+			),
+			requestDelay: Number(this.config.requestDelay) || 0.5,
 		};
 	}
 
@@ -112,6 +119,12 @@ class AnkerSolix extends utils.Adapter {
 				this.log,
 			);
 
+			if (typeof result.pollCounter === "number") {
+				this.pollCounter = result.pollCounter;
+			} else {
+				this.pollCounter += 1;
+			}
+
 			const pollDevices = result.devices as BridgeDevice[] | undefined;
 			if (pollDevices?.length) {
 				this.rememberDeviceContexts(pollDevices);
@@ -123,7 +136,8 @@ class AnkerSolix extends utils.Adapter {
 			}
 
 			await this.setState("info.connection", true, true);
-			this.log.debug(`Poll OK (${pollDevices?.length ?? 0} devices)`);
+			const detailHint = result.refreshDetails ? "full" : "sites";
+			this.log.debug(`Poll OK (${pollDevices?.length ?? 0} devices, ${detailHint})`);
 		} catch (error) {
 			await this.setState("info.connection", false, true);
 			const msg = (error as Error).message || String(error);
@@ -132,6 +146,16 @@ class AnkerSolix extends utils.Adapter {
 					`Poll failed: ${msg} – Check e-mail, password and country (${this.config.country || "DE"}). ` +
 						"In Admin use “Install Python dependencies” tab or restart after saving config; " +
 						"try country matching your Anker account region.",
+				);
+			} else if (
+				msg.includes("26161") ||
+				msg.includes("429") ||
+				msg.includes("Too Many Requests") ||
+				msg.includes("Failed to request")
+			) {
+				this.log.warn(
+					`Poll failed (Anker API limit or temporary error): ${msg} – ` +
+						"adapter will retry; increase scan interval (e.g. 120 s) if this persists.",
 				);
 			} else {
 				this.log.error(`Poll failed: ${msg}`);

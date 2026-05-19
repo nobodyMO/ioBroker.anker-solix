@@ -7,6 +7,10 @@ declare global {
 			password: string;
 			country: string;
 			scanInterval: number;
+			/** Fetch heavy device/site details every Nth poll (default 5). */
+			deviceDetailMultiplier?: number;
+			/** Delay between API requests in seconds (default 0.5). */
+			requestDelay?: number;
 			mqttUsage: boolean;
 			acceptTerms: boolean;
 			pythonPath: string;

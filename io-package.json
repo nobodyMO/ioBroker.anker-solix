@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.4.1",
+		"version": "0.4.2",
 		"messagebox": true,
 		"news": {
+			"0.4.2": {
+				"en": "Staggered polling like HA (sites every cycle, device details every 5th poll) plus API retries",
+				"de": "Gestaffeltes Polling wie HA (Sites jedes Mal, Gerätedetails jedes 5. Mal) plus API-Wiederholungen",
+				"ru": "Поэтапный опрос API",
+				"pt": "Polling escalonado da API",
+				"nl": "Gespreide API-polling",
+				"fr": "Interrogation API échelonnée",
+				"it": "Polling API scaglionato",
+				"es": "Sondeo API escalonado",
+				"pl": "Etapowe odpytywanie API",
+				"uk": "Етапне опитування API",
+				"zh-cn": "分级 API 轮询"
+			},
 			"0.4.1": {
 				"en": "Rate-limit fix: debounced/serialized controls, MQTT-first AC charge limit, delayed poll after writes",
 				"de": "Rate-Limit-Fix: entprellte/serialisierte Steuerungen, MQTT zuerst für AC-Ladelimit, verzögertes Poll nach Schreibvorgängen",
@@ -237,6 +250,8 @@
 		"password": "",
 		"country": "DE",
 		"scanInterval": 60,
+		"deviceDetailMultiplier": 5,
+		"requestDelay": 0.5,
 		"mqttUsage": true,
 		"acceptTerms": false,
 		"pythonPath": "",
