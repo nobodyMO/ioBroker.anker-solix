@@ -29,8 +29,11 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var pythonPaths_exports = {};
 __export(pythonPaths_exports, {
   adapterRoot: () => adapterRoot,
+  buildPythonEnv: () => buildPythonEnv,
+  hasSitePackagesDeps: () => hasSitePackagesDeps,
   isPyLauncher: () => isPyLauncher,
   resolvePythonExecutable: () => resolvePythonExecutable,
+  sitePackagesPath: () => sitePackagesPath,
   venvPythonPath: () => venvPythonPath
 });
 module.exports = __toCommonJS(pythonPaths_exports);
@@ -43,6 +46,12 @@ function venvPythonPath() {
   const venv = path.join(adapterRoot(), "python", ".venv");
   const py = process.platform === "win32" ? path.join(venv, "Scripts", "python.exe") : path.join(venv, "bin", "python3");
   return fs.existsSync(py) ? py : null;
+}
+function sitePackagesPath() {
+  return path.join(adapterRoot(), "python", "site-packages");
+}
+function hasSitePackagesDeps() {
+  return fs.existsSync(path.join(sitePackagesPath(), "aiohttp"));
 }
 function resolvePythonExecutable(configPath) {
   if (configPath == null ? void 0 : configPath.trim()) {
@@ -60,11 +69,25 @@ function resolvePythonExecutable(configPath) {
 function isPyLauncher(python) {
   return python === "py";
 }
+function buildPythonEnv() {
+  const env = {
+    ...process.env,
+    PYTHONIOENCODING: "utf-8"
+  };
+  if (hasSitePackagesDeps()) {
+    const site = sitePackagesPath();
+    env.PYTHONPATH = env.PYTHONPATH ? `${site}${path.delimiter}${env.PYTHONPATH}` : site;
+  }
+  return env;
+}
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   adapterRoot,
+  buildPythonEnv,
+  hasSitePackagesDeps,
   isPyLauncher,
   resolvePythonExecutable,
+  sitePackagesPath,
   venvPythonPath
 });
 //# sourceMappingURL=pythonPaths.js.map

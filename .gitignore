@@ -20,5 +20,6 @@ admin/i18n/*/flat.txt
 
 python/authcache/
 python/.venv/
+python/site-packages/
 python/**/__pycache__/
 *.pyc

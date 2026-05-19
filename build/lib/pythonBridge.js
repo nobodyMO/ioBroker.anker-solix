@@ -51,7 +51,7 @@ async function runBridge(action, config, pythonPath, log) {
   return new Promise((resolve, reject) => {
     const proc = (0, import_node_child_process.spawn)(python, args, {
       windowsHide: true,
-      env: { ...process.env, PYTHONIOENCODING: "utf-8" }
+      env: (0, import_pythonPaths.buildPythonEnv)()
     });
     let stdout = "";
     let stderr = "";

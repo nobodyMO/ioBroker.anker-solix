@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.2.1",
+		"version": "0.2.2",
 		"messagebox": true,
 		"news": {
+			"0.2.2": {
+				"en": "Fallback pip install to python/site-packages when python3-venv is missing",
+				"de": "Fallback: pip nach python/site-packages wenn python3-venv fehlt",
+				"ru": "Резервная установка в site-packages",
+				"pt": "Instalação alternativa em site-packages",
+				"nl": "Fallback installatie naar site-packages",
+				"fr": "Installation de secours vers site-packages",
+				"it": "Installazione fallback in site-packages",
+				"es": "Instalación alternativa en site-packages",
+				"pl": "Instalacja zapasowa do site-packages",
+				"uk": "Резервне встановлення site-packages",
+				"zh-cn": "无 venv 时安装到 site-packages"
+			},
 			"0.2.1": {
 				"en": "Fix install on Debian/Ubuntu: Python deps in local venv (PEP 668), postinstall no longer fails npm",
 				"de": "Installationsfix Debian/Ubuntu: Python-Abhängigkeiten in lokalem venv (PEP 668), postinstall bricht npm nicht mehr ab",

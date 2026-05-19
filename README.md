@@ -10,8 +10,10 @@ The adapter uses the same unofficial **solixapi** Python library that is embedde
 
 - ioBroker with **js-controller >= 6** and **admin >= 7**
 - **Node.js >= 20**
-- **Python 3.12+** on the ioBroker host (on Debian/Ubuntu also `python3-venv`: `sudo apt install python3-venv`)
-- Python packages are installed into **`python/.venv`** inside the adapter folder (avoids PEP 668 “externally-managed-environment” on modern Linux)
+- **Python 3.12+** on the ioBroker host (`python3` is enough; **recommended** on Debian/Ubuntu: `sudo apt install python3-venv python3-pip`)
+- Python packages are installed inside the adapter folder:
+  - preferred: **`python/.venv`**
+  - fallback (no `python3-venv`): **`python/site-packages`** via `pip install --target` (PEP 668 safe, adapter-local only)
 
 Manual setup (if needed):
 
@@ -59,6 +61,11 @@ This is **not** an official Anker product. The cloud API may change or break at 
 - [thomluther/anker-solix-api](https://github.com/thomluther/anker-solix-api) – Python API library
 
 ## Changelog
+
+### 0.2.2
+
+- **Fallback without `python3-venv`:** if `venv` cannot be created (`ensurepip`), packages install to `python/site-packages` automatically
+- postinstall logs only to stdout (avoids false install errors)
 
 ### 0.2.1
 

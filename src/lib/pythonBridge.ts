@@ -3,7 +3,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 
-import { isPyLauncher, resolvePythonExecutable } from "./pythonPaths";
+import { buildPythonEnv, isPyLauncher, resolvePythonExecutable } from "./pythonPaths";
 import type {
 	BridgeConfig,
 	BridgePollResult,
@@ -37,7 +37,7 @@ export async function runBridge(
 	return new Promise((resolve, reject) => {
 		const proc = spawn(python, args, {
 			windowsHide: true,
-			env: { ...process.env, PYTHONIOENCODING: "utf-8" },
+			env: buildPythonEnv(),
 		});
 
 		let stdout = "";
