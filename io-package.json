@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.2.4",
+		"version": "0.2.5",
 		"messagebox": true,
 		"news": {
+			"0.2.5": {
+				"en": "Fix control state types (grid_export_limit as number, not string)",
+				"de": "Korrektur State-Typen für Steuerungen (grid_export_limit als number)",
+				"ru": "Исправление типов состояний",
+				"pt": "Correção de tipos de estado",
+				"nl": "State-typen voor bediening gecorrigeerd",
+				"fr": "Correction des types d'états",
+				"it": "Correzione tipi di stato",
+				"es": "Corrección de tipos de estado",
+				"pl": "Poprawka typów stanów",
+				"uk": "Виправлення типів станів",
+				"zh-cn": "修复控制状态类型"
+			},
 			"0.2.4": {
 				"en": "Fix GitHub install: symlink iobroker.AnkerSolix for repo name mismatch",
 				"de": "GitHub-Installationsfix: Symlink iobroker.AnkerSolix bei Repo-Namen Abweichung",

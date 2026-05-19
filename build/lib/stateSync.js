@@ -23,6 +23,40 @@ __export(stateSync_exports, {
 });
 module.exports = __toCommonJS(stateSync_exports);
 var import_entities = require("./entities");
+function resolveStateType(meta, value) {
+  if ((meta == null ? void 0 : meta.kind) === "number") {
+    return "number";
+  }
+  if ((meta == null ? void 0 : meta.kind) === "switch") {
+    return "boolean";
+  }
+  if (typeof value === "boolean") {
+    return "boolean";
+  }
+  if (typeof value === "number") {
+    return "number";
+  }
+  return "string";
+}
+function coerceStateValue(type, value) {
+  if (type === "number") {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : 0;
+  }
+  if (type === "boolean") {
+    if (typeof value === "boolean") {
+      return value;
+    }
+    if (value === "true" || value === 1 || value === "1") {
+      return true;
+    }
+    if (value === "false" || value === 0 || value === "0") {
+      return false;
+    }
+    return Boolean(value);
+  }
+  return String(value != null ? value : "");
+}
 function sanitizeIdPart(value) {
   return value.replace(/[^a-zA-Z0-9._-]/g, "_");
 }
@@ -66,22 +100,35 @@ async function syncDevices(adapter, devices) {
       const kind = (_a = meta == null ? void 0 : meta.kind) != null ? _a : "sensor";
       const subfolder = kind === "sensor" ? "sensors" : "control";
       const stateId = `${channelPath}.${subfolder}.${entityId}`;
-      const type = typeof value === "boolean" ? "boolean" : typeof value === "number" ? "number" : "string";
+      const stateType = resolveStateType(meta, value);
+      const stateVal = coerceStateValue(stateType, value);
+      const common = {
+        name: entityId,
+        type: stateType,
+        role: (_b = meta == null ? void 0 : meta.role) != null ? _b : "value",
+        read: true,
+        write: writable
+      };
+      if (meta == null ? void 0 : meta.unit) {
+        common.unit = meta.unit;
+      }
+      if (stateType === "number" || stateType === "mixed") {
+        if ((meta == null ? void 0 : meta.min) !== void 0) {
+          common.min = meta.min;
+        }
+        if ((meta == null ? void 0 : meta.max) !== void 0) {
+          common.max = meta.max;
+        }
+      }
       await adapter.setObjectNotExistsAsync(stateId, {
         type: "state",
-        common: {
-          name: entityId,
-          type,
-          role: (_b = meta == null ? void 0 : meta.role) != null ? _b : "value",
-          unit: meta == null ? void 0 : meta.unit,
-          min: meta == null ? void 0 : meta.min,
-          max: meta == null ? void 0 : meta.max,
-          read: true,
-          write: writable
-        },
+        common,
         native: { control: entityId }
       });
-      await adapter.setState(stateId, value, true);
+      if ((meta == null ? void 0 : meta.kind) === "number" || (meta == null ? void 0 : meta.kind) === "switch") {
+        await adapter.extendObject(stateId, { common });
+      }
+      await adapter.setState(stateId, stateVal, true);
     }
   }
 }

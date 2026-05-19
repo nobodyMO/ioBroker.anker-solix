@@ -1,5 +1,41 @@
-import { ENTITY_MAP, isWritable } from "./entities";
+import { ENTITY_MAP, isWritable, type EntityMeta } from "./entities";
 import type { BridgeDevice } from "./types";
+
+function resolveStateType(meta: EntityMeta | undefined, value: unknown): ioBroker.CommonType {
+	if (meta?.kind === "number") {
+		return "number";
+	}
+	if (meta?.kind === "switch") {
+		return "boolean";
+	}
+	if (typeof value === "boolean") {
+		return "boolean";
+	}
+	if (typeof value === "number") {
+		return "number";
+	}
+	return "string";
+}
+
+function coerceStateValue(type: ioBroker.CommonType, value: unknown): ioBroker.StateValue {
+	if (type === "number") {
+		const n = Number(value);
+		return Number.isFinite(n) ? n : 0;
+	}
+	if (type === "boolean") {
+		if (typeof value === "boolean") {
+			return value;
+		}
+		if (value === "true" || value === 1 || value === "1") {
+			return true;
+		}
+		if (value === "false" || value === 0 || value === "0") {
+			return false;
+		}
+		return Boolean(value);
+	}
+	return String(value ?? "");
+}
 
 function sanitizeIdPart(value: string): string {
 	return value.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -48,24 +84,38 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 			const kind = meta?.kind ?? "sensor";
 			const subfolder = kind === "sensor" ? "sensors" : "control";
 			const stateId = `${channelPath}.${subfolder}.${entityId}`;
-			const type =
-				typeof value === "boolean" ? "boolean" : typeof value === "number" ? "number" : "string";
+			const stateType = resolveStateType(meta, value);
+			const stateVal = coerceStateValue(stateType, value);
+
+			const common: ioBroker.StateCommon = {
+				name: entityId,
+				type: stateType,
+				role: meta?.role ?? "value",
+				read: true,
+				write: writable,
+			};
+			if (meta?.unit) {
+				common.unit = meta.unit;
+			}
+			if (stateType === "number" || stateType === "mixed") {
+				if (meta?.min !== undefined) {
+					common.min = meta.min;
+				}
+				if (meta?.max !== undefined) {
+					common.max = meta.max;
+				}
+			}
 
 			await adapter.setObjectNotExistsAsync(stateId, {
 				type: "state",
-				common: {
-					name: entityId,
-					type,
-					role: meta?.role ?? "value",
-					unit: meta?.unit,
-					min: meta?.min,
-					max: meta?.max,
-					read: true,
-					write: writable,
-				},
+				common,
 				native: { control: entityId },
 			});
-			await adapter.setState(stateId, value as ioBroker.StateValue, true);
+			// Fix objects created with wrong type (e.g. grid_export_limit as string)
+			if (meta?.kind === "number" || meta?.kind === "switch") {
+				await adapter.extendObject(stateId, { common });
+			}
+			await adapter.setState(stateId, stateVal, true);
 		}
 	}
 }

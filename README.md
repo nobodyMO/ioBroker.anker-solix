@@ -75,11 +75,12 @@ Python packages are installed on **first adapter start** (or via Admin → Insta
 ## Configuration
 
 1. Install the adapter from GitHub or npm (`iobroker.anker-solix`).
-2. Create an instance and enter your Anker account e-mail and password.
-3. Set the country code (e.g. `DE`) matching your Anker account.
-4. Accept the usage terms (unofficial API – use at your own risk).
-5. Start with a poll interval of **60–180 seconds** (same recommendation as in the HA integration).
-6. Optional: enable **MQTT** for additional device data (as in HA).
+2. Create an instance: `iobroker add anker-solix` (name from `io-package.json`, **not** the GitHub repo `AnkerSolix`).
+3. Enter your Anker account e-mail and password in the instance config.
+4. Set the country code (e.g. `DE`) matching your Anker account.
+5. Accept the usage terms (unofficial API – use at your own risk).
+6. Start with a poll interval of **60–180 seconds** (same recommendation as in the HA integration).
+7. Optional: enable **MQTT** for additional device data (as in HA).
 
 ## State structure (v0.1.0+)
 
@@ -106,6 +107,10 @@ This is **not** an official Anker product. The cloud API may change or break at 
 - [thomluther/anker-solix-api](https://github.com/thomluther/anker-solix-api) – Python API library
 
 ## Changelog
+
+### 0.2.5
+
+- Fix js-controller 7 warnings: number controls (`grid_export_limit`, `min_soc`, …) use `type: number` even when API returns strings
 
 ### 0.2.4
 
