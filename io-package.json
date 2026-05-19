@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.4.2",
+		"version": "0.5.0",
 		"messagebox": true,
 		"news": {
+			"0.5.0": {
+				"en": "Poll cycle matches Home Assistant: interval counter, API delay/throttle, MQTT on detail refresh",
+				"de": "Poll-Zyklus wie Home Assistant: Intervallzähler, API-Delay/Throttle, MQTT bei Detail-Refresh",
+				"ru": "Опрос как в Home Assistant",
+				"pt": "Ciclo de poll igual ao Home Assistant",
+				"nl": "Pollcyclus gelijk aan Home Assistant",
+				"fr": "Cycle de poll identique à Home Assistant",
+				"it": "Ciclo poll come Home Assistant",
+				"es": "Ciclo de sondeo como Home Assistant",
+				"pl": "Cykl odpytywania jak Home Assistant",
+				"uk": "Опитування як у Home Assistant",
+				"zh-cn": "轮询周期与 Home Assistant 一致"
+			},
 			"0.4.2": {
 				"en": "Staggered polling like HA (sites every cycle, device details every 5th poll) plus API retries",
 				"de": "Gestaffeltes Polling wie HA (Sites jedes Mal, Gerätedetails jedes 5. Mal) plus API-Wiederholungen",
@@ -250,8 +263,10 @@
 		"password": "",
 		"country": "DE",
 		"scanInterval": 60,
-		"deviceDetailMultiplier": 5,
-		"requestDelay": 0.5,
+		"deviceDetailMultiplier": 10,
+		"requestDelay": 0.3,
+		"requestTimeout": 10,
+		"endpointLimit": 10,
 		"mqttUsage": true,
 		"acceptTerms": false,
 		"pythonPath": "",

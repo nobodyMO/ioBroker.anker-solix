@@ -1,0 +1,191 @@
+"""HA-aligned API client (ported from homeassistant integration api_client.py)."""
+
+from __future__ import annotations
+
+import json
+import logging
+from pathlib import Path
+from typing import Any
+
+from aiohttp import ClientSession
+
+from solixapi.api import AnkerSolixApi
+from solixapi.apitypes import ApiCategories, SolixDefaults, SolixDeviceType
+from solixapi.mqtt_device import SolixMqttDevice
+from solixapi.mqtt_factory import SolixMqttDeviceFactory
+
+# Same defaults as custom_components/anker_solix/api_client.py
+MIN_DEVICE_REFRESH: int = 60
+DEFAULT_DEVICE_MULTIPLIER: int = 10
+DEFAULT_ENDPOINT_LIMIT: int = SolixDefaults.ENDPOINT_LIMIT_DEF
+DEFAULT_DELAY_TIME: float = SolixDefaults.REQUEST_DELAY_DEF
+DEFAULT_TIMEOUT: int = SolixDefaults.REQUEST_TIMEOUT_DEF
+
+DEFAULT_EXCLUDE_CATEGORIES: list[str] = [
+    ApiCategories.solarbank_energy,
+    ApiCategories.solarbank_pps_energy,
+    ApiCategories.smartmeter_energy,
+    ApiCategories.solar_energy,
+    ApiCategories.smartplug_energy,
+    ApiCategories.charger_energy,
+    ApiCategories.powerpanel_energy,
+    ApiCategories.hes_energy,
+]
+
+
+class IoBrokerAnkerApiClient:
+    """Mirrors HA AnkerSolixApiClient refresh logic for polling."""
+
+    def __init__(
+        self,
+        config: dict,
+        session: ClientSession,
+        logger: logging.Logger,
+    ) -> None:
+        email = str(config.get("username") or "").strip()
+        password = str(config.get("password") or "")
+        country = (config.get("country") or "DE").upper()
+        self.api = AnkerSolixApi(email, password, country, session, logger)
+        cache_dir = Path(config.get("cacheDir") or Path(__file__).parent / "authcache")
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        self.api.apisession._authFile = str(cache_dir / f"{email}.json")
+        self.api.apisession.nickname = str(config.get("nickname") or email)
+
+        self.api.apisession.requestDelay(
+            float(config.get("requestDelay", DEFAULT_DELAY_TIME))
+        )
+        self.api.apisession.requestTimeout(
+            int(config.get("requestTimeout", DEFAULT_TIMEOUT))
+        )
+        self.api.apisession.endpointLimit(
+            int(config.get("endpointLimit", DEFAULT_ENDPOINT_LIMIT))
+        )
+
+        self.exclude_categories = list(
+            config.get("exclude") or DEFAULT_EXCLUDE_CATEGORIES
+        )
+        self._deviceintervals = max(
+            1, int(config.get("deviceDetailMultiplier", DEFAULT_DEVICE_MULTIPLIER))
+        )
+        self._intervalcount = 0
+        self._mqtt_usage = bool(config.get("mqttUsage", True))
+        self._startup = True
+        self.deferred_data = False
+        self.active_device_refresh = False
+        self.mqtt_devices: dict[str, SolixMqttDevice] = {}
+        self._state_path = cache_dir / "poll_client_state.json"
+        self._logger = logger
+        self._load_state()
+
+    def _load_state(self) -> None:
+        if not self._state_path.is_file():
+            return
+        try:
+            data = json.loads(self._state_path.read_text(encoding="utf-8"))
+            self._intervalcount = int(data.get("intervalcount", 0))
+            self._startup = bool(data.get("startup", True))
+            self.deferred_data = bool(data.get("deferred_data", False))
+        except (OSError, ValueError, TypeError) as exc:
+            self._logger.warning("Could not load poll state: %s", exc)
+
+    def _save_state(self) -> None:
+        try:
+            self._state_path.write_text(
+                json.dumps(
+                    {
+                        "intervalcount": self._intervalcount,
+                        "startup": self._startup,
+                        "deferred_data": self.deferred_data,
+                    },
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+        except OSError as exc:
+            self._logger.warning("Could not save poll state: %s", exc)
+
+    async def authenticate(self) -> None:
+        if not await self.api.async_authenticate():
+            if not await self.api.async_authenticate(restart=True):
+                raise RuntimeError("Authentication failed")
+
+    async def async_get_data(self) -> dict[str, Any]:
+        """Same sequence as HA AnkerSolixApiClient.async_get_data (normal poll path)."""
+        await self.api.update_sites(exclude=set(self.exclude_categories))
+
+        self._intervalcount -= 1
+        refresh_details = False
+        if self._intervalcount <= 0:
+            refresh_details = True
+            self.active_device_refresh = True
+            self._logger.debug(
+                "Updating device and site details (HA interval, mult=%s)",
+                self._deviceintervals,
+            )
+            await self.api.update_device_details(exclude=set(self.exclude_categories))
+            await self.api.update_site_details(exclude=set(self.exclude_categories))
+            if self._startup:
+                self._logger.info("Deferring energy updates on first device refresh")
+            else:
+                await self.api.update_device_energy(
+                    exclude=set(self.exclude_categories)
+                )
+            self._intervalcount = self._deviceintervals
+            self.active_device_refresh = False
+            await self.check_mqtt_session()
+        elif self._startup and not self.deferred_data:
+            self.active_device_refresh = True
+            self._logger.info("Updating deferred energy data")
+            await self.api.update_device_energy(exclude=set(self.exclude_categories))
+            self.deferred_data = True
+            self._startup = False
+            self.active_device_refresh = False
+
+        self._save_state()
+        return {
+            "caches": self.api.getCaches(),
+            "refreshDetails": refresh_details,
+            "intervalcount": self._intervalcount,
+            "deviceintervals": self._deviceintervals,
+        }
+
+    async def check_mqtt_session(self) -> None:
+        """Same as HA check_mqtt_session (live mode, no file poller)."""
+        if not self._mqtt_usage:
+            return
+        if not self.api.mqttsession or not self.api.mqttsession.is_connected():
+            self._logger.info("Starting MQTT session")
+            if await self.api.startMqttSession():
+                mqtt_devs = [
+                    dev for dev in self.api.devices.values() if dev.get("mqtt_supported")
+                ]
+                for dev in mqtt_devs:
+                    self.subscribe_device(dev)
+                for dev in mqtt_devs:
+                    sn = dev.get("device_sn")
+                    if sn and (
+                        mdev := SolixMqttDeviceFactory(
+                            api_instance=self.api, device_sn=sn
+                        ).create_device()
+                    ):
+                        self.mqtt_devices[sn] = mdev
+            else:
+                self._logger.error("Failed to start MQTT session")
+                self.mqtt_devices.clear()
+        else:
+            for mdev in self.mqtt_devices.values():
+                if not mdev.is_subscribed() and not self.subscribe_device(mdev.device):
+                    mdev.mqttdata.clear()
+
+    def subscribe_device(self, device_dict: dict) -> bool:
+        if not self.api.mqttsession or not self.api.mqttsession.is_connected():
+            return False
+        topic = f"{self.api.mqttsession.get_topic_prefix(deviceDict=device_dict)}#"
+        resp = self.api.mqttsession.subscribe(topic)
+        if resp and resp.is_failure:
+            self._logger.warning("MQTT subscribe failed for topic: %s", topic)
+            return False
+        return True
+
+    def get_mqtt_device(self, sn: str) -> SolixMqttDevice | None:
+        return self.mqtt_devices.get(sn) if sn else None

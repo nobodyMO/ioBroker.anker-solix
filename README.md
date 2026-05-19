@@ -79,6 +79,12 @@ This is **not** an official Anker product. The cloud API may change or break at 
 
 ## Changelog
 
+### 0.5.0
+
+- Polling now uses the same logic as the Home Assistant integration (`async_get_data`): sites every interval, device/site details when the interval counter reaches zero (default every 10th poll), deferred energy on startup, MQTT session on detail refresh
+- API defaults match HA: `requestDelay` 0.3 s, `endpointLimit` 10/min, `deviceDetailMultiplier` 10
+- Poll state persisted in `authcache/poll_client_state.json` across bridge runs
+
 ### 0.4.2
 
 - Poll matches HA load pattern: `update_sites` every interval, `update_device_details` / `update_site_details` only every 5th poll (configurable via `deviceDetailMultiplier`)

@@ -26,7 +26,6 @@ class AnkerSolix extends utils.Adapter {
 	private readonly controlQueue = new ControlQueue();
 	private readonly deviceContexts = new Map<string, DeviceControlContext>();
 	private pollAfterControlTimer: NodeJS.Timeout | undefined;
-	private pollCounter = 0;
 
 	public constructor(options: Partial<utils.AdapterOptions> = {}) {
 		super({
@@ -52,12 +51,13 @@ class AnkerSolix extends utils.Adapter {
 			enableAllDevices: this.config.enableAllDevices !== false,
 			selectedSiteId: this.config.selectedSiteId || "",
 			selectedDeviceIds: selectedIds,
-			pollCounter: this.pollCounter,
 			deviceDetailMultiplier: Math.max(
-				2,
-				Number(this.config.deviceDetailMultiplier) || 5,
+				1,
+				Number(this.config.deviceDetailMultiplier) || 10,
 			),
-			requestDelay: Number(this.config.requestDelay) || 0.5,
+			requestDelay: Number(this.config.requestDelay) || 0.3,
+			requestTimeout: Number(this.config.requestTimeout) || 10,
+			endpointLimit: Number(this.config.endpointLimit) || 10,
 		};
 	}
 
@@ -119,12 +119,6 @@ class AnkerSolix extends utils.Adapter {
 				this.log,
 			);
 
-			if (typeof result.pollCounter === "number") {
-				this.pollCounter = result.pollCounter;
-			} else {
-				this.pollCounter += 1;
-			}
-
 			const pollDevices = result.devices as BridgeDevice[] | undefined;
 			if (pollDevices?.length) {
 				this.rememberDeviceContexts(pollDevices);
@@ -136,8 +130,14 @@ class AnkerSolix extends utils.Adapter {
 			}
 
 			await this.setState("info.connection", true, true);
-			const detailHint = result.refreshDetails ? "full" : "sites";
-			this.log.debug(`Poll OK (${pollDevices?.length ?? 0} devices, ${detailHint})`);
+			const detailHint = result.refreshDetails ? "devices+mqtt" : "sites";
+			const intervalHint =
+				result.intervalcount !== undefined && result.deviceintervals !== undefined
+					? `, next detail in ~${result.intervalcount} polls`
+					: "";
+			this.log.debug(
+				`Poll OK (${pollDevices?.length ?? 0} devices, ${detailHint}${intervalHint})`,
+			);
 		} catch (error) {
 			await this.setState("info.connection", false, true);
 			const msg = (error as Error).message || String(error);

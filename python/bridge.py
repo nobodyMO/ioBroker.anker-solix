@@ -8,10 +8,8 @@ import asyncio
 import json
 import logging
 import sys
-from collections.abc import Awaitable, Callable
 from pathlib import Path
-from random import randrange
-from typing import Any, TypeVar
+from typing import Any
 
 from aiohttp import ClientSession
 
@@ -25,6 +23,11 @@ from entities import (  # noqa: E402
     extract_entities,
     should_include_device,
 )
+from ha_api_client import (  # noqa: E402
+    DEFAULT_DELAY_TIME,
+    DEFAULT_EXCLUDE_CATEGORIES,
+    IoBrokerAnkerApiClient,
+)
 from solixapi.export import AnkerSolixApiExport  # noqa: E402
 from solixapi import errors  # noqa: E402
 from solixapi.api import AnkerSolixApi  # noqa: E402
@@ -34,27 +37,7 @@ from solixapi.mqttcmdmap import SolixMqttCommands  # noqa: E402
 
 _LOGGER = logging.getLogger("anker-solix-bridge")
 
-# HA default: device/site details only every Nth poll (not every scan)
-DEFAULT_DEVICE_DETAIL_MULTIPLIER = 5
-RETRYABLE_ERRORS = (
-    errors.RequestError,
-    errors.RequestLimitError,
-    errors.BusyError,
-    errors.NetworkError,
-    errors.ConnectError,
-    errors.ServerError,
-)
-
-DEFAULT_EXCLUDE = [
-    ApiCategories.solarbank_energy,
-    ApiCategories.solarbank_pps_energy,
-    ApiCategories.smartmeter_energy,
-    ApiCategories.solar_energy,
-    ApiCategories.smartplug_energy,
-    ApiCategories.charger_energy,
-    ApiCategories.powerpanel_energy,
-    ApiCategories.hes_energy,
-]
+DEFAULT_EXCLUDE = DEFAULT_EXCLUDE_CATEGORIES
 
 
 def _json_safe(value: Any) -> Any:
@@ -112,58 +95,13 @@ async def _get_api(config: dict) -> tuple[AnkerSolixApi, ClientSession]:
     session = ClientSession()
     api = AnkerSolixApi(email, password, country, session, _LOGGER)
     api.apisession._authFile = str(cache_dir / f"{email}.json")
-    api.apisession.requestDelay(float(config.get("requestDelay") or 0.5))
+    api.apisession.requestDelay(float(config.get("requestDelay") or DEFAULT_DELAY_TIME))
 
     # Cached token may be expired/invalid – retry once with fresh login (like HA integration)
     if not await api.async_authenticate():
         if not await api.async_authenticate(restart=True):
             raise errors.InvalidCredentialsError(_auth_error_message(api, country))
     return api, session
-
-
-T = TypeVar("T")
-
-
-async def _api_retry(
-    label: str,
-    func: Callable[[], Awaitable[T]],
-    *,
-    attempts: int = 3,
-) -> T:
-    """Retry transient Anker API failures (rate limit, busy, generic request errors)."""
-    last_exc: Exception | None = None
-    for attempt in range(attempts):
-        try:
-            return await func()
-        except RETRYABLE_ERRORS as exc:
-            last_exc = exc
-            if attempt >= attempts - 1:
-                break
-            if isinstance(exc, errors.RequestLimitError):
-                delay = 60
-            else:
-                delay = randrange(5, 16) * (attempt + 1)
-            _LOGGER.warning(
-                "%s failed (%s), retry %s/%s in %ss",
-                label,
-                exc,
-                attempt + 2,
-                attempts,
-                delay,
-            )
-            await asyncio.sleep(delay)
-    assert last_exc is not None
-    raise last_exc
-
-
-async def _api_optional(label: str, func: Callable[[], Awaitable[Any]]) -> bool:
-    """Run API step; log and continue poll on failure."""
-    try:
-        await _api_retry(label, func, attempts=2)
-        return True
-    except RETRYABLE_ERRORS as exc:
-        _LOGGER.warning("%s skipped: %s", label, exc)
-        return False
 
 
 def _control_context(api: AnkerSolixApi, device_id: str) -> tuple[str, str, str, dict]:
@@ -217,11 +155,17 @@ async def _mqtt_command(
     cmd: str,
     value: int,
     parm: str,
+    ha_client: IoBrokerAnkerApiClient | None = None,
 ) -> bool:
-    mdev = SolixMqttDeviceFactory(api, device_sn).create_device()
+    mdev = (ha_client.get_mqtt_device(device_sn) if ha_client else None) or (
+        SolixMqttDeviceFactory(api, device_sn).create_device()
+    )
     if not mdev or cmd not in (mdev.controls or {}):
         return False
-    if not await _ensure_mqtt(api):
+    if ha_client:
+        if not api.mqttsession or not api.mqttsession.is_connected():
+            await ha_client.check_mqtt_session()
+    elif not await _ensure_mqtt(api):
         return False
     resp = await mdev.run_command(cmd=cmd, value=value, parm=parm)
     return bool(resp)
@@ -259,7 +203,13 @@ async def _set_min_soc(
     return await api.set_power_cutoff(deviceSn=device_id, setId=int(set_id))
 
 
-async def apply_control(api: AnkerSolixApi, device_id: str, control: str, value: Any) -> None:
+async def apply_control(
+    api: AnkerSolixApi,
+    device_id: str,
+    control: str,
+    value: Any,
+    ha_client: IoBrokerAnkerApiClient | None = None,
+) -> None:
     site_id, control_sn, device_id, device = _control_context(api, device_id)
     dev_type = str(device.get("type") or "").lower()
 
@@ -310,6 +260,7 @@ async def apply_control(api: AnkerSolixApi, device_id: str, control: str, value:
             SolixMqttCommands.sb_ac_input_limit,
             limit,
             "set_ac_input_limit",
+            ha_client=ha_client,
         )
         if mqtt_ok:
             result = {"mqtt": True}
@@ -440,37 +391,12 @@ async def run_service(config: dict) -> dict:
 
 
 async def run_poll(config: dict) -> dict:
-    mqtt_usage = bool(config.get("mqttUsage", True))
-    exclude = config.get("exclude") or DEFAULT_EXCLUDE
-    multiplier = max(
-        2, int(config.get("deviceDetailMultiplier") or DEFAULT_DEVICE_DETAIL_MULTIPLIER)
-    )
-    poll_counter = int(config.get("pollCounter") or 0)
-    refresh_details = poll_counter % multiplier == 0
-
-    api, session = await _get_api(config)
+    session = ClientSession()
+    client = IoBrokerAnkerApiClient(config, session, _LOGGER)
     try:
-        await _api_retry(
-            "update_sites",
-            lambda: api.update_sites(exclude=set(exclude)),
-        )
-
-        if refresh_details:
-            await _api_optional(
-                "update_device_details",
-                lambda: api.update_device_details(exclude=set(exclude)),
-            )
-            await _api_optional(
-                "update_site_details",
-                lambda: api.update_site_details(exclude=set(exclude)),
-            )
-            if mqtt_usage:
-                try:
-                    await api.startMqttSession()
-                except Exception as mqtt_exc:  # noqa: BLE001
-                    _LOGGER.warning("MQTT session not started: %s", mqtt_exc)
-
-        caches = api.getCaches()
+        await client.authenticate()
+        poll_result = await client.async_get_data()
+        caches = poll_result["caches"]
         devices: list[dict] = []
 
         for ctx_id, ctx_data in caches.items():
@@ -493,30 +419,36 @@ async def run_poll(config: dict) -> dict:
 
         return {
             "ok": True,
-            "nickname": api.apisession.nickname or config["username"],
+            "nickname": client.api.apisession.nickname or config["username"],
             "devices": devices,
-            "refreshDetails": refresh_details,
-            "pollCounter": poll_counter + 1,
+            "refreshDetails": poll_result.get("refreshDetails", False),
+            "intervalcount": poll_result.get("intervalcount"),
+            "deviceintervals": poll_result.get("deviceintervals"),
         }
     finally:
         await session.close()
 
 
 async def run_set(config: dict) -> dict:
-    api, session = await _get_api(config)
+    session = ClientSession()
+    client = IoBrokerAnkerApiClient(config, session, _LOGGER)
     device_id = str(config["deviceId"])
     try:
-        _seed_device_context(api, device_id, config)
+        await client.authenticate()
+        _seed_device_context(client.api, device_id, config)
         site_id = str((config.get("deviceContext") or {}).get("site_id") or "")
-        if site_id and site_id not in api.sites:
-            await api.update_sites(exclude=set(config.get("exclude") or DEFAULT_EXCLUDE))
-        if bool(config.get("mqttUsage", True)):
-            await _ensure_mqtt(api)
+        if site_id and site_id not in client.api.sites:
+            await client.api.update_sites(
+                exclude=set(config.get("exclude") or DEFAULT_EXCLUDE)
+            )
+        if client._mqtt_usage:
+            await client.check_mqtt_session()
         await apply_control(
-            api,
+            client.api,
             device_id,
             str(config["control"]),
             config["value"],
+            ha_client=client,
         )
         return {"ok": True}
     finally:

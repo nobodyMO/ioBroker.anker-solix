@@ -35,7 +35,6 @@ class AnkerSolix extends utils.Adapter {
   controlQueue = new import_controlQueue.ControlQueue();
   deviceContexts = /* @__PURE__ */ new Map();
   pollAfterControlTimer;
-  pollCounter = 0;
   constructor(options = {}) {
     super({
       ...options,
@@ -58,12 +57,13 @@ class AnkerSolix extends utils.Adapter {
       enableAllDevices: this.config.enableAllDevices !== false,
       selectedSiteId: this.config.selectedSiteId || "",
       selectedDeviceIds: selectedIds,
-      pollCounter: this.pollCounter,
       deviceDetailMultiplier: Math.max(
-        2,
-        Number(this.config.deviceDetailMultiplier) || 5
+        1,
+        Number(this.config.deviceDetailMultiplier) || 10
       ),
-      requestDelay: Number(this.config.requestDelay) || 0.5
+      requestDelay: Number(this.config.requestDelay) || 0.3,
+      requestTimeout: Number(this.config.requestTimeout) || 10,
+      endpointLimit: Number(this.config.endpointLimit) || 10
     };
   }
   /** Remove legacy install symlink from old GitHub repo name "AnkerSolix". */
@@ -118,11 +118,6 @@ class AnkerSolix extends utils.Adapter {
         this.config.pythonPath || "",
         this.log
       );
-      if (typeof result.pollCounter === "number") {
-        this.pollCounter = result.pollCounter;
-      } else {
-        this.pollCounter += 1;
-      }
       const pollDevices = result.devices;
       if (pollDevices == null ? void 0 : pollDevices.length) {
         this.rememberDeviceContexts(pollDevices);
@@ -132,8 +127,11 @@ class AnkerSolix extends utils.Adapter {
         await this.setState("account.nickname", result.nickname, true);
       }
       await this.setState("info.connection", true, true);
-      const detailHint = result.refreshDetails ? "full" : "sites";
-      this.log.debug(`Poll OK (${(_c = pollDevices == null ? void 0 : pollDevices.length) != null ? _c : 0} devices, ${detailHint})`);
+      const detailHint = result.refreshDetails ? "devices+mqtt" : "sites";
+      const intervalHint = result.intervalcount !== void 0 && result.deviceintervals !== void 0 ? `, next detail in ~${result.intervalcount} polls` : "";
+      this.log.debug(
+        `Poll OK (${(_c = pollDevices == null ? void 0 : pollDevices.length) != null ? _c : 0} devices, ${detailHint}${intervalHint})`
+      );
     } catch (error) {
       await this.setState("info.connection", false, true);
       const msg = error.message || String(error);

@@ -41,8 +41,9 @@ export interface BridgePollResult {
 	schedule?: unknown;
 	path?: string;
 	system?: unknown;
-	pollCounter?: number;
 	refreshDetails?: boolean;
+	intervalcount?: number;
+	deviceintervals?: number;
 }
 
 export interface BridgeConfig {
@@ -55,10 +56,11 @@ export interface BridgeConfig {
 	enableAllDevices?: boolean;
 	selectedSiteId?: string;
 	selectedDeviceIds?: string[];
-	/** Poll counter (adapter-side); device details fetched every Nth poll. */
-	pollCounter?: number;
+	/** HA dev_interval_mult: device details every N site polls (default 10). */
 	deviceDetailMultiplier?: number;
 	requestDelay?: number;
+	requestTimeout?: number;
+	endpointLimit?: number;
 }
 
 export interface BridgeSetConfig extends BridgeConfig {
