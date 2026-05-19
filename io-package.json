@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.2.0",
+		"version": "0.2.1",
 		"messagebox": true,
 		"news": {
+			"0.2.1": {
+				"en": "Fix install on Debian/Ubuntu: Python deps in local venv (PEP 668), postinstall no longer fails npm",
+				"de": "Installationsfix Debian/Ubuntu: Python-Abhängigkeiten in lokalem venv (PEP 668), postinstall bricht npm nicht mehr ab",
+				"ru": "Исправление установки: venv, PEP 668",
+				"pt": "Correção de instalação: venv, PEP 668",
+				"nl": "Installatiefix: venv, PEP 668",
+				"fr": "Correctif installation : venv, PEP 668",
+				"it": "Fix installazione: venv, PEP 668",
+				"es": "Corrección de instalación: venv, PEP 668",
+				"pl": "Poprawka instalacji: venv, PEP 668",
+				"uk": "Виправлення встановлення: venv",
+				"zh-cn": "安装修复：venv，PEP 668"
+			},
 			"0.2.0": {
 				"en": "Python auto-install, smart meter entities, HA services, device selection in admin",
 				"de": "Python-Auto-Installation, Smart-Meter-Entitäten, HA-Services, Geräteauswahl in der Admin-Oberfläche",

@@ -35,15 +35,7 @@ var import_node_child_process = require("node:child_process");
 var fs = __toESM(require("node:fs"));
 var os = __toESM(require("node:os"));
 var path = __toESM(require("node:path"));
-function resolvePython(pythonPath) {
-  if (pythonPath == null ? void 0 : pythonPath.trim()) {
-    return pythonPath.trim();
-  }
-  if (process.platform === "win32") {
-    return "py";
-  }
-  return "python3";
-}
+var import_pythonPaths = require("./pythonPaths");
 function bridgeScriptPath() {
   return path.join(__dirname, "..", "..", "python", "bridge.py");
 }
@@ -54,8 +46,8 @@ async function runBridge(action, config, pythonPath, log) {
   }
   const tmpFile = path.join(os.tmpdir(), `anker-solix-${process.pid}-${Date.now()}.json`);
   fs.writeFileSync(tmpFile, JSON.stringify(config), "utf8");
-  const python = resolvePython(pythonPath);
-  const args = process.platform === "win32" && python === "py" ? ["-3", script, action, tmpFile] : [script, action, tmpFile];
+  const python = (0, import_pythonPaths.resolvePythonExecutable)(pythonPath);
+  const args = (0, import_pythonPaths.isPyLauncher)(python) ? ["-3", script, action, tmpFile] : [script, action, tmpFile];
   return new Promise((resolve, reject) => {
     const proc = (0, import_node_child_process.spawn)(python, args, {
       windowsHide: true,

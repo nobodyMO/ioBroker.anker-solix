@@ -30,7 +30,7 @@
 	"mqttUsage": "Use MQTT connection (like HA integration)",
 	"pythonPath": "Python command (empty = py/python3)",
 	"acceptTerms": "Accept terms of use",
-	"terms_hint": "This adapter uses the unofficial Anker cloud API (see https://github.com/thomluther/ha-anker-solix). Use at your own risk. Requires Python 3.12+ and packages from python/requirements.txt.",
+	"terms_hint": "This adapter uses the unofficial Anker cloud API (see https://github.com/thomluther/ha-anker-solix). Use at your own risk. Requires Python 3.12+ (on Linux also python3-venv). Packages install into python/.venv.",
 	"input_power": "PV input power (W)",
 	"dc_output_power": "DC output power (W)",
 	"output_power_total": "Total output power (W)",

@@ -10,16 +10,20 @@ The adapter uses the same unofficial **solixapi** Python library that is embedde
 
 - ioBroker with **js-controller >= 6** and **admin >= 7**
 - **Node.js >= 20**
-- **Python 3.12+** on the ioBroker host
-- Python packages (once per host):
+- **Python 3.12+** on the ioBroker host (on Debian/Ubuntu also `python3-venv`: `sudo apt install python3-venv`)
+- Python packages are installed into **`python/.venv`** inside the adapter folder (avoids PEP 668 “externally-managed-environment” on modern Linux)
+
+Manual setup (if needed):
 
 ```bash
-pip install -r python/requirements.txt
+cd node_modules/iobroker.anker-solix
+python3 -m venv python/.venv
+python/.venv/bin/pip install -r python/requirements.txt
 ```
 
-On Windows you can use `py -3 -m pip install -r python/requirements.txt`.
+On Windows use `py -3 -m venv python\.venv` and `python\.venv\Scripts\pip`.
 
-Since **v0.2.0**, dependencies are also installed automatically via `npm postinstall` when installing the adapter, and optionally on adapter start (see **Options** → `autoInstallPython` in the admin UI).
+Since **v0.2.0**, dependencies are installed automatically on adapter start (see **Options** → `autoInstallPython`) or via the admin button **Install Python dependencies**. `npm postinstall` only runs a best-effort check and does **not** abort the ioBroker install.
 
 ## Configuration
 
@@ -55,6 +59,11 @@ This is **not** an official Anker product. The cloud API may change or break at 
 - [thomluther/anker-solix-api](https://github.com/thomluther/anker-solix-api) – Python API library
 
 ## Changelog
+
+### 0.2.1
+
+- **Install fix (Debian/Ubuntu / PEP 668):** Python dependencies go into `python/.venv` instead of system pip; `npm postinstall` no longer fails `iobroker url` / adapter installation
+- Bridge uses venv Python automatically when `python/.venv` exists
 
 ### 0.2.0
 

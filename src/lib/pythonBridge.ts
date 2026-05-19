@@ -3,22 +3,13 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 
+import { isPyLauncher, resolvePythonExecutable } from "./pythonPaths";
 import type {
 	BridgeConfig,
 	BridgePollResult,
 	BridgeServiceConfig,
 	BridgeSetConfig,
 } from "./types";
-
-function resolvePython(pythonPath: string): string {
-	if (pythonPath?.trim()) {
-		return pythonPath.trim();
-	}
-	if (process.platform === "win32") {
-		return "py";
-	}
-	return "python3";
-}
 
 function bridgeScriptPath(): string {
 	return path.join(__dirname, "..", "..", "python", "bridge.py");
@@ -38,11 +29,10 @@ export async function runBridge(
 	const tmpFile = path.join(os.tmpdir(), `anker-solix-${process.pid}-${Date.now()}.json`);
 	fs.writeFileSync(tmpFile, JSON.stringify(config), "utf8");
 
-	const python = resolvePython(pythonPath);
-	const args =
-		process.platform === "win32" && python === "py"
-			? ["-3", script, action, tmpFile]
-			: [script, action, tmpFile];
+	const python = resolvePythonExecutable(pythonPath);
+	const args = isPyLauncher(python)
+		? ["-3", script, action, tmpFile]
+		: [script, action, tmpFile];
 
 	return new Promise((resolve, reject) => {
 		const proc = spawn(python, args, {

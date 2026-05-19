@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Installs Python dependencies from python/requirements.txt.
- * Runs on npm postinstall and can be invoked manually: node tools/install-python.js
+ * Installs Python dependencies into python/.venv (avoids PEP 668 system pip).
+ * npm postinstall: best-effort only (never fails npm install).
+ * Adapter start / manual: full install expected.
  */
 
 const { spawnSync } = require("node:child_process");
@@ -10,12 +11,38 @@ const path = require("node:path");
 
 const adapterRoot = path.join(__dirname, "..");
 const requirements = path.join(adapterRoot, "python", "requirements.txt");
+const venvDir = path.join(adapterRoot, "python", ".venv");
 
-function tryCommand(cmd, args) {
+function isNpmTempInstall() {
+	const root = adapterRoot.replace(/\\/g, "/").toLowerCase();
+	return (
+		root.includes("/_cacache/") ||
+		root.includes("/tmp/git-clone") ||
+		root.includes("/npm/_cacache/")
+	);
+}
+
+function isSoftFail() {
+	return (
+		process.env.npm_lifecycle_event === "postinstall" ||
+		process.env.ANKER_SOLIX_SOFT_INSTALL === "1" ||
+		isNpmTempInstall()
+	);
+}
+
+function venvPython() {
+	if (process.platform === "win32") {
+		return path.join(venvDir, "Scripts", "python.exe");
+	}
+	return path.join(venvDir, "bin", "python3");
+}
+
+function tryCommand(cmd, args, options = {}) {
 	const result = spawnSync(cmd, args, {
 		cwd: adapterRoot,
 		encoding: "utf8",
 		shell: process.platform === "win32",
+		...options,
 	});
 	return {
 		ok: result.status === 0,
@@ -25,7 +52,7 @@ function tryCommand(cmd, args) {
 	};
 }
 
-function findPythonCandidates(customPath) {
+function findSystemPython(customPath) {
 	const candidates = [];
 	if (customPath?.trim()) {
 		candidates.push(customPath.trim());
@@ -35,88 +62,112 @@ function findPythonCandidates(customPath) {
 	} else {
 		candidates.push("python3", "python");
 	}
-	return [...new Set(candidates)];
-}
-
-function resolvePython(customPath) {
-	for (const cmd of findPythonCandidates(customPath)) {
+	for (const cmd of [...new Set(candidates)]) {
 		const versionArgs =
 			process.platform === "win32" && cmd === "py" ? ["-3", "--version"] : ["--version"];
 		const check = tryCommand(cmd, versionArgs);
-		if (check.ok && check.stdout.includes("Python")) {
-			const pipArgs =
-				process.platform === "win32" && cmd === "py"
-					? ["-3", "-m", "pip", "--version"]
-					: ["-m", "pip", "--version"];
-			const pip = tryCommand(cmd, pipArgs);
-			if (pip.ok) {
-				return { cmd, version: check.stdout, pip: pip.stdout };
-			}
+		if (check.ok && (check.stdout + check.stderr).includes("Python")) {
+			return cmd;
 		}
 	}
 	return null;
 }
 
-function installLinuxPython() {
-	if (process.platform !== "linux") {
-		return false;
+function ensureVenv(systemPython) {
+	const py = venvPython();
+	if (fs.existsSync(py)) {
+		return py;
 	}
-	console.log("[anker-solix] Python not found – trying apt install (requires root)...");
-	const update = spawnSync("sudo", ["apt-get", "update", "-qq"], { stdio: "inherit", shell: true });
-	if (update.status !== 0) {
-		return false;
+
+	console.log(`[anker-solix] Creating virtual environment at ${venvDir} ...`);
+	const venvArgs =
+		process.platform === "win32" && systemPython === "py"
+			? ["-3", "-m", "venv", venvDir]
+			: ["-m", "venv", venvDir];
+	const created = tryCommand(systemPython, venvArgs);
+	if (!created.ok) {
+		console.error(
+			"[anker-solix] venv creation failed:",
+			created.stderr || created.stdout,
+		);
+		return null;
 	}
-	const install = spawnSync(
-		"sudo",
-		["apt-get", "install", "-y", "python3", "python3-pip", "python3-venv"],
-		{ stdio: "inherit", shell: true },
-	);
-	return install.status === 0;
+	return fs.existsSync(py) ? py : null;
 }
 
-function installRequirements(pythonCmd) {
-	const pipArgs =
-		process.platform === "win32" && pythonCmd === "py"
-			? ["-3", "-m", "pip", "install", "-r", requirements, "--upgrade"]
-			: ["-m", "pip", "install", "-r", requirements, "--upgrade"];
-	console.log(`[anker-solix] Installing Python packages from ${requirements} ...`);
-	const result = tryCommand(pythonCmd, pipArgs);
+function installIntoVenv(py) {
+	console.log(`[anker-solix] Installing packages into venv from ${requirements} ...`);
+	const pipArgs = ["-m", "pip", "install", "-r", requirements, "--upgrade"];
+	const result = tryCommand(py, pipArgs);
 	if (!result.ok) {
 		console.error("[anker-solix] pip install failed:", result.stderr || result.stdout);
 		return false;
 	}
-	console.log("[anker-solix] Python dependencies installed successfully.");
+	console.log("[anker-solix] Python dependencies installed in python/.venv");
 	return true;
 }
 
-function main() {
-	if (!fs.existsSync(requirements)) {
-		console.error(`[anker-solix] Missing ${requirements}`);
-		process.exit(1);
+function venvReady() {
+	const py = venvPython();
+	if (!fs.existsSync(py)) {
+		return false;
 	}
+	const check = tryCommand(py, ["-c", "import aiohttp"]);
+	return check.ok;
+}
 
-	const customPath = process.env.ANKER_SOLIX_PYTHON || "";
-	let python = resolvePython(customPath);
-
-	if (!python && process.env.ANKER_SOLIX_AUTO_INSTALL_PYTHON === "1") {
-		if (installLinuxPython()) {
-			python = resolvePython(customPath);
-		}
-	}
-
-	if (!python) {
+function finish(success, message) {
+	if (!success && isSoftFail()) {
+		console.warn(`[anker-solix] ${message}`);
 		console.warn(
-			"[anker-solix] Python 3.12+ with pip not found. Install Python and run:\n" +
-				`  pip install -r "${requirements}"\n` +
-				"Or set ANKER_SOLIX_AUTO_INSTALL_PYTHON=1 on Linux for automatic apt install.",
+			"[anker-solix] npm install continues; Python deps will be installed on first adapter start or via admin button.",
+		);
+		process.exit(0);
+	}
+	process.exit(success ? 0 : 1);
+}
+
+function main() {
+	if (isNpmTempInstall()) {
+		console.log(
+			"[anker-solix] Skipping Python setup in npm cache (runs after install on adapter start).",
 		);
 		process.exit(0);
 	}
 
-	console.log(`[anker-solix] Using ${python.cmd} (${python.version})`);
-	if (!installRequirements(python.cmd)) {
-		process.exit(1);
+	if (!fs.existsSync(requirements)) {
+		finish(false, `Missing ${requirements}`);
+		return;
 	}
+
+	if (venvReady()) {
+		console.log(`[anker-solix] Python venv OK (${venvPython()})`);
+		process.exit(0);
+	}
+
+	const customPath = process.env.ANKER_SOLIX_PYTHON || "";
+	const systemPython = findSystemPython(customPath);
+	if (!systemPython) {
+		finish(
+			false,
+			"Python 3.12+ not found. Install python3 and python3-venv, then restart the adapter.",
+		);
+		return;
+	}
+
+	console.log(`[anker-solix] System Python: ${systemPython}`);
+	const py = ensureVenv(systemPython);
+	if (!py) {
+		finish(false, "Could not create python/.venv");
+		return;
+	}
+
+	if (!installIntoVenv(py)) {
+		finish(false, "pip install into venv failed");
+		return;
+	}
+
+	process.exit(0);
 }
 
 main();
