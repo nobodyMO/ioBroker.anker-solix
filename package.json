@@ -1,6 +1,6 @@
 {
   "name": "iobroker.anker-solix",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "ioBroker adapter for Anker Solix (based on ha-anker-solix)",
   "author": {
     "name": "MatthiasUlrich1",
@@ -10,6 +10,8 @@
   "homepage": "https://github.com/MatthiasUlrich1/AnkerSolix",
   "license": "MIT",
   "keywords": [
+    "iobroker",
+    "iobroker-adapter",
     "anker",
     "solix",
     "solarbank",
@@ -68,8 +70,7 @@
     "check": "tsc --noEmit",
     "lint": "eslint -c eslint.config.mjs .",
     "translate": "translate-adapter",
-    "release": "release-script",
-    "postinstall": "node tools/install-python.js"
+    "release": "release-script"
   },
   "bugs": {
     "url": "https://github.com/MatthiasUlrich1/AnkerSolix/issues"

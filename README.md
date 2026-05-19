@@ -27,6 +27,39 @@ On Windows use `py -3 -m venv python\.venv` and `python\.venv\Scripts\pip`.
 
 Since **v0.2.0**, dependencies are installed automatically on adapter start (see **Options** → `autoInstallPython`) or via the admin button **Install Python dependencies**. `npm postinstall` only runs a best-effort check and does **not** abort the ioBroker install.
 
+## Installation (GitHub / Multihost)
+
+**npm install succeeded but adapter missing in Admin?** This is usually **not** a Python issue.
+
+1. Check the package exists:
+
+```bash
+ls /opt/iobroker/node_modules/iobroker.anker-solix/io-package.json
+```
+
+2. Restart ioBroker and refresh Admin (F5):
+
+```bash
+iobroker restart
+```
+
+3. In Admin → **Adapters** → tab **Installed** (not only “Available”), host selector = machine where npm ran (often `iobroker`, not a remote slave).
+
+4. **Multihost:** `iob url` installs npm on the **master**. Remote hosts (e.g. `PC(SmartHome)`) may report `Cannot install … : 0` until the adapter is installed there too. Either:
+   - run instances on the master host, or
+   - on the slave: `iob url https://github.com/MatthiasUlrich1/AnkerSolix` (on that host), or
+   - quote host names with special characters: `iob url … --host "PC(SmartHome)"`
+
+5. Manual install (reliable):
+
+```bash
+cd /opt/iobroker
+npm install github:MatthiasUlrich1/AnkerSolix
+iobroker restart
+```
+
+Python packages are installed on **first adapter start** (or via Admin → Install Python dependencies), not during `npm install`.
+
 ## Configuration
 
 1. Install the adapter from GitHub or npm (`iobroker.anker-solix`).
@@ -61,6 +94,10 @@ This is **not** an official Anker product. The cloud API may change or break at 
 - [thomluther/anker-solix-api](https://github.com/thomluther/anker-solix-api) – Python API library
 
 ## Changelog
+
+### 0.2.3
+
+- Removed `npm postinstall` so `iobroker url` / GitHub install is not blocked; Python setup runs on adapter start only
 
 ### 0.2.2
 

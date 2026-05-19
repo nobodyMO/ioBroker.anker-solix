@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.2.2",
+		"version": "0.2.3",
 		"messagebox": true,
 		"news": {
+			"0.2.3": {
+				"en": "Remove npm postinstall (fix ioBroker install); Python setup only on adapter start",
+				"de": "npm postinstall entfernt (ioBroker-Installation); Python-Setup erst beim Adapterstart",
+				"ru": "Удалён postinstall",
+				"pt": "Removido postinstall",
+				"nl": "postinstall verwijderd",
+				"fr": "postinstall supprimé",
+				"it": "Rimosso postinstall",
+				"es": "Eliminado postinstall",
+				"pl": "Usunięto postinstall",
+				"uk": "Видалено postinstall",
+				"zh-cn": "移除 postinstall"
+			},
 			"0.2.2": {
 				"en": "Fallback pip install to python/site-packages when python3-venv is missing",
 				"de": "Fallback: pip nach python/site-packages wenn python3-venv fehlt",
