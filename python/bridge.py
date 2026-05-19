@@ -312,82 +312,140 @@ def build_device_list(api: AnkerSolixApi, caches: dict) -> dict:
     return {"sites": sites, "devices": devices}
 
 
+async def run_list_devices_with_client(
+    client: IoBrokerAnkerApiClient, config: dict
+) -> dict:
+    exclude = set(config.get("exclude") or DEFAULT_EXCLUDE)
+    await client.api.update_sites(exclude=exclude)
+    await client.api.update_device_details(exclude=exclude)
+    caches = client.api.getCaches()
+    listing = build_device_list(client.api, caches)
+    return {"ok": True, **listing, "nickname": client.api.apisession.nickname}
+
+
 async def run_list_devices(config: dict) -> dict:
-    exclude = config.get("exclude") or DEFAULT_EXCLUDE
-    api, session = await _get_api(config)
+    session = ClientSession()
+    client = IoBrokerAnkerApiClient(config, session, _LOGGER)
     try:
-        await api.update_sites(exclude=set(exclude))
-        await api.update_device_details(exclude=set(exclude))
-        caches = api.getCaches()
-        listing = build_device_list(api, caches)
-        return {"ok": True, **listing, "nickname": api.apisession.nickname}
+        await client.authenticate()
+        return await run_list_devices_with_client(client, config)
     finally:
         await session.close()
 
 
-async def run_service(config: dict) -> dict:
+async def run_service_with_client(
+    client: IoBrokerAnkerApiClient, config: dict
+) -> dict:
     service = str(config.get("service") or "")
     params = config.get("params") or {}
     device_id = str(params.get("deviceId") or config.get("selectedDeviceId") or "")
     site_id = str(params.get("siteId") or config.get("selectedSiteId") or "")
 
-    api, session = await _get_api(config)
+    api = client.api
+    await api.update_sites(exclude=set(DEFAULT_EXCLUDE))
+    await api.update_device_details(exclude=set(DEFAULT_EXCLUDE))
+
+    if service == "get_schedule":
+        device = api.devices.get(device_id) or {}
+        site_id = site_id or device.get("site_id") or ""
+        schedule = device.get("schedule")
+        if not schedule and site_id and device_id:
+            schedule = await api.get_device_load(siteId=site_id, deviceSn=device_id)
+        return {"ok": True, "schedule": _json_safe(schedule or {})}
+
+    if service == "clear_schedule":
+        device = api.devices.get(device_id) or {}
+        site_id = site_id or device.get("site_id") or ""
+        result = await api.set_home_load(
+            siteId=site_id,
+            deviceSn=device_id,
+            export=False,
+            preset=0,
+        )
+        return {"ok": bool(result), "result": _json_safe(result or {})}
+
+    if service == "export_systems":
+        export_dir = Path(config.get("cacheDir") or ".") / "exports"
+        export_dir.mkdir(parents=True, exist_ok=True)
+        exporter = AnkerSolixApiExport(api, _LOGGER)
+        ok = await exporter.export_data(
+            export_path=str(export_dir.parent),
+            export_folder=export_dir.name,
+            randomized=True,
+            mqttdata=bool(params.get("includeMqtt", True)),
+            zipped=True,
+        )
+        zip_path = getattr(exporter, "zipfilename", None) or str(export_dir)
+        return {"ok": bool(ok), "path": str(zip_path)}
+
+    if service == "get_system_info":
+        site = api.sites.get(site_id) or {}
+        return {
+            "ok": True,
+            "system": _json_safe(
+                {
+                    "site": site,
+                    "devices": {
+                        k: v
+                        for k, v in api.devices.items()
+                        if (v.get("site_id") or "") == site_id or not site_id
+                    },
+                }
+            ),
+        }
+
+    raise ValueError(f"Unknown service: {service}")
+
+
+async def run_service(config: dict) -> dict:
+    session = ClientSession()
+    client = IoBrokerAnkerApiClient(config, session, _LOGGER)
     try:
-        await api.update_sites(exclude=set(DEFAULT_EXCLUDE))
-        await api.update_device_details(exclude=set(DEFAULT_EXCLUDE))
-
-        if service == "get_schedule":
-            device = api.devices.get(device_id) or {}
-            site_id = site_id or device.get("site_id") or ""
-            schedule = device.get("schedule")
-            if not schedule and site_id and device_id:
-                schedule = await api.get_device_load(siteId=site_id, deviceSn=device_id)
-            return {"ok": True, "schedule": _json_safe(schedule or {})}
-
-        if service == "clear_schedule":
-            device = api.devices.get(device_id) or {}
-            site_id = site_id or device.get("site_id") or ""
-            result = await api.set_home_load(
-                siteId=site_id,
-                deviceSn=device_id,
-                export=False,
-                preset=0,
-            )
-            return {"ok": bool(result), "result": _json_safe(result or {})}
-
-        if service == "export_systems":
-            export_dir = Path(config.get("cacheDir") or ".") / "exports"
-            export_dir.mkdir(parents=True, exist_ok=True)
-            exporter = AnkerSolixApiExport(api, _LOGGER)
-            ok = await exporter.export_data(
-                export_path=str(export_dir.parent),
-                export_folder=export_dir.name,
-                randomized=True,
-                mqttdata=bool(params.get("includeMqtt", True)),
-                zipped=True,
-            )
-            zip_path = getattr(exporter, "zipfilename", None) or str(export_dir)
-            return {"ok": bool(ok), "path": str(zip_path)}
-
-        if service == "get_system_info":
-            site = api.sites.get(site_id) or {}
-            return {
-                "ok": True,
-                "system": _json_safe(
-                    {
-                        "site": site,
-                        "devices": {
-                            k: v
-                            for k, v in api.devices.items()
-                            if (v.get("site_id") or "") == site_id or not site_id
-                        },
-                    }
-                ),
-            }
-
-        raise ValueError(f"Unknown service: {service}")
+        await client.authenticate()
+        return await run_service_with_client(client, config)
     finally:
         await session.close()
+
+
+def _devices_from_caches(
+    client: IoBrokerAnkerApiClient, config: dict, caches: dict
+) -> list[dict]:
+    devices: list[dict] = []
+    for ctx_id, ctx_data in caches.items():
+        if not isinstance(ctx_data, dict):
+            continue
+        info = device_info(str(ctx_id), ctx_data)
+        if not should_include_device(str(ctx_id), ctx_data, info, config):
+            continue
+        entities = extract_entities(ctx_data)
+        writable = controls_for_type(info["type"])
+        if not entities and not writable:
+            continue
+        devices.append(
+            {
+                "info": info,
+                "entities": _json_safe(entities),
+                "writable": writable,
+            }
+        )
+    return devices
+
+
+async def run_poll_with_client(
+    client: IoBrokerAnkerApiClient, config: dict
+) -> dict:
+    poll_result = await client.async_get_data()
+    caches = poll_result["caches"]
+    devices = _devices_from_caches(client, config, caches)
+    return {
+        "ok": True,
+        "nickname": client.api.apisession.nickname or config.get("username"),
+        "devices": devices,
+        "refreshDetails": poll_result.get("refreshDetails", False),
+        "intervalcount": poll_result.get("intervalcount"),
+        "deviceintervals": poll_result.get("deviceintervals"),
+        "persistent": True,
+    }
 
 
 async def run_poll(config: dict) -> dict:
@@ -395,83 +453,104 @@ async def run_poll(config: dict) -> dict:
     client = IoBrokerAnkerApiClient(config, session, _LOGGER)
     try:
         await client.authenticate()
-        poll_result = await client.async_get_data()
-        caches = poll_result["caches"]
-        devices: list[dict] = []
-
-        for ctx_id, ctx_data in caches.items():
-            if not isinstance(ctx_data, dict):
-                continue
-            info = device_info(str(ctx_id), ctx_data)
-            if not should_include_device(str(ctx_id), ctx_data, info, config):
-                continue
-            entities = extract_entities(ctx_data)
-            writable = controls_for_type(info["type"])
-            if not entities and not writable:
-                continue
-            devices.append(
-                {
-                    "info": info,
-                    "entities": _json_safe(entities),
-                    "writable": writable,
-                }
-            )
-
-        return {
-            "ok": True,
-            "nickname": client.api.apisession.nickname or config["username"],
-            "devices": devices,
-            "refreshDetails": poll_result.get("refreshDetails", False),
-            "intervalcount": poll_result.get("intervalcount"),
-            "deviceintervals": poll_result.get("deviceintervals"),
-        }
+        return await run_poll_with_client(client, config)
     finally:
         await session.close()
+
+
+async def run_set_with_client(client: IoBrokerAnkerApiClient, config: dict) -> dict:
+    device_id = str(config["deviceId"])
+    _seed_device_context(client.api, device_id, config)
+    site_id = str((config.get("deviceContext") or {}).get("site_id") or "")
+    if site_id and site_id not in client.api.sites:
+        await client.api.update_sites(exclude=set(config.get("exclude") or DEFAULT_EXCLUDE))
+    if client._mqtt_usage:
+        await client.check_mqtt_session()
+    await apply_control(
+        client.api,
+        device_id,
+        str(config["control"]),
+        config["value"],
+        ha_client=client,
+    )
+    return {"ok": True, "persistent": True}
 
 
 async def run_set(config: dict) -> dict:
     session = ClientSession()
     client = IoBrokerAnkerApiClient(config, session, _LOGGER)
-    device_id = str(config["deviceId"])
     try:
         await client.authenticate()
-        _seed_device_context(client.api, device_id, config)
-        site_id = str((config.get("deviceContext") or {}).get("site_id") or "")
-        if site_id and site_id not in client.api.sites:
-            await client.api.update_sites(
-                exclude=set(config.get("exclude") or DEFAULT_EXCLUDE)
-            )
-        if client._mqtt_usage:
-            await client.check_mqtt_session()
-        await apply_control(
-            client.api,
-            device_id,
-            str(config["control"]),
-            config["value"],
-            ha_client=client,
-        )
-        return {"ok": True}
+        return await run_set_with_client(client, config)
     finally:
         await session.close()
+
+
+async def run_login_with_client(
+    client: IoBrokerAnkerApiClient, config: dict
+) -> dict:
+    nickname = client.api.apisession.nickname or config.get("username")
+    return {"ok": True, "nickname": nickname, "persistent": True}
 
 
 async def run_login(config: dict) -> dict:
-    api, session = await _get_api(config)
+    session = ClientSession()
+    client = IoBrokerAnkerApiClient(config, session, _LOGGER)
     try:
-        nickname = api.apisession.nickname or config["username"]
-        return {"ok": True, "nickname": nickname}
+        await client.authenticate()
+        return await run_login_with_client(client, config)
     finally:
         await session.close()
+
+
+async def run_serve() -> None:
+    """Read JSON lines from stdin, keep API/MQTT session alive (HA-style)."""
+    from bridge_runtime import BridgeRuntime  # noqa: PLC0415
+
+    runtime = BridgeRuntime()
+    loop = asyncio.get_running_loop()
+    _LOGGER.info("Bridge daemon ready (persistent HA session)")
+    print(json.dumps({"ok": True, "ready": True}), flush=True)
+
+    while True:
+        line = await loop.run_in_executor(None, sys.stdin.readline)
+        if not line:
+            break
+        line = line.strip()
+        if not line:
+            continue
+        req_id = None
+        try:
+            request = json.loads(line)
+            req_id = request.get("id")
+            payload = await runtime.dispatch(request)
+            payload["id"] = req_id
+            print(json.dumps(payload, ensure_ascii=False), flush=True)
+        except Exception as exc:  # noqa: BLE001
+            err = {
+                "id": req_id,
+                "ok": False,
+                "error": f"{type(exc).__name__}: {exc}",
+            }
+            print(json.dumps(err, ensure_ascii=False), flush=True)
+
+    await runtime.close()
 
 
 async def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "action",
-        choices=["poll", "login", "set", "list_devices", "service"],
+        choices=["poll", "login", "set", "list_devices", "service", "serve"],
     )
     parser.add_argument("config_file", nargs="?", default="-")
     args = parser.parse_args()
+
+    logging.basicConfig(level=logging.WARNING)
+
+    if args.action == "serve":
+        await run_serve()
+        return 0
 
     if args.config_file == "-":
         raw = sys.stdin.read()
@@ -479,8 +558,6 @@ async def main() -> int:
         raw = Path(args.config_file).read_text(encoding="utf-8-sig")
 
     config = json.loads(raw or "{}")
-    logging.basicConfig(level=logging.WARNING)
-
     try:
         if args.action == "login":
             payload = await run_login(config)

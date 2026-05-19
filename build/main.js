@@ -307,6 +307,12 @@ class AnkerSolix extends utils.Adapter {
           await Promise.all(
             files.map((f) => fs2.unlink(path.join(cacheDir, f)).catch(() => void 0))
           );
+          await (0, import_pythonBridge.stopBridgeDaemon)();
+          await (0, import_pythonBridge.ensureBridgeDaemon)(
+            this.getBridgeConfig(),
+            this.config.pythonPath || "",
+            this.log
+          );
           respond({ ok: true, cleared: files.length });
         } catch {
           respond({ ok: true, cleared: 0 });
@@ -379,6 +385,15 @@ class AnkerSolix extends utils.Adapter {
       `Anker Solix adapter started (poll every ${intervalSec}s, MQTT: ${this.config.mqttUsage !== false})`
     );
     await this.ensurePythonDeps();
+    try {
+      await (0, import_pythonBridge.ensureBridgeDaemon)(
+        this.getBridgeConfig(),
+        this.config.pythonPath || "",
+        this.log
+      );
+    } catch (error) {
+      this.log.error(`Bridge daemon start failed: ${error.message}`);
+    }
     this.subscribeStates(`${this.namespace}.*.control.*`);
     this.subscribeStates(`${this.namespace}.services.*`);
     await this.pollOnce();
@@ -391,7 +406,11 @@ class AnkerSolix extends utils.Adapter {
       this.clearInterval(this.pollTimer);
       this.pollTimer = void 0;
     }
-    callback();
+    if (this.pollAfterControlTimer) {
+      clearTimeout(this.pollAfterControlTimer);
+      this.pollAfterControlTimer = void 0;
+    }
+    void (0, import_pythonBridge.stopBridgeDaemon)().finally(() => callback());
   }
 }
 if (require.main !== module) {

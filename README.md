@@ -79,6 +79,10 @@ This is **not** an official Anker product. The cloud API may change or break at 
 
 ## Changelog
 
+### 0.6.0
+
+- **Persistent bridge daemon** (`bridge.py serve`): one Python process keeps aiohttp + Anker API + MQTT connected for the adapter lifetime, matching Home Assistant coordinator behaviour (no reconnect per poll/control)
+
 ### 0.5.0
 
 - Polling now uses the same logic as the Home Assistant integration (`async_get_data`): sites every interval, device/site details when the interval counter reaches zero (default every 10th poll), deferred energy on startup, MQTT session on detail refresh

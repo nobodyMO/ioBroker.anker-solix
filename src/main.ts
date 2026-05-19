@@ -11,7 +11,7 @@ import * as utils from "@iobroker/adapter-core";
 import { parseSelectedDeviceIds } from "./lib/configHelpers";
 import { ControlQueue } from "./lib/controlQueue";
 import { runPythonInstaller } from "./lib/ensurePython";
-import { runBridge } from "./lib/pythonBridge";
+import { ensureBridgeDaemon, runBridge, stopBridgeDaemon } from "./lib/pythonBridge";
 import { SERVICE_STATES, setupServiceStates } from "./lib/services";
 import { parseControlStateId, syncDevices } from "./lib/stateSync";
 import type {
@@ -345,6 +345,12 @@ class AnkerSolix extends utils.Adapter {
 					await Promise.all(
 						files.map((f) => fs.unlink(path.join(cacheDir, f)).catch(() => undefined)),
 					);
+					await stopBridgeDaemon();
+					await ensureBridgeDaemon(
+						this.getBridgeConfig(),
+						this.config.pythonPath || "",
+						this.log,
+					);
 					respond({ ok: true, cleared: files.length });
 				} catch {
 					respond({ ok: true, cleared: 0 });
@@ -426,6 +432,16 @@ class AnkerSolix extends utils.Adapter {
 
 		await this.ensurePythonDeps();
 
+		try {
+			await ensureBridgeDaemon(
+				this.getBridgeConfig(),
+				this.config.pythonPath || "",
+				this.log,
+			);
+		} catch (error) {
+			this.log.error(`Bridge daemon start failed: ${(error as Error).message}`);
+		}
+
 		this.subscribeStates(`${this.namespace}.*.control.*`);
 		this.subscribeStates(`${this.namespace}.services.*`);
 
@@ -440,7 +456,11 @@ class AnkerSolix extends utils.Adapter {
 			this.clearInterval(this.pollTimer);
 			this.pollTimer = undefined;
 		}
-		callback();
+		if (this.pollAfterControlTimer) {
+			clearTimeout(this.pollAfterControlTimer);
+			this.pollAfterControlTimer = undefined;
+		}
+		void stopBridgeDaemon().finally(() => callback());
 	}
 }
 

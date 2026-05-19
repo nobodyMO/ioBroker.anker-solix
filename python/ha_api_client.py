@@ -189,3 +189,26 @@ class IoBrokerAnkerApiClient:
 
     def get_mqtt_device(self, sn: str) -> SolixMqttDevice | None:
         return self.mqtt_devices.get(sn) if sn else None
+
+    def apply_runtime_config(self, config: dict) -> None:
+        """Update poll options without tearing down the persistent session."""
+        self.exclude_categories = list(
+            config.get("exclude") or DEFAULT_EXCLUDE_CATEGORIES
+        )
+        self._deviceintervals = max(
+            1, int(config.get("deviceDetailMultiplier", self._deviceintervals))
+        )
+        mqtt_usage = bool(config.get("mqttUsage", self._mqtt_usage))
+        if self._mqtt_usage and not mqtt_usage:
+            self.api.stopMqttSession()
+            self.mqtt_devices.clear()
+        self._mqtt_usage = mqtt_usage
+        self.api.apisession.requestDelay(
+            float(config.get("requestDelay", DEFAULT_DELAY_TIME))
+        )
+        self.api.apisession.requestTimeout(
+            int(config.get("requestTimeout", DEFAULT_TIMEOUT))
+        )
+        self.api.apisession.endpointLimit(
+            int(config.get("endpointLimit", DEFAULT_ENDPOINT_LIMIT))
+        )

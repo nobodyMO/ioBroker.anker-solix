@@ -3,6 +3,9 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 
+import { getBridgeDaemon, stopBridgeDaemon } from "./bridgeDaemon";
+
+export { stopBridgeDaemon };
 import { buildPythonEnv, isPyLauncher, resolvePythonExecutable } from "./pythonPaths";
 import type {
 	BridgeConfig,
@@ -15,7 +18,8 @@ function bridgeScriptPath(): string {
 	return path.join(__dirname, "..", "..", "python", "bridge.py");
 }
 
-export async function runBridge(
+/** One-shot bridge (admin install / fallback). */
+async function runBridgeOnce(
 	action: "poll" | "login" | "set" | "list_devices" | "service",
 	config: BridgeConfig | BridgeSetConfig | BridgeServiceConfig,
 	pythonPath: string,
@@ -85,4 +89,49 @@ export async function runBridge(
 			}
 		});
 	});
+}
+
+export async function ensureBridgeDaemon(
+	config: BridgeConfig,
+	pythonPath: string,
+	log?: ioBroker.Logger,
+): Promise<void> {
+	const daemon = getBridgeDaemon(pythonPath, log);
+	if (!daemon.isRunning) {
+		await daemon.start(config);
+	} else {
+		await daemon.request("configure", config as unknown as Record<string, unknown>);
+	}
+}
+
+export async function runBridge(
+	action: "poll" | "login" | "set" | "list_devices" | "service",
+	config: BridgeConfig | BridgeSetConfig | BridgeServiceConfig,
+	pythonPath: string,
+	log?: ioBroker.Logger,
+	options?: { useDaemon?: boolean },
+): Promise<BridgePollResult> {
+	const useDaemon = options?.useDaemon !== false;
+	if (useDaemon) {
+		try {
+			const daemon = getBridgeDaemon(pythonPath, log);
+			if (!daemon.isRunning && action !== "poll" && action !== "login") {
+				await daemon.start(config as BridgeConfig);
+			} else if (!daemon.isRunning) {
+				await daemon.start(config as BridgeConfig);
+			} else {
+				await daemon.request("configure", config as unknown as Record<string, unknown>);
+			}
+			return await daemon.request(action, config as unknown as Record<string, unknown>);
+		} catch (error) {
+			log?.warn(
+				`Bridge daemon failed (${(error as Error).message}), restarting daemon…`,
+			);
+			const daemon = getBridgeDaemon(pythonPath, log);
+			await daemon.stop();
+			await daemon.start(config as BridgeConfig);
+			return await daemon.request(action, config as unknown as Record<string, unknown>);
+		}
+	}
+	return runBridgeOnce(action, config, pythonPath, log);
 }

@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.5.0",
+		"version": "0.6.0",
 		"messagebox": true,
 		"news": {
+			"0.6.0": {
+				"en": "Persistent Python bridge daemon: API and MQTT session stay open like Home Assistant",
+				"de": "Persistenter Python-Bridge-Daemon: API- und MQTT-Session bleiben wie in Home Assistant offen",
+				"ru": "Постоянный daemon моста Python",
+				"pt": "Daemon Python persistente como Home Assistant",
+				"nl": "Persistente Python-bridge daemon",
+				"fr": "Daemon Python persistant comme Home Assistant",
+				"it": "Daemon bridge Python persistente",
+				"es": "Daemon Python persistente como Home Assistant",
+				"pl": "Trwały daemon Python jak HA",
+				"uk": "Постійний Python daemon як HA",
+				"zh-cn": "持久化 Python 桥接守护进程（同 HA）"
+			},
 			"0.5.0": {
 				"en": "Poll cycle matches Home Assistant: interval counter, API delay/throttle, MQTT on detail refresh",
 				"de": "Poll-Zyklus wie Home Assistant: Intervallzähler, API-Delay/Throttle, MQTT bei Detail-Refresh",

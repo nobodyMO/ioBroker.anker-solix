@@ -28,18 +28,21 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var pythonBridge_exports = {};
 __export(pythonBridge_exports, {
-  runBridge: () => runBridge
+  ensureBridgeDaemon: () => ensureBridgeDaemon,
+  runBridge: () => runBridge,
+  stopBridgeDaemon: () => import_bridgeDaemon.stopBridgeDaemon
 });
 module.exports = __toCommonJS(pythonBridge_exports);
 var import_node_child_process = require("node:child_process");
 var fs = __toESM(require("node:fs"));
 var os = __toESM(require("node:os"));
 var path = __toESM(require("node:path"));
+var import_bridgeDaemon = require("./bridgeDaemon");
 var import_pythonPaths = require("./pythonPaths");
 function bridgeScriptPath() {
   return path.join(__dirname, "..", "..", "python", "bridge.py");
 }
-async function runBridge(action, config, pythonPath, log) {
+async function runBridgeOnce(action, config, pythonPath, log) {
   const script = bridgeScriptPath();
   if (!fs.existsSync(script)) {
     throw new Error(`Python bridge not found: ${script}`);
@@ -94,8 +97,43 @@ ${stdout}`
     });
   });
 }
+async function ensureBridgeDaemon(config, pythonPath, log) {
+  const daemon = (0, import_bridgeDaemon.getBridgeDaemon)(pythonPath, log);
+  if (!daemon.isRunning) {
+    await daemon.start(config);
+  } else {
+    await daemon.request("configure", config);
+  }
+}
+async function runBridge(action, config, pythonPath, log, options) {
+  const useDaemon = (options == null ? void 0 : options.useDaemon) !== false;
+  if (useDaemon) {
+    try {
+      const daemon = (0, import_bridgeDaemon.getBridgeDaemon)(pythonPath, log);
+      if (!daemon.isRunning && action !== "poll" && action !== "login") {
+        await daemon.start(config);
+      } else if (!daemon.isRunning) {
+        await daemon.start(config);
+      } else {
+        await daemon.request("configure", config);
+      }
+      return await daemon.request(action, config);
+    } catch (error) {
+      log == null ? void 0 : log.warn(
+        `Bridge daemon failed (${error.message}), restarting daemon\u2026`
+      );
+      const daemon = (0, import_bridgeDaemon.getBridgeDaemon)(pythonPath, log);
+      await daemon.stop();
+      await daemon.start(config);
+      return await daemon.request(action, config);
+    }
+  }
+  return runBridgeOnce(action, config, pythonPath, log);
+}
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  runBridge
+  ensureBridgeDaemon,
+  runBridge,
+  stopBridgeDaemon
 });
 //# sourceMappingURL=pythonBridge.js.map
