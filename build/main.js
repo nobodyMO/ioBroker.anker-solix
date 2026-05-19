@@ -41,12 +41,7 @@ class AnkerSolix extends utils.Adapter {
     this.on("unload", this.onUnload.bind(this));
   }
   getBridgeConfig() {
-    const cacheDir = path.join(
-      process.cwd(),
-      "iobroker-data",
-      this.namespace,
-      "authcache"
-    );
+    const cacheDir = path.join(utils.getAbsoluteInstanceDataDir(this), "authcache");
     const selectedIds = (0, import_configHelpers.parseSelectedDeviceIds)(this.config.selectedDeviceIds);
     return {
       username: this.config.username,
@@ -71,14 +66,21 @@ class AnkerSolix extends utils.Adapter {
     return result.ok;
   }
   async pollOnce() {
-    var _a;
+    var _a, _b, _c;
     if (!this.config.acceptTerms) {
       this.log.warn("Please accept the usage terms in the adapter configuration.");
       await this.setState("info.connection", false, true);
       return;
     }
-    if (!this.config.username || !this.config.password) {
-      this.log.warn("Username and password are required.");
+    if (!((_a = this.config.username) == null ? void 0 : _a.trim())) {
+      this.log.warn("Anker e-mail (username) is required in adapter settings.");
+      await this.setState("info.connection", false, true);
+      return;
+    }
+    if (!((_b = this.config.password) == null ? void 0 : _b.trim())) {
+      this.log.warn(
+        "Password missing \u2013 open instance config in Admin, re-enter Anker password and save."
+      );
       await this.setState("info.connection", false, true);
       return;
     }
@@ -101,10 +103,17 @@ class AnkerSolix extends utils.Adapter {
         await this.setState("account.nickname", result.nickname, true);
       }
       await this.setState("info.connection", true, true);
-      this.log.debug(`Poll OK (${(_a = pollDevices == null ? void 0 : pollDevices.length) != null ? _a : 0} devices)`);
+      this.log.debug(`Poll OK (${(_c = pollDevices == null ? void 0 : pollDevices.length) != null ? _c : 0} devices)`);
     } catch (error) {
       await this.setState("info.connection", false, true);
-      this.log.error(`Poll failed: ${error.message}`);
+      const msg = error.message || String(error);
+      if (msg.includes("InvalidCredentials") || msg.includes("Authentication failed")) {
+        this.log.error(
+          `Poll failed: ${msg} \u2013 Check e-mail, password and country (${this.config.country || "DE"}). In Admin use \u201CInstall Python dependencies\u201D tab or restart after saving config; try country matching your Anker account region.`
+        );
+      } else {
+        this.log.error(`Poll failed: ${msg}`);
+      }
     }
   }
   getPrimaryDeviceId() {
@@ -216,6 +225,20 @@ class AnkerSolix extends utils.Adapter {
       }
     };
     try {
+      if (obj.command === "clearAuthCache") {
+        const cacheDir = path.join(utils.getAbsoluteInstanceDataDir(this), "authcache");
+        const fs = await Promise.resolve().then(() => __toESM(require("node:fs/promises")));
+        try {
+          const files = await fs.readdir(cacheDir);
+          await Promise.all(
+            files.map((f) => fs.unlink(path.join(cacheDir, f)).catch(() => void 0))
+          );
+          respond({ ok: true, cleared: files.length });
+        } catch {
+          respond({ ok: true, cleared: 0 });
+        }
+        return;
+      }
       if (obj.command === "installPython") {
         const ok = await this.ensurePythonDeps(true);
         respond({ ok });

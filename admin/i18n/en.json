@@ -8,6 +8,7 @@
 	"devices_hint": "Click “Load devices” first. Optionally set site ID and device serial numbers (comma-separated) to limit polling.",
 	"loadDevices": "Load devices from Anker",
 	"installPython": "Install Python dependencies",
+	"clearAuthCache": "Clear Anker login cache",
 	"enableAllDevices": "Monitor all discovered devices",
 	"selectedSiteId": "Site ID (optional, empty = all)",
 	"selectedDeviceIds": "Device serial numbers (comma-separated, optional)",

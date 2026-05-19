@@ -59,6 +59,16 @@
 					"sm": 6,
 					"md": 4
 				},
+				"clearAuthCache": {
+					"type": "sendTo",
+					"label": "clearAuthCache",
+					"command": "clearAuthCache",
+					"variant": "outlined",
+					"showProcess": true,
+					"xs": 12,
+					"sm": 6,
+					"md": 4
+				},
 				"enableAllDevices": {
 					"type": "checkbox",
 					"label": "enableAllDevices",

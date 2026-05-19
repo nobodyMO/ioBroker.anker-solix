@@ -29,12 +29,7 @@ class AnkerSolix extends utils.Adapter {
 	}
 
 	private getBridgeConfig(): BridgeConfig {
-		const cacheDir = path.join(
-			process.cwd(),
-			"iobroker-data",
-			this.namespace,
-			"authcache",
-		);
+		const cacheDir = path.join(utils.getAbsoluteInstanceDataDir(this), "authcache");
 		const selectedIds = parseSelectedDeviceIds(this.config.selectedDeviceIds);
 
 		return {
@@ -68,8 +63,15 @@ class AnkerSolix extends utils.Adapter {
 			return;
 		}
 
-		if (!this.config.username || !this.config.password) {
-			this.log.warn("Username and password are required.");
+		if (!this.config.username?.trim()) {
+			this.log.warn("Anker e-mail (username) is required in adapter settings.");
+			await this.setState("info.connection", false, true);
+			return;
+		}
+		if (!this.config.password?.trim()) {
+			this.log.warn(
+				"Password missing – open instance config in Admin, re-enter Anker password and save.",
+			);
 			await this.setState("info.connection", false, true);
 			return;
 		}
@@ -100,7 +102,16 @@ class AnkerSolix extends utils.Adapter {
 			this.log.debug(`Poll OK (${pollDevices?.length ?? 0} devices)`);
 		} catch (error) {
 			await this.setState("info.connection", false, true);
-			this.log.error(`Poll failed: ${(error as Error).message}`);
+			const msg = (error as Error).message || String(error);
+			if (msg.includes("InvalidCredentials") || msg.includes("Authentication failed")) {
+				this.log.error(
+					`Poll failed: ${msg} – Check e-mail, password and country (${this.config.country || "DE"}). ` +
+						"In Admin use “Install Python dependencies” tab or restart after saving config; " +
+						"try country matching your Anker account region.",
+				);
+			} else {
+				this.log.error(`Poll failed: ${msg}`);
+			}
 		}
 	}
 
@@ -228,6 +239,21 @@ class AnkerSolix extends utils.Adapter {
 		};
 
 		try {
+			if (obj.command === "clearAuthCache") {
+				const cacheDir = path.join(utils.getAbsoluteInstanceDataDir(this), "authcache");
+				const fs = await import("node:fs/promises");
+				try {
+					const files = await fs.readdir(cacheDir);
+					await Promise.all(
+						files.map((f) => fs.unlink(path.join(cacheDir, f)).catch(() => undefined)),
+					);
+					respond({ ok: true, cleared: files.length });
+				} catch {
+					respond({ ok: true, cleared: 0 });
+				}
+				return;
+			}
+
 			if (obj.command === "installPython") {
 				const ok = await this.ensurePythonDeps(true);
 				respond({ ok });

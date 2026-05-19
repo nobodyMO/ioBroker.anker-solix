@@ -63,17 +63,35 @@ def device_info(ctx_id: str, data: dict) -> dict[str, str]:
     }
 
 
+def _auth_error_message(api: AnkerSolixApi, country: str) -> str:
+    resp = getattr(api.apisession, "_login_response", None) or {}
+    detail = resp.get("msg") or resp.get("message") or ""
+    base = "Authentication failed"
+    if detail:
+        base = f"{base}: {detail}"
+    return (
+        f"{base} (country={country}). "
+        "Check Anker app e-mail/password and country code in adapter config."
+    )
+
+
 async def _get_api(config: dict) -> tuple[AnkerSolixApi, ClientSession]:
-    email = config["username"]
-    password = config["password"]
+    email = str(config.get("username") or "").strip()
+    password = str(config.get("password") or "")
     country = (config.get("country") or "DE").upper()
+    if not email or not password:
+        raise errors.InvalidCredentialsError("Username or password empty in adapter config")
+
     cache_dir = Path(config.get("cacheDir") or Path(__file__).parent / "authcache")
     cache_dir.mkdir(parents=True, exist_ok=True)
     session = ClientSession()
     api = AnkerSolixApi(email, password, country, session, _LOGGER)
     api.apisession._authFile = str(cache_dir / f"{email}.json")
+
+    # Cached token may be expired/invalid – retry once with fresh login (like HA integration)
     if not await api.async_authenticate():
-        raise errors.InvalidCredentialsError("Authentication failed")
+        if not await api.async_authenticate(restart=True):
+            raise errors.InvalidCredentialsError(_auth_error_message(api, country))
     return api, session
 
 

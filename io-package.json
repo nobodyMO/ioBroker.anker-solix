@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.2.5",
+		"version": "0.2.6",
 		"messagebox": true,
 		"news": {
+			"0.2.6": {
+				"en": "Auth fix: correct instance cache path, retry login on stale token, clearer errors",
+				"de": "Auth-Fix: korrekter Cache-Pfad, Login-Wiederholung bei abgelaufenem Token, klarere Fehler",
+				"ru": "Исправление авторизации",
+				"pt": "Correção de autenticação",
+				"nl": "Authenticatie-fix",
+				"fr": "Correctif authentification",
+				"it": "Correzione autenticazione",
+				"es": "Corrección de autenticación",
+				"pl": "Poprawka uwierzytelniania",
+				"uk": "Виправлення автентифікації",
+				"zh-cn": "认证修复"
+			},
 			"0.2.5": {
 				"en": "Fix control state types (grid_export_limit as number, not string)",
 				"de": "Korrektur State-Typen für Steuerungen (grid_export_limit als number)",

@@ -8,6 +8,7 @@
 	"devices_hint": "Zuerst „Geräte laden“ klicken. Dann optional Site-ID und Geräte-SNs (kommagetrennt) eintragen, wenn nicht alle Geräte überwacht werden sollen.",
 	"loadDevices": "Geräte von Anker laden",
 	"installPython": "Python-Abhängigkeiten installieren",
+	"clearAuthCache": "Anker-Login-Cache löschen",
 	"enableAllDevices": "Alle gefundenen Geräte überwachen",
 	"selectedSiteId": "Site-ID (optional, leer = alle)",
 	"selectedDeviceIds": "Geräte-SNs (kommagetrennt, optional)",
