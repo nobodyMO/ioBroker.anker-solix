@@ -16,9 +16,10 @@ from aiohttp import ClientSession
 # solixapi is vendored from https://github.com/thomluther/ha-anker-solix
 sys.path.insert(0, str(Path(__file__).parent))
 
+from entities import CONTROL_ENTITIES, extract_entities  # noqa: E402
 from solixapi import errors  # noqa: E402
 from solixapi.api import AnkerSolixApi  # noqa: E402
-from solixapi.apitypes import ApiCategories, SolixDefaults  # noqa: E402
+from solixapi.apitypes import ApiCategories  # noqa: E402
 
 _LOGGER = logging.getLogger("anker-solix-bridge")
 
@@ -33,26 +34,6 @@ DEFAULT_EXCLUDE = [
     ApiCategories.hes_energy,
 ]
 
-# Keys commonly used for energy monitoring (HA integration sensor names)
-PRIORITY_KEYS = {
-    "solar_power",
-    "output_power",
-    "battery_power",
-    "grid_power",
-    "home_power",
-    "battery_soc",
-    "total_soc",
-    "charge_power",
-    "discharge_power",
-    "cloud_state",
-    "wifi_state",
-    "device_name",
-    "device_type",
-    "model",
-    "site_name",
-    "nickname",
-}
-
 
 def _json_safe(value: Any) -> Any:
     if value is None or isinstance(value, (bool, int, float, str)):
@@ -64,68 +45,92 @@ def _json_safe(value: Any) -> Any:
     return str(value)
 
 
-def flatten_states(
-    data: dict,
-    *,
-    prefix: str = "",
-    max_depth: int = 5,
-    depth: int = 0,
-) -> dict[str, Any]:
-    """Flatten nested cache dict to ioBroker-friendly primitive states."""
-    states: dict[str, Any] = {}
-    if depth > max_depth or not isinstance(data, dict):
-        return states
-
-    for key, value in data.items():
-        if key in ("customized", "raw", "mqtt_cache"):
-            continue
-        path = f"{prefix}.{key}" if prefix else str(key)
-        if isinstance(value, dict):
-            if depth < max_depth:
-                states.update(
-                    flatten_states(value, prefix=path, max_depth=max_depth, depth=depth + 1)
-                )
-            if path.split(".")[-1] in PRIORITY_KEYS or any(
-                pk in path for pk in PRIORITY_KEYS
-            ):
-                states[f"{path}__json"] = json.dumps(_json_safe(value), ensure_ascii=False)
-        elif isinstance(value, list):
-            if len(value) < 20:
-                states[path] = json.dumps(_json_safe(value), ensure_ascii=False)
-        elif value is not None:
-            states[path] = value
-
-    return states
+def device_info(ctx_id: str, data: dict) -> dict[str, str]:
+    dev_type = str(data.get("type") or data.get("device_type") or "unknown").lower()
+    name = (
+        data.get("device_name")
+        or data.get("site_name")
+        or data.get("alias")
+        or ctx_id
+    )
+    return {
+        "id": ctx_id,
+        "type": dev_type,
+        "name": str(name),
+        "site_id": str(data.get("site_id") or ""),
+        "model": str(data.get("model") or data.get("product_code") or ""),
+    }
 
 
-def context_meta(data: dict) -> dict[str, str]:
-    meta: dict[str, str] = {}
-    for field in ("device_type", "type", "site_type", "model", "device_name", "site_name"):
-        if data.get(field):
-            meta[field] = str(data[field])
-    if data.get("sn"):
-        meta["serial"] = str(data["sn"])
-    if data.get("site_id"):
-        meta["site_id"] = str(data["site_id"])
-    return meta
-
-
-async def run_poll(config: dict) -> dict:
+async def _get_api(config: dict) -> tuple[AnkerSolixApi, ClientSession]:
     email = config["username"]
     password = config["password"]
     country = (config.get("country") or "DE").upper()
-    mqtt_usage = bool(config.get("mqttUsage", True))
-    exclude = config.get("exclude") or DEFAULT_EXCLUDE
     cache_dir = Path(config.get("cacheDir") or Path(__file__).parent / "authcache")
     cache_dir.mkdir(parents=True, exist_ok=True)
+    session = ClientSession()
+    api = AnkerSolixApi(email, password, country, session, _LOGGER)
+    api.apisession._authFile = str(cache_dir / f"{email}.json")
+    if not await api.async_authenticate():
+        raise errors.InvalidCredentialsError("Authentication failed")
+    return api, session
 
-    async with ClientSession() as session:
-        api = AnkerSolixApi(email, password, country, session, _LOGGER)
-        api.apisession._authFile = str(cache_dir / f"{email}.json")
 
-        if not await api.async_authenticate():
-            raise errors.InvalidCredentialsError("Authentication failed")
+async def apply_control(api: AnkerSolixApi, device_id: str, control: str, value: Any) -> None:
+    device = api.devices.get(device_id) or api.sites.get(device_id) or {}
+    site_id = device.get("site_id") or device_id
+    dev_type = str(device.get("type") or "").lower()
 
+    if control == "allow_grid_export":
+        result = await api.set_power_limit(
+            siteId=site_id,
+            deviceSn=device_id,
+            grid_export=bool(value),
+        )
+    elif control == "preset_allow_export":
+        result = await api.set_home_load(
+            siteId=site_id,
+            deviceSn=device_id,
+            export=bool(value),
+        )
+    elif control == "set_output_power":
+        load = int(value)
+        if dev_type in ("solarbank",):
+            result = await api.set_home_load(
+                siteId=site_id,
+                deviceSn=device_id,
+                preset=load,
+            )
+        else:
+            result = await api.set_sb2_home_load(
+                siteId=site_id,
+                deviceSn=device_id,
+                preset=load,
+            )
+    elif control == "min_soc":
+        result = await api.set_station_parm(
+            siteId=site_id,
+            deviceSn=device_id,
+            socReserve=int(value),
+        )
+    elif control == "grid_export_limit":
+        result = await api.set_station_parm(
+            siteId=site_id,
+            deviceSn=device_id,
+            gridExportLimit=int(value),
+        )
+    else:
+        raise ValueError(f"Unsupported control: {control}")
+
+    if result is False:
+        raise RuntimeError(f"Control '{control}' was rejected by the API")
+
+
+async def run_poll(config: dict) -> dict:
+    mqtt_usage = bool(config.get("mqttUsage", True))
+    exclude = config.get("exclude") or DEFAULT_EXCLUDE
+    api, session = await _get_api(config)
+    try:
         await api.update_sites(exclude=set(exclude))
         await api.update_device_details(exclude=set(exclude))
         await api.update_site_details(exclude=set(exclude))
@@ -137,32 +142,64 @@ async def run_poll(config: dict) -> dict:
                 _LOGGER.warning("MQTT session not started: %s", mqtt_exc)
 
         caches = api.getCaches()
-        contexts: dict[str, dict] = {}
+        devices: list[dict] = []
 
         for ctx_id, ctx_data in caches.items():
             if not isinstance(ctx_data, dict):
                 continue
-            states = flatten_states(ctx_data)
-            contexts[str(ctx_id)] = {
-                "meta": context_meta(ctx_data),
-                "states": _json_safe(states),
-            }
+            entities = extract_entities(ctx_data)
+            if not entities:
+                continue
+            info = device_info(str(ctx_id), ctx_data)
+            writable = [
+                spec["id"]
+                for spec in CONTROL_ENTITIES
+                if spec["id"] in entities
+                and (not info["type"] or info["type"] in spec.get("types", []))
+            ]
+            devices.append(
+                {
+                    "info": info,
+                    "entities": _json_safe(entities),
+                    "writable": writable,
+                }
+            )
 
         return {
             "ok": True,
-            "nickname": api.apisession.nickname or email,
-            "contexts": contexts,
+            "nickname": api.apisession.nickname or config["username"],
+            "devices": devices,
         }
+    finally:
+        await session.close()
+
+
+async def run_set(config: dict) -> dict:
+    api, session = await _get_api(config)
+    try:
+        await apply_control(
+            api,
+            str(config["deviceId"]),
+            str(config["control"]),
+            config["value"],
+        )
+        return {"ok": True}
+    finally:
+        await session.close()
 
 
 async def run_login(config: dict) -> dict:
-    result = await run_poll({**config, "mqttUsage": False})
-    return {"ok": True, "nickname": result.get("nickname")}
+    api, session = await _get_api(config)
+    try:
+        nickname = api.apisession.nickname or config["username"]
+        return {"ok": True, "nickname": nickname}
+    finally:
+        await session.close()
 
 
 async def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("action", choices=["poll", "login"])
+    parser.add_argument("action", choices=["poll", "login", "set"])
     parser.add_argument("config_file", nargs="?", default="-")
     args = parser.parse_args()
 
@@ -177,6 +214,8 @@ async def main() -> int:
     try:
         if args.action == "login":
             payload = await run_login(config)
+        elif args.action == "set":
+            payload = await run_set(config)
         else:
             payload = await run_poll(config)
         print(json.dumps(payload, ensure_ascii=False))
@@ -192,9 +231,6 @@ async def main() -> int:
             )
         )
         return 1
-    finally:
-        # stop mqtt if started
-        pass
 
 
 if __name__ == "__main__":

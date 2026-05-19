@@ -33,6 +33,7 @@ class AnkerSolix extends utils.Adapter {
       name: "anker-solix"
     });
     this.on("ready", this.onReady.bind(this));
+    this.on("stateChange", this.onStateChange.bind(this));
     this.on("unload", this.onUnload.bind(this));
   }
   getBridgeConfig() {
@@ -51,6 +52,7 @@ class AnkerSolix extends utils.Adapter {
     };
   }
   async pollOnce() {
+    var _a, _b, _c;
     if (!this.config.acceptTerms) {
       this.log.warn("Please accept the usage terms in the adapter configuration.");
       await this.setState("info.connection", false, true);
@@ -68,17 +70,41 @@ class AnkerSolix extends utils.Adapter {
         this.config.pythonPath || "",
         this.log
       );
-      if (result.contexts) {
-        await (0, import_stateSync.syncContexts)(this, result.contexts);
+      if ((_a = result.devices) == null ? void 0 : _a.length) {
+        await (0, import_stateSync.syncDevices)(this, result.devices);
       }
       if (result.nickname) {
         await this.setState("account.nickname", result.nickname, true);
       }
       await this.setState("info.connection", true, true);
-      this.log.debug(`Poll OK (${Object.keys(result.contexts || {}).length} contexts)`);
+      this.log.debug(`Poll OK (${(_c = (_b = result.devices) == null ? void 0 : _b.length) != null ? _c : 0} devices)`);
     } catch (error) {
       await this.setState("info.connection", false, true);
       this.log.error(`Poll failed: ${error.message}`);
+    }
+  }
+  async onStateChange(id, state) {
+    if (!state || state.ack) {
+      return;
+    }
+    const control = (0, import_stateSync.parseControlStateId)(this.namespace, id);
+    if (!control) {
+      return;
+    }
+    try {
+      const setConfig = {
+        ...this.getBridgeConfig(),
+        deviceId: control.deviceId,
+        control: control.control,
+        value: state.val
+      };
+      await (0, import_pythonBridge.runBridge)("set", setConfig, this.config.pythonPath || "", this.log);
+      await this.setState(id, { val: state.val, ack: true });
+      this.log.info(`Applied ${control.control} on ${control.deviceId}`);
+      await this.pollOnce();
+    } catch (error) {
+      this.log.error(`Control failed for ${id}: ${error.message}`);
+      await this.setState(id, { val: state.val, ack: false });
     }
   }
   async onReady() {
@@ -103,6 +129,7 @@ class AnkerSolix extends utils.Adapter {
     this.log.info(
       `Anker Solix adapter started (poll every ${intervalSec}s, MQTT: ${this.config.mqttUsage !== false})`
     );
+    this.subscribeStates(`${this.namespace}.*.control.*`);
     await this.pollOnce();
     this.pollTimer = this.setInterval(() => {
       void this.pollOnce();

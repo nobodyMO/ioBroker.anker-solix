@@ -10,5 +10,19 @@
 	"mqttUsage": "Use MQTT connection (like HA integration)",
 	"pythonPath": "Python command (empty = py/python3)",
 	"acceptTerms": "Accept terms of use",
-	"terms_hint": "This adapter uses the unofficial Anker cloud API (see https://github.com/thomluther/ha-anker-solix). Use at your own risk. Requires Python 3.12+ and packages from python/requirements.txt."
+	"terms_hint": "This adapter uses the unofficial Anker cloud API (see https://github.com/thomluther/ha-anker-solix). Use at your own risk. Requires Python 3.12+ and packages from python/requirements.txt.",
+	"input_power": "PV input power (W)",
+	"dc_output_power": "DC output power (W)",
+	"output_power_total": "Total output power (W)",
+	"battery_power": "Battery power (W)",
+	"grid_power": "Grid power (W)",
+	"home_power": "Home load power (W)",
+	"state_of_charge": "State of charge (%)",
+	"set_output_power": "Output preset (W)",
+	"allow_grid_export": "Allow grid export",
+	"preset_allow_export": "Allow export (schedule preset)",
+	"min_soc": "Minimum SOC reserve (%)",
+	"grid_export_limit": "Grid export limit (W)",
+	"cloud_state": "Cloud state",
+	"wifi_state": "WiFi state"
 }

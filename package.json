@@ -1,10 +1,10 @@
 {
   "name": "iobroker.anker-solix",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "ioBroker adapter for Anker Solix (based on ha-anker-solix)",
   "author": {
-    "name": "Miro1310",
-    "email": "michael.roling@gmx.de"
+    "name": "MatthiasUlrich1",
+    "email": "info@my-smart-home-support.de"
   },
   "contributors": [],
   "homepage": "https://github.com/MatthiasUlrich1/AnkerSolix",

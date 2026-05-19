@@ -1,13 +1,22 @@
-export interface BridgeContext {
-	meta: Record<string, string>;
-	states: Record<string, string | number | boolean | null>;
+export interface DeviceInfo {
+	id: string;
+	type: string;
+	name: string;
+	site_id: string;
+	model: string;
+}
+
+export interface BridgeDevice {
+	info: DeviceInfo;
+	entities: Record<string, string | number | boolean | null>;
+	writable: string[];
 }
 
 export interface BridgePollResult {
 	ok: boolean;
 	error?: string;
 	nickname?: string;
-	contexts?: Record<string, BridgeContext>;
+	devices?: BridgeDevice[];
 }
 
 export interface BridgeConfig {
@@ -17,4 +26,10 @@ export interface BridgeConfig {
 	mqttUsage: boolean;
 	cacheDir: string;
 	exclude?: string[];
+}
+
+export interface BridgeSetConfig extends BridgeConfig {
+	deviceId: string;
+	control: string;
+	value: string | number | boolean;
 }

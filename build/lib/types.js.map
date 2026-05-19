@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sources": ["../../src/lib/types.ts"],
-  "sourcesContent": ["export interface BridgeContext {\n\tmeta: Record<string, string>;\n\tstates: Record<string, string | number | boolean | null>;\n}\n\nexport interface BridgePollResult {\n\tok: boolean;\n\terror?: string;\n\tnickname?: string;\n\tcontexts?: Record<string, BridgeContext>;\n}\n\nexport interface BridgeConfig {\n\tusername: string;\n\tpassword: string;\n\tcountry: string;\n\tmqttUsage: boolean;\n\tcacheDir: string;\n\texclude?: string[];\n}\n"],
+  "sourcesContent": ["export interface DeviceInfo {\n\tid: string;\n\ttype: string;\n\tname: string;\n\tsite_id: string;\n\tmodel: string;\n}\n\nexport interface BridgeDevice {\n\tinfo: DeviceInfo;\n\tentities: Record<string, string | number | boolean | null>;\n\twritable: string[];\n}\n\nexport interface BridgePollResult {\n\tok: boolean;\n\terror?: string;\n\tnickname?: string;\n\tdevices?: BridgeDevice[];\n}\n\nexport interface BridgeConfig {\n\tusername: string;\n\tpassword: string;\n\tcountry: string;\n\tmqttUsage: boolean;\n\tcacheDir: string;\n\texclude?: string[];\n}\n\nexport interface BridgeSetConfig extends BridgeConfig {\n\tdeviceId: string;\n\tcontrol: string;\n\tvalue: string | number | boolean;\n}\n"],
   "mappings": ";;;;;;;;;;;;;;AAAA;AAAA;",
   "names": []
 }

@@ -28,15 +28,17 @@ On Windows you can use `py -3 -m pip install -r python/requirements.txt`.
 5. Start with a poll interval of **60–180 seconds** (same recommendation as in the HA integration).
 6. Optional: enable **MQTT** for additional device data (as in HA).
 
-## State structure
+## State structure (v0.1.0+)
 
-After each successful poll, states are created per API context (account, site, device serial):
+HA-aligned entities per device under:
 
-- `anker-solix.0.<contextId>.<flattened_key>` – numeric/string/boolean values from the API cache
-- `anker-solix.0.account.nickname` – logged-in account nickname
+- `anker-solix.0.solarbank.<deviceId>.sensors.*` – e.g. `input_power`, `state_of_charge`, `dc_output_power`, `battery_power`, `grid_power`, `home_power`
+- `anker-solix.0.solarbank.<deviceId>.control.*` – writable: `allow_grid_export`, `preset_allow_export`, `set_output_power`, `min_soc`, `grid_export_limit` (when supported by your device/API)
+- `anker-solix.0.system.<siteId>.sensors.*` – system totals where available
+- `anker-solix.0.account.nickname` – account nickname
 - `anker-solix.0.info.connection` – cloud connection indicator
 
-This is an initial release; not all HA entities/controls are mapped yet. Contributions welcome.
+Controls use the same API/MQTT paths as the [HA integration](https://github.com/thomluther/ha-anker-solix). Not every device model supports every control.
 
 ## Disclaimer
 

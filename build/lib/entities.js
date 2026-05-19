@@ -1,0 +1,62 @@
+"use strict";
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var entities_exports = {};
+__export(entities_exports, {
+  ENTITY_MAP: () => ENTITY_MAP,
+  isWritable: () => isWritable
+});
+module.exports = __toCommonJS(entities_exports);
+const SENSOR_ENTITIES = [
+  { id: "input_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "dc_output_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "output_power_total", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "battery_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "grid_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "home_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "state_of_charge", kind: "sensor", role: "value.battery", unit: "%" },
+  { id: "set_output_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "cloud_state", kind: "sensor", role: "indicator" },
+  { id: "wifi_state", kind: "sensor", role: "indicator" }
+];
+const CONTROL_ENTITIES = [
+  { id: "allow_grid_export", kind: "switch", role: "switch" },
+  { id: "preset_allow_export", kind: "switch", role: "switch" },
+  { id: "set_output_power", kind: "number", role: "level.power", unit: "W", min: 0, max: 1200 },
+  { id: "min_soc", kind: "number", role: "level.battery", unit: "%", min: 0, max: 100 },
+  {
+    id: "grid_export_limit",
+    kind: "number",
+    role: "level.power",
+    unit: "W",
+    min: 0,
+    max: 1e5
+  }
+];
+const ENTITY_MAP = new Map(
+  [...SENSOR_ENTITIES, ...CONTROL_ENTITIES].map((e) => [e.id, e])
+);
+function isWritable(entityId, writable) {
+  return writable.includes(entityId);
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (module.exports = {
+  ENTITY_MAP,
+  isWritable
+});
+//# sourceMappingURL=entities.js.map

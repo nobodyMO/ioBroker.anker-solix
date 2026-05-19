@@ -18,68 +18,90 @@ var __copyProps = (to, from, except, desc) => {
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var stateSync_exports = {};
 __export(stateSync_exports, {
-  syncContexts: () => syncContexts
+  parseControlStateId: () => parseControlStateId,
+  syncDevices: () => syncDevices
 });
 module.exports = __toCommonJS(stateSync_exports);
+var import_entities = require("./entities");
 function sanitizeIdPart(value) {
   return value.replace(/[^a-zA-Z0-9._-]/g, "_");
 }
-function inferRole(key, value) {
-  const lower = key.toLowerCase();
-  if (lower.includes("soc") || lower.endsWith("_percent")) {
-    return "value.battery";
-  }
-  if (lower.includes("power") || lower.includes("_w")) {
-    return "value.power";
-  }
-  if (lower.includes("energy") || lower.includes("kwh")) {
-    return "value.energy";
-  }
-  if (typeof value === "boolean") {
-    return "indicator";
-  }
-  return "value";
+function channelForDevice(info) {
+  const typePart = sanitizeIdPart(info.type || "device");
+  const idPart = sanitizeIdPart(info.id);
+  return `${typePart}.${idPart}`;
 }
-function inferType(value) {
-  if (typeof value === "boolean") {
-    return "boolean";
-  }
-  if (typeof value === "number") {
-    return "number";
-  }
-  return "string";
-}
-async function syncContexts(adapter, contexts) {
-  for (const [contextId, context] of Object.entries(contexts)) {
-    const channelId = sanitizeIdPart(contextId);
-    const channelPath = `${adapter.namespace}.${channelId}`;
+async function syncDevices(adapter, devices) {
+  var _a, _b;
+  for (const device of devices) {
+    const base = channelForDevice(device.info);
+    const channelPath = `${adapter.namespace}.${base}`;
     await adapter.setObjectNotExistsAsync(channelPath, {
       type: "channel",
       common: {
-        name: context.meta.device_name || context.meta.site_name || contextId
+        name: `${device.info.name} (${device.info.type})`
       },
-      native: context.meta
+      native: device.info
     });
-    for (const [stateKey, stateVal] of Object.entries(context.states)) {
-      const stateId = `${channelPath}.${sanitizeIdPart(stateKey.replace(/\./g, "_"))}`;
-      const type = inferType(stateVal);
+    await adapter.setObjectNotExistsAsync(`${channelPath}.info.model`, {
+      type: "state",
+      common: {
+        name: "Model",
+        type: "string",
+        role: "info",
+        read: true,
+        write: false
+      },
+      native: {}
+    });
+    if (device.info.model) {
+      await adapter.setState(`${channelPath}.info.model`, device.info.model, true);
+    }
+    for (const [entityId, value] of Object.entries(device.entities)) {
+      if (value === null || value === void 0) {
+        continue;
+      }
+      const meta = import_entities.ENTITY_MAP.get(entityId);
+      const writable = meta ? (0, import_entities.isWritable)(entityId, device.writable) : false;
+      const kind = (_a = meta == null ? void 0 : meta.kind) != null ? _a : "sensor";
+      const subfolder = kind === "sensor" ? "sensors" : "control";
+      const stateId = `${channelPath}.${subfolder}.${entityId}`;
+      const type = typeof value === "boolean" ? "boolean" : typeof value === "number" ? "number" : "string";
       await adapter.setObjectNotExistsAsync(stateId, {
         type: "state",
         common: {
-          name: stateKey,
+          name: entityId,
           type,
-          role: inferRole(stateKey, stateVal),
+          role: (_b = meta == null ? void 0 : meta.role) != null ? _b : "value",
+          unit: meta == null ? void 0 : meta.unit,
+          min: meta == null ? void 0 : meta.min,
+          max: meta == null ? void 0 : meta.max,
           read: true,
-          write: false
+          write: writable
         },
-        native: {}
+        native: { control: entityId }
       });
-      await adapter.setState(stateId, stateVal, true);
+      await adapter.setState(stateId, value, true);
     }
   }
 }
+function parseControlStateId(namespace, stateId) {
+  const prefix = `${namespace}.`;
+  if (!stateId.startsWith(prefix) || !stateId.includes(".control.")) {
+    return null;
+  }
+  const relative = stateId.slice(prefix.length);
+  const parts = relative.split(".");
+  if (parts.length < 4 || parts[parts.length - 2] !== "control") {
+    return null;
+  }
+  const control = parts[parts.length - 1];
+  const deviceId = parts[1];
+  return { deviceId, control };
+}
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  syncContexts
+  parseControlStateId,
+  syncDevices
 });
 //# sourceMappingURL=stateSync.js.map

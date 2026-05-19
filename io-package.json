@@ -1,8 +1,21 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.0.1",
+		"version": "0.1.0",
 		"news": {
+			"0.1.0": {
+				"en": "HA-aligned Solarbank sensors and control entities; author update",
+				"de": "HA-ähnliche Solarbank-Sensoren und Steuerungen; Autor aktualisiert",
+				"ru": "Сенсоры и управление Solarbank",
+				"pt": "Sensores e controles Solarbank",
+				"nl": "Solarbank sensoren en bediening",
+				"fr": "Capteurs et commandes Solarbank",
+				"it": "Sensori e controlli Solarbank",
+				"es": "Sensores y controles Solarbank",
+				"pl": "Czujniki i sterowanie Solarbank",
+				"uk": "Датчики та керування Solarbank",
+				"zh-cn": "Solarbank 传感器和控制"
+			},
 			"0.0.1": {
 				"en": "Initial release based on ha-anker-solix",
 				"de": "Erstveröffentlichung basierend auf ha-anker-solix",
@@ -43,7 +56,7 @@
 			"uk": "Anker Solix через хмарний API",
 			"zh-cn": "通过云 API 的 Anker Solix"
 		},
-		"authors": ["Miro1310 <michael.roling@gmx.de>"],
+		"authors": ["MatthiasUlrich1 <info@my-smart-home-support.de>"],
 		"keywords": ["anker", "solix", "solarbank", "energy", "solar", "battery"],
 		"licenseInformation": {
 			"type": "free",
