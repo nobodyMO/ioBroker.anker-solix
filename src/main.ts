@@ -3,6 +3,7 @@
  * Based on https://github.com/thomluther/ha-anker-solix (Home Assistant integration)
  */
 
+import * as fs from "node:fs";
 import * as path from "node:path";
 
 import * as utils from "@iobroker/adapter-core";
@@ -42,6 +43,36 @@ class AnkerSolix extends utils.Adapter {
 			selectedSiteId: this.config.selectedSiteId || "",
 			selectedDeviceIds: selectedIds,
 		};
+	}
+
+	/** GitHub repo is "AnkerSolix" but package is iobroker.anker-solix – remove install-only symlink. */
+	private cleanupGithubInstallSymlink(): void {
+		const alias = path.join(this.adapterDir, "..", "iobroker.AnkerSolix");
+		try {
+			if (fs.existsSync(alias) && fs.lstatSync(alias).isSymbolicLink()) {
+				fs.unlinkSync(alias);
+				this.log.debug("Removed install symlink iobroker.AnkerSolix (display uses anker-solix only)");
+			}
+		} catch {
+			// ignore
+		}
+	}
+
+	/** Admin tile: use npm-style installedFrom so title is not "AnkerSolix" from GitHub URL. */
+	private async normalizeAdapterRegistryEntry(): Promise<void> {
+		const adapterObj = `system.adapter.${this.name}`;
+		const version = this.common.version || "0.0.0";
+		const installedFrom = `iobroker.${this.name}@${version}`;
+		try {
+			const obj = await this.getObjectAsync(adapterObj);
+			if (obj?.common && obj.common.installedFrom !== installedFrom) {
+				await this.extendObject(adapterObj, {
+					common: { installedFrom },
+				});
+			}
+		} catch {
+			// ignore
+		}
 	}
 
 	private async ensurePythonDeps(force = false): Promise<boolean> {
@@ -287,6 +318,9 @@ class AnkerSolix extends utils.Adapter {
 	}
 
 	private async onReady(): Promise<void> {
+		this.cleanupGithubInstallSymlink();
+		await this.normalizeAdapterRegistryEntry();
+
 		await this.setObjectNotExistsAsync("account", {
 			type: "channel",
 			common: { name: "Account" },

@@ -21,6 +21,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
+var fs = __toESM(require("node:fs"));
 var path = __toESM(require("node:path"));
 var utils = __toESM(require("@iobroker/adapter-core"));
 var import_configHelpers = require("./lib/configHelpers");
@@ -53,6 +54,32 @@ class AnkerSolix extends utils.Adapter {
       selectedSiteId: this.config.selectedSiteId || "",
       selectedDeviceIds: selectedIds
     };
+  }
+  /** GitHub repo is "AnkerSolix" but package is iobroker.anker-solix – remove install-only symlink. */
+  cleanupGithubInstallSymlink() {
+    const alias = path.join(this.adapterDir, "..", "iobroker.AnkerSolix");
+    try {
+      if (fs.existsSync(alias) && fs.lstatSync(alias).isSymbolicLink()) {
+        fs.unlinkSync(alias);
+        this.log.debug("Removed install symlink iobroker.AnkerSolix (display uses anker-solix only)");
+      }
+    } catch {
+    }
+  }
+  /** Admin tile: use npm-style installedFrom so title is not "AnkerSolix" from GitHub URL. */
+  async normalizeAdapterRegistryEntry() {
+    const adapterObj = `system.adapter.${this.name}`;
+    const version = this.common.version || "0.0.0";
+    const installedFrom = `iobroker.${this.name}@${version}`;
+    try {
+      const obj = await this.getObjectAsync(adapterObj);
+      if ((obj == null ? void 0 : obj.common) && obj.common.installedFrom !== installedFrom) {
+        await this.extendObject(adapterObj, {
+          common: { installedFrom }
+        });
+      }
+    } catch {
+    }
   }
   async ensurePythonDeps(force = false) {
     if (!force && this.config.autoInstallPython === false) {
@@ -227,11 +254,11 @@ class AnkerSolix extends utils.Adapter {
     try {
       if (obj.command === "clearAuthCache") {
         const cacheDir = path.join(utils.getAbsoluteInstanceDataDir(this), "authcache");
-        const fs = await Promise.resolve().then(() => __toESM(require("node:fs/promises")));
+        const fs2 = await Promise.resolve().then(() => __toESM(require("node:fs/promises")));
         try {
-          const files = await fs.readdir(cacheDir);
+          const files = await fs2.readdir(cacheDir);
           await Promise.all(
-            files.map((f) => fs.unlink(path.join(cacheDir, f)).catch(() => void 0))
+            files.map((f) => fs2.unlink(path.join(cacheDir, f)).catch(() => void 0))
           );
           respond({ ok: true, cleared: files.length });
         } catch {
@@ -269,6 +296,8 @@ class AnkerSolix extends utils.Adapter {
     }
   }
   async onReady() {
+    this.cleanupGithubInstallSymlink();
+    await this.normalizeAdapterRegistryEntry();
     await this.setObjectNotExistsAsync("account", {
       type: "channel",
       common: { name: "Account" },

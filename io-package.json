@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.2.6",
+		"version": "0.2.7",
 		"messagebox": true,
 		"news": {
+			"0.2.7": {
+				"en": "Admin tile: remove GitHub install symlink, normalize display name (Anker Solix)",
+				"de": "Admin-Kachel: GitHub-Symlink entfernt, einheitlicher Anzeigename (Anker Solix)",
+				"ru": "Единое имя в Admin",
+				"pt": "Nome unificado no Admin",
+				"nl": "Uniforme naam in Admin",
+				"fr": "Nom uniforme dans Admin",
+				"it": "Nome uniforme in Admin",
+				"es": "Nombre uniforme en Admin",
+				"pl": "Jednolita nazwa w Admin",
+				"uk": "Єдине ім'я в Admin",
+				"zh-cn": "Admin 中统一显示名称"
+			},
 			"0.2.6": {
 				"en": "Auth fix: correct instance cache path, retry login on stale token, clearer errors",
 				"de": "Auth-Fix: korrekter Cache-Pfad, Login-Wiederholung bei abgelaufenem Token, klarere Fehler",
