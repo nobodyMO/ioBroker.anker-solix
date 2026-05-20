@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.9.3",
+		"version": "0.9.4",
 		"messagebox": true,
 		"news": {
+			"0.9.4": {
+				"en": "Log exact authcache path when login cache file is missing",
+				"de": "Loggt exakten authcache-Pfad wenn Login-Cache fehlt",
+				"ru": "Путь authcache в логе",
+				"pt": "Caminho authcache no log",
+				"nl": "Authcache-pad in log",
+				"fr": "Chemin authcache dans les logs",
+				"it": "Percorso authcache nel log",
+				"es": "Ruta authcache en log",
+				"pl": "Ścieżka authcache w logu",
+				"uk": "Шлях authcache у логах",
+				"zh-cn": "缺少缓存时记录路径"
+			},
 			"0.9.3": {
 				"en": "Fix login cache treated as failed after restart (captcha 100032 after saving entity groups)",
 				"de": "Login-Cache nach Neustart wieder nutzen (Captcha 100032 nach Entitätsgruppen)",

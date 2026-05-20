@@ -45,8 +45,44 @@ class AnkerSolix extends utils.Adapter {
     this.on("message", this.onMessage.bind(this));
     this.on("unload", this.onUnload.bind(this));
   }
+  getAuthCacheDir() {
+    return path.join(utils.getAbsoluteInstanceDataDir(this), "authcache");
+  }
+  getAuthCacheFile() {
+    const email = (this.config.username || "").trim();
+    return path.join(this.getAuthCacheDir(), `${email}.json`);
+  }
+  logAuthCacheStatus() {
+    const cacheDir = this.getAuthCacheDir();
+    const cacheFile = this.getAuthCacheFile();
+    const email = (this.config.username || "").trim();
+    if (!email) {
+      return;
+    }
+    try {
+      fs.mkdirSync(cacheDir, { recursive: true });
+    } catch (err) {
+      this.log.warn(`Cannot create authcache folder ${cacheDir}: ${err.message}`);
+      return;
+    }
+    if (fs.existsSync(cacheFile)) {
+      this.log.debug(`Anker login cache present: ${cacheFile}`);
+      return;
+    }
+    let other = "";
+    try {
+      const names = fs.readdirSync(cacheDir).filter((f) => f.endsWith(".json"));
+      if (names.length) {
+        other = ` Found other file(s) in folder: ${names.join(", ")} (username must match filename).`;
+      }
+    } catch {
+    }
+    this.log.warn(
+      `No Anker login cache at ${cacheFile}.${other} Without this file every adapter restart triggers a new API login (often captcha 100032). Copy <email>.json from a working Anker/Solix integration (e.g. ha-anker-solix) into that folder, then restart.`
+    );
+  }
   getBridgeConfig() {
-    const cacheDir = path.join(utils.getAbsoluteInstanceDataDir(this), "authcache");
+    const cacheDir = this.getAuthCacheDir();
     const selectedIds = (0, import_configHelpers.parseSelectedDeviceIds)(this.config.selectedDeviceIds);
     return {
       username: this.config.username,
@@ -142,9 +178,14 @@ class AnkerSolix extends utils.Adapter {
       await this.setState("info.connection", false, true);
       const msg = error.message || String(error);
       if (msg.includes("CaptchaRequired") || msg.includes("100032") || msg.toLowerCase().includes("captcha")) {
+        const cacheFile = this.getAuthCacheFile();
+        const missing = !fs.existsSync(cacheFile);
         this.log.error(
-          `Poll failed: ${msg} \u2013 Anker verlangt Captcha f\xFCr einen erzwungenen API-Neulogin. Nach Instanz-Neustart (z. B. Entit\xE4tsgruppe speichern) soll der vorhandene Login-Cache genutzt werden \u2013 pr\xFCfen ob iobroker-data/${this.namespace}/authcache/<E-Mail>.json existiert. Mit 0.9.3 behoben: Cache wurde f\xE4lschlich als ung\xFCltig gewertet. Update installieren und Adapter neu starten.`
+          `Poll failed: ${msg} \u2013 API-Neulogin n\xF6tig${missing ? " (kein Login-Cache)" : ""}. ` + (missing ? `Erwartete Datei: ${cacheFile} \u2013 von funktionierender Anker/Solix-Integration (z. B. ha-anker-solix) dorthin kopieren, Ordner anlegen falls n\xF6tig, Adapter neu starten.` : `Cache vorhanden aber ung\xFCltig: ${cacheFile} \u2013 frische Datei von HA kopieren oder Passwort in Admin neu speichern.`)
         );
+        if (missing) {
+          this.logAuthCacheStatus();
+        }
       } else if (msg.includes("Cached Anker login is invalid") || msg.includes("invalidated by the mobile app")) {
         this.log.error(
           `Poll failed: ${msg} \u2013 Gespeicherter API-Token ung\xFCltig (abgelaufen oder durch App ersetzt). Nicht \u201ECache l\xF6schen\u201C \u2013 stattdessen frische authcache-Datei von HA kopieren oder App kurz abmelden, dann neu starten.`
@@ -302,7 +343,7 @@ class AnkerSolix extends utils.Adapter {
     };
     try {
       if (obj.command === "clearAuthCache") {
-        const cacheDir = path.join(utils.getAbsoluteInstanceDataDir(this), "authcache");
+        const cacheDir = this.getAuthCacheDir();
         const fs2 = await Promise.resolve().then(() => __toESM(require("node:fs/promises")));
         try {
           const files = await fs2.readdir(cacheDir);
@@ -381,6 +422,7 @@ class AnkerSolix extends utils.Adapter {
       `Anker Solix adapter started (poll every ${intervalSec}s, MQTT: ${this.config.mqttUsage !== false})`
     );
     await this.ensurePythonDeps();
+    this.logAuthCacheStatus();
     await (0, import_pythonBridge.ensureBridgeDaemon)(this.getBridgeConfig(), this.config.pythonPath || "", this.log);
     this.subscribeStates(`${this.namespace}.*.control.*`);
     this.subscribeStates(`${this.namespace}.services.*`);
