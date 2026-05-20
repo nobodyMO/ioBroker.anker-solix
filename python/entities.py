@@ -92,10 +92,17 @@ SENSOR_ENTITIES: list[dict[str, Any]] = [
     },
     {
         "id": "ac_charge_limit",
-        "keys": ["ac_input_limit", "ac_power_limit"],
+        "keys": ["ac_input_limit", "ac_power_limit", "preset_ac_input_limit"],
         "unit": "W",
         "role": "value.power",
         "types": [SOLARBANK],
+    },
+    {
+        "id": "all_ac_input_limit",
+        "keys": ["all_ac_input_limit", "ac_input_power_unit"],
+        "unit": "W",
+        "role": "value.power",
+        "types": [COMBINER, SYSTEM],
     },
     {
         "id": "cloud_state",
@@ -192,16 +199,22 @@ CONTROL_ENTITIES: list[dict[str, Any]] = [
     {
         "id": "ac_output_limit",
         "keys": [
+            "max_load_total",
+            "all_power_limit",
             "preset_system_output_power",
             "parallel_home_load",
             "legal_power_limit",
             "max_load",
+            "power_limit",
         ],
         "role": "level.power",
         "types": [SOLARBANK, COMBINER, SYSTEM],
         "control": "ac_output_limit",
         "min": 0,
         "max": 5000,  # multisystem/combiner up to ~4800 W (HA PRESET_MAX_MULTISYSTEM)
+        # HA select max_load_total: only when multisystem total limit is exposed
+        "require_any_keys": ["all_power_limit", "max_load_total"],
+        "require_types": [COMBINER, SYSTEM],
     },
     {
         "id": "min_soc",
@@ -242,6 +255,27 @@ CONTROL_ENTITIES: list[dict[str, Any]] = [
 ]
 
 _NESTED_KEYS = ("solarbank_info", "solarbank_pps_info", "average_power")
+_POWER_KEYS = frozenset(
+    {
+        "ac_input_limit",
+        "ac_power_limit",
+        "all_ac_input_limit",
+        "ac_input_power_unit",
+        "all_power_limit",
+        "max_load_total",
+        "preset_ac_input_limit",
+    }
+)
+
+
+def _parse_power_value(val: Any) -> Any:
+    if isinstance(val, (int, float)):
+        return int(val)
+    if isinstance(val, str):
+        cleaned = val.replace("W", "").replace("w", "").strip()
+        if cleaned.isdigit():
+            return int(cleaned)
+    return val
 
 
 def _nested_get(data: dict, key: str, nested: bool = False) -> Any:
@@ -262,9 +296,40 @@ def _nested_get(data: dict, key: str, nested: bool = False) -> Any:
 
 
 def pick_value(data: dict, keys: list[str], nested: bool = False) -> Any:
+    mqtt = data.get("mqtt_data")
+    if isinstance(mqtt, dict):
+        for key in keys:
+            val = mqtt.get(key)
+            if val is not None and val != "":
+                if key in ("set_output_power", "preset_system_output_power") and isinstance(
+                    val, str
+                ):
+                    cleaned = val.replace("W", "").strip()
+                    return int(cleaned) if cleaned.isdigit() else val
+                if key in ("allow_grid_export", "switch_0w", "grid_export_disabled"):
+                    if key == "switch_0w":
+                        return not bool(int(val) if str(val).isdigit() else val)
+                    if key == "grid_export_disabled":
+                        return not bool(val)
+                    return bool(val) if not isinstance(val, str) else val.lower() in (
+                        "1",
+                        "true",
+                        "on",
+                        "yes",
+                    )
+                if key in _POWER_KEYS:
+                    return _parse_power_value(val)
+                return val
     for key in keys:
         val = _nested_get(data, key, nested=nested)
         if val is not None and val != "":
+            if key in _POWER_KEYS or key in (
+                "set_output_power",
+                "preset_system_output_power",
+            ):
+                parsed = _parse_power_value(val)
+                if isinstance(parsed, int):
+                    return parsed
             if key in ("set_output_power", "preset_system_output_power") and isinstance(
                 val, str
             ):
@@ -313,6 +378,19 @@ def controls_for_type(dev_type: str) -> list[str]:
     ]
 
 
+def writable_controls_for_device(data: dict, dev_type: str) -> list[str]:
+    """HA: preset_ac_input_limit only on solarbanks with MQTT; combiner uses all_ac_input_limit (read)."""
+    controls = controls_for_type(dev_type)
+    if dev_type == SOLARBANK and "ac_charge_limit" in controls:
+        if not (
+            data.get("mqtt_data")
+            or data.get("mqtt_supported")
+            or pick_value(data, ["ac_input_limit", "ac_power_limit"]) is not None
+        ):
+            controls = [c for c in controls if c != "ac_charge_limit"]
+    return controls
+
+
 def extract_entities(data: dict) -> dict[str, Any]:
     dev_type = str(data.get("type") or data.get("device_type") or "").lower()
     if not dev_type:
@@ -330,6 +408,17 @@ def extract_entities(data: dict) -> dict[str, Any]:
     for spec in CONTROL_ENTITIES:
         if dev_type and dev_type not in spec.get("types", []):
             continue
+        req_types = spec.get("require_types") or []
+        req_keys = spec.get("require_any_keys") or []
+        if req_types and dev_type in req_types and req_keys:
+            if not any(
+                pick_value(data, [key]) is not None for key in req_keys
+            ):
+                continue
+        # HA max_load: per-SB only without station; multisystem uses combiner max_load_total
+        if spec["id"] == "ac_output_limit" and dev_type == SOLARBANK:
+            if data.get("station_sn") or "all_power_limit" in data:
+                continue
         val = pick_value(data, spec["keys"])
         if val is not None:
             entities[spec["id"]] = val

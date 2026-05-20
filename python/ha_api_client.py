@@ -104,6 +104,22 @@ class IoBrokerAnkerApiClient:
         except OSError as exc:
             self._logger.warning("Could not save poll state: %s", exc)
 
+    async def _refresh_power_limits(self) -> None:
+        """Fetch site power limits (ac_input_limit per SB, all_ac_input_limit on combiner)."""
+        from solixapi import errors  # noqa: PLC0415
+
+        for site_id, site in list(self.api.sites.items()):
+            if not site.get("site_admin"):
+                continue
+            if not (site.get("solarbank_list") or site.get("station_sn")):
+                continue
+            try:
+                await self.api.get_power_limit(siteId=str(site_id))
+            except errors.RequestError as exc:
+                self._logger.debug(
+                    "get_power_limit skipped for site %s: %s", site_id, exc
+                )
+
     async def authenticate(self) -> None:
         import asyncio
         from solixapi import errors  # noqa: PLC0415
@@ -145,6 +161,7 @@ class IoBrokerAnkerApiClient:
             )
             await self.api.update_device_details(exclude=set(self.exclude_categories))
             await self.api.update_site_details(exclude=set(self.exclude_categories))
+            await self._refresh_power_limits()
             if self._startup:
                 self._logger.info("Deferring energy updates on first device refresh")
             else:
@@ -154,6 +171,8 @@ class IoBrokerAnkerApiClient:
             self._intervalcount = self._deviceintervals
             self.active_device_refresh = False
             await self.check_mqtt_session()
+            if self.api.mqttsession and self.api.mqttsession.is_connected():
+                self.api.update_device_mqtt()
         elif self._startup and not self.deferred_data:
             self.active_device_refresh = True
             self._logger.info("Updating deferred energy data")
@@ -161,6 +180,9 @@ class IoBrokerAnkerApiClient:
             self.deferred_data = True
             self._startup = False
             self.active_device_refresh = False
+
+        if self._mqtt_usage and self.api.mqttsession and self.api.mqttsession.is_connected():
+            self.api.update_device_mqtt()
 
         self._save_state()
         return {

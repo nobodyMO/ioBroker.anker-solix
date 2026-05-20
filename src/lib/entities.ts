@@ -24,6 +24,7 @@ const SENSOR_ENTITIES: EntityMeta[] = [
 	{ id: "set_output_power", kind: "sensor", role: "value.power", unit: "W" },
 	{ id: "pv_input_limit", kind: "sensor", role: "value.power", unit: "W" },
 	{ id: "ac_charge_limit", kind: "sensor", role: "value.power", unit: "W" },
+	{ id: "all_ac_input_limit", kind: "sensor", role: "value.power", unit: "W" },
 	{ id: "cloud_state", kind: "sensor", role: "indicator" },
 	{ id: "wifi_state", kind: "sensor", role: "indicator" },
 	// Smart meter

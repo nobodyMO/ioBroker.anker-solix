@@ -932,7 +932,14 @@ async def poll_site_details(
                         "Getting api %s power limits for site",
                         api.apisession.nickname,
                     )
-                    await api.get_power_limit(siteId=site_id, fromFile=fromFile)
+                    try:
+                        await api.get_power_limit(siteId=site_id, fromFile=fromFile)
+                    except Exception as exc:  # noqa: BLE001
+                        api._logger.warning(
+                            "Power limits unavailable for site %s (%s)",
+                            site_id,
+                            exc,
+                        )
             # Fetch CO2 Ranking if not excluded
             if not ({f"{site_type}_energy"} & exclude):
                 api._logger.debug(

@@ -1,9 +1,48 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.6.2",
+		"version": "0.6.5",
 		"messagebox": true,
 		"news": {
+			"0.6.5": {
+				"en": "Fix ac_charge_limit: MQTT cmds, power limit poll, all_ac_input_limit on combiner (read); push 0.6.3+ fixes",
+				"de": "ac_charge_limit: MQTT-Befehle, Power-Limit-Poll, all_ac_input_limit am Combiner (lesen)",
+				"ru": "Исправлен ac_charge_limit и лимиты",
+				"pt": "Correção ac_charge_limit",
+				"nl": "ac_charge_limit gerepareerd",
+				"fr": "Correction ac_charge_limit",
+				"it": "Corretto ac_charge_limit",
+				"es": "Corregido ac_charge_limit",
+				"pl": "Naprawiono ac_charge_limit",
+				"uk": "Виправлено ac_charge_limit",
+				"zh-cn": "修复 ac_charge_limit"
+			},
+			"0.6.4": {
+				"en": "AC output/charge limits: MQTT-first, safe API (no 10004 poll crash), live MQTT values for ac_charge_limit",
+				"de": "AC-Ausgang/Ladegrenzen: MQTT zuerst, sichere API (kein 10004-Poll-Abbruch), MQTT-Livewerte für ac_charge_limit",
+				"ru": "Лимиты AC: MQTT и безопасный API",
+				"pt": "Limites AC: MQTT e API segura",
+				"nl": "AC-limieten: MQTT en veilige API",
+				"fr": "Limites AC : MQTT et API sécurisée",
+				"it": "Limiti AC: MQTT e API sicura",
+				"es": "Límites AC: MQTT y API segura",
+				"pl": "Limity AC: MQTT i bezpieczne API",
+				"uk": "Ліміти AC: MQTT і безпечне API",
+				"zh-cn": "AC 限制：MQTT 优先与安全 API"
+			},
+			"0.6.3": {
+				"en": "Fix combiner ac_output_limit (10004): MQTT parallel max load + HA-aligned API fallback",
+				"de": "Combiner ac_output_limit (10004): MQTT-Parallel-Last + HA-konformer API-Fallback",
+				"ru": "Исправлен ac_output_limit для combiner",
+				"pt": "Correção ac_output_limit no combiner",
+				"nl": "Combiner ac_output_limit gerepareerd",
+				"fr": "Correction ac_output_limit combiner",
+				"it": "Corretto ac_output_limit combiner",
+				"es": "Corregido ac_output_limit en combiner",
+				"pl": "Naprawiono ac_output_limit combiner",
+				"uk": "Виправлено ac_output_limit combiner",
+				"zh-cn": "修复 combiner ac_output_limit"
+			},
 			"0.6.2": {
 				"en": "Fix control state min/max for multisystem AC output (4800 W) and grid export limit 0",
 				"de": "Min/Max der Steuer-States für Multisystem AC-Ausgang (4800 W) und Netzeinspeisung 0 korrigiert",

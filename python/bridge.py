@@ -22,6 +22,7 @@ from entities import (  # noqa: E402
     controls_for_type,
     extract_entities,
     should_include_device,
+    writable_controls_for_device,
 )
 from ha_api_client import (  # noqa: E402
     DEFAULT_DELAY_TIME,
@@ -31,7 +32,11 @@ from ha_api_client import (  # noqa: E402
 from solixapi.export import AnkerSolixApiExport  # noqa: E402
 from solixapi import errors  # noqa: E402
 from solixapi.api import AnkerSolixApi  # noqa: E402
-from solixapi.apitypes import ApiCategories, SolixDeviceType  # noqa: E402
+from solixapi.apitypes import (  # noqa: E402
+    ApiCategories,
+    SolixDeviceType,
+    SolixParmType,
+)
 from solixapi.mqtt_factory import SolixMqttDeviceFactory  # noqa: E402
 from solixapi.mqttcmdmap import SolixMqttCommands  # noqa: E402
 
@@ -124,9 +129,10 @@ def _seed_device_context(api: AnkerSolixApi, device_id: str, config: dict) -> No
     meta = config.get("deviceContext") or {}
     if not meta:
         return
+    dev_type = str(meta.get("type") or "").lower()
     entry = {
         "device_sn": device_id,
-        "type": meta.get("type") or "",
+        "type": dev_type,
         "site_id": meta.get("site_id") or "",
         "device_pn": meta.get("device_pn") or "",
         "product_code": meta.get("device_pn") or "",
@@ -134,6 +140,11 @@ def _seed_device_context(api: AnkerSolixApi, device_id: str, config: dict) -> No
         "generation": int(meta.get("generation") or 0),
         "mqtt_supported": True,
     }
+    if dev_type == COMBINER:
+        cached = api.devices.get(device_id) or {}
+        for key in ("all_power_limit", "max_load_total", "power_limit_option"):
+            if key in cached:
+                entry[key] = cached[key]
     api.devices[device_id] = {**(api.devices.get(device_id) or {}), **entry}
     site_id = entry.get("site_id")
     if site_id and site_id not in api.sites:
@@ -156,6 +167,7 @@ async def _mqtt_command(
     value: int,
     parm: str,
     ha_client: IoBrokerAnkerApiClient | None = None,
+    parm_map: dict[str, Any] | None = None,
 ) -> bool:
     mdev = (ha_client.get_mqtt_device(device_sn) if ha_client else None) or (
         SolixMqttDeviceFactory(api, device_sn).create_device()
@@ -167,8 +179,181 @@ async def _mqtt_command(
             await ha_client.check_mqtt_session()
     elif not await _ensure_mqtt(api):
         return False
-    resp = await mdev.run_command(cmd=cmd, value=value, parm=parm)
+    resp = await mdev.run_command(
+        cmd=cmd,
+        value=value,
+        parm=parm,
+        parm_map=parm_map,
+    )
     return bool(resp)
+
+
+async def _mqtt_max_load_parallel(
+    api: AnkerSolixApi,
+    site_id: str,
+    limit: int,
+    primary_sn: str,
+    ha_client: IoBrokerAnkerApiClient | None = None,
+) -> bool:
+    """HA max_load_total: parallel max load on combiner or any site solarbank."""
+    if await _mqtt_command(
+        api,
+        primary_sn,
+        SolixMqttCommands.sb_max_load_parallel,
+        limit,
+        "set_max_load",
+        ha_client=ha_client,
+    ):
+        return True
+    for sn, dev in api.devices.items():
+        if (dev.get("site_id") or "") != site_id:
+            continue
+        if str(dev.get("type") or "").lower() != SOLARBANK:
+            continue
+        if sn == primary_sn:
+            continue
+        if await _mqtt_command(
+            api,
+            sn,
+            SolixMqttCommands.sb_max_load_parallel,
+            limit,
+            "set_max_load",
+            ha_client=ha_client,
+        ):
+            return True
+    return False
+
+
+async def _api_set_ac_output_only(
+    api: AnkerSolixApi,
+    site_id: str,
+    device_sn: str,
+    limit: int,
+    device: dict,
+) -> bool:
+    """Apply AC output limit without follow-up get_power_limit (avoids 10004 on some sites)."""
+    dev = api.devices.get(device_sn, {}) | device
+    dev_type = str(dev.get("type") or "").lower()
+    use_parm = (
+        dev_type in (COMBINER, SolixDeviceType.COMBINER_BOX.value)
+        or dev.get("station_sn")
+        or int(dev.get("generation") or 0) >= 3
+    )
+    try:
+        if use_parm:
+            resp = await api.set_device_parm(
+                siteId=site_id,
+                paramType=SolixParmType.SOLARBANK_POWER_LIMIT.value,
+                paramData={
+                    "power_limit": {"limit": limit, "limit_real": limit},
+                },
+                deviceSn=device_sn,
+            )
+            return isinstance(resp, dict)
+        resp = await api.set_device_attributes(
+            deviceSn=device_sn,
+            attributes={"power_limit": limit},
+        )
+        return isinstance(resp, dict)
+    except errors.ItemNotFoundError:
+        return False
+
+
+async def _set_ac_output_limit(
+    api: AnkerSolixApi,
+    site_id: str,
+    control_sn: str,
+    device_id: str,
+    device: dict,
+    limit: int,
+    ha_client: IoBrokerAnkerApiClient | None = None,
+) -> Any:
+    """HA max_load / max_load_total: MQTT first, optional API cache sync without get_power_limit."""
+    dev_type = str(device.get("type") or "").lower()
+    station_sn = device.get("station_sn")
+    multisystem = dev_type == COMBINER or "all_power_limit" in device
+    mqtt_ok = False
+
+    if multisystem:
+        mqtt_ok = await _mqtt_max_load_parallel(
+            api, site_id, limit, control_sn, ha_client=ha_client
+        )
+    elif dev_type == SOLARBANK and not station_sn:
+        mqtt_ok = await _mqtt_command(
+            api,
+            device_id,
+            SolixMqttCommands.sb_max_load,
+            limit,
+            "set_max_load",
+            ha_client=ha_client,
+        )
+
+    api_sn = (
+        control_sn
+        if multisystem or station_sn or int(device.get("generation") or 0) >= 3
+        else device_id
+    )
+    api_ok = await _api_set_ac_output_only(api, site_id, api_sn, limit, device)
+
+    if mqtt_ok:
+        return {"mqtt": True, "api": api_ok}
+    if api_ok:
+        return {"api": True}
+    raise RuntimeError(
+        "ac_output_limit rejected (enable MQTT in adapter settings; API returned 10004)"
+    )
+
+
+async def _api_set_ac_input_only(
+    api: AnkerSolixApi,
+    device_sn: str,
+    limit: int,
+) -> bool:
+    """Set AC charge limit via device attributes only (no get_power_limit refresh)."""
+    try:
+        resp = await api.set_device_attributes(
+            deviceSn=device_sn,
+            attributes={"ac_power_limit": limit},
+        )
+        return isinstance(resp, dict)
+    except errors.ItemNotFoundError:
+        return False
+
+
+async def _set_ac_charge_limit(
+    api: AnkerSolixApi,
+    site_id: str,
+    device_id: str,
+    limit: int,
+    ha_client: IoBrokerAnkerApiClient | None = None,
+) -> Any:
+    """HA preset_ac_input_limit: sb_ac_input_limit (SB2/3) or ac_charge_limit MQTT, then API."""
+    mqtt_cmds = (
+        (SolixMqttCommands.sb_ac_input_limit, "set_ac_input_limit"),
+        (SolixMqttCommands.ac_charge_limit, "set_ac_input_limit"),
+    )
+    for cmd, parm in mqtt_cmds:
+        if await _mqtt_command(
+            api, device_id, cmd, limit, parm, ha_client=ha_client
+        ):
+            await _api_set_ac_input_only(api, device_id, limit)
+            return {"mqtt": True, "cmd": cmd}
+    api_ok = await _api_set_ac_input_only(api, device_id, limit)
+    if api_ok:
+        return {"api": True}
+    try:
+        resp = await api.set_power_limit(
+            siteId=site_id,
+            deviceSn=device_id,
+            ac_input=limit,
+        )
+        if resp is not False:
+            return resp
+    except errors.ItemNotFoundError:
+        pass
+    raise RuntimeError(
+        "ac_charge_limit rejected (MQTT/API failed; ensure MQTT is on and device is online)"
+    )
 
 
 async def _set_min_soc(
@@ -241,10 +426,14 @@ async def apply_control(
                 preset=load,
             )
     elif control == "ac_output_limit":
-        result = await api.set_power_limit(
-            siteId=site_id,
-            deviceSn=control_sn,
-            ac_output=int(value),
+        result = await _set_ac_output_limit(
+            api,
+            site_id,
+            control_sn,
+            device_id,
+            device,
+            int(value),
+            ha_client=ha_client,
         )
     elif control == "pv_input_limit":
         result = await api.set_power_limit(
@@ -253,23 +442,13 @@ async def apply_control(
             pv_input=int(value),
         )
     elif control == "ac_charge_limit":
-        limit = int(value)
-        mqtt_ok = await _mqtt_command(
+        result = await _set_ac_charge_limit(
             api,
+            site_id,
             device_id,
-            SolixMqttCommands.sb_ac_input_limit,
-            limit,
-            "set_ac_input_limit",
+            int(value),
             ha_client=ha_client,
         )
-        if mqtt_ok:
-            result = {"mqtt": True}
-        else:
-            result = await api.set_power_limit(
-                siteId=site_id,
-                deviceSn=device_id,
-                ac_input=limit,
-            )
     elif control == "min_soc":
         result = await _set_min_soc(
             api, site_id, control_sn, device_id, device, int(value)
@@ -418,7 +597,7 @@ def _devices_from_caches(
         if not should_include_device(str(ctx_id), ctx_data, info, config):
             continue
         entities = extract_entities(ctx_data)
-        writable = controls_for_type(info["type"])
+        writable = writable_controls_for_device(ctx_data, info["type"])
         if not entities and not writable:
             continue
         devices.append(
