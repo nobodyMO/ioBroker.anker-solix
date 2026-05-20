@@ -152,6 +152,14 @@
 					"sm": 6,
 					"md": 4
 				},
+				"enableEnergyStatistics": {
+					"type": "checkbox",
+					"label": "enableEnergyStatistics",
+					"default": true,
+					"xs": 12,
+					"sm": 6,
+					"md": 4
+				},
 				"autoInstallPython": {
 					"type": "checkbox",
 					"label": "autoInstallPython",

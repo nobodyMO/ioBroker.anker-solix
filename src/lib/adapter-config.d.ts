@@ -16,6 +16,8 @@ declare global {
 			/** Max same-endpoint requests per minute (HA default 10, 0=off). */
 			endpointLimit?: number;
 			mqttUsage: boolean;
+			/** Fetch daily energy statistics (kWh) from Anker cloud (default on). */
+			enableEnergyStatistics?: boolean;
 			acceptTerms: boolean;
 			pythonPath: string;
 			autoInstallPython: boolean;

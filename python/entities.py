@@ -133,34 +133,6 @@ SENSOR_ENTITIES: list[dict[str, Any]] = [
         "types": [SMARTMETER, SYSTEM],
     },
     {
-        "id": "grid_import_energy",
-        "keys": ["grid_import_energy", "daily_grid_import"],
-        "unit": "kWh",
-        "role": "value.energy",
-        "types": [SMARTMETER, SYSTEM, SITE],
-    },
-    {
-        "id": "grid_export_energy",
-        "keys": ["grid_export_energy", "daily_grid_export"],
-        "unit": "kWh",
-        "role": "value.energy",
-        "types": [SMARTMETER, SYSTEM, SITE],
-    },
-    {
-        "id": "daily_grid_import",
-        "keys": ["grid_import", "daily_grid_import"],
-        "unit": "kWh",
-        "role": "value.energy",
-        "types": [SMARTMETER, SYSTEM],
-    },
-    {
-        "id": "daily_grid_export",
-        "keys": ["grid_export", "daily_grid_export"],
-        "unit": "kWh",
-        "role": "value.energy",
-        "types": [SMARTMETER, SYSTEM],
-    },
-    {
         "id": "phase",
         "keys": ["phase"],
         "role": "text",
@@ -482,6 +454,23 @@ def writable_controls_for_device(data: dict, dev_type: str) -> list[str]:
     return controls
 
 
+def extract_statistics_entities(data: dict, dev_type: str) -> dict[str, Any]:
+    from energy_entities import ENERGY_STATISTICS_ENTITIES, pick_energy_value  # noqa: PLC0415
+
+    entities: dict[str, Any] = {}
+    if not (data.get("energy_details") or {}).get("today"):
+        return entities
+    for spec in ENERGY_STATISTICS_ENTITIES:
+        if dev_type and dev_type not in spec.get("types", []):
+            continue
+        if spec.get("smartmeter_only") and dev_type != SMARTMETER:
+            continue
+        val = pick_energy_value(data, spec)
+        if val is not None:
+            entities[spec["id"]] = val
+    return entities
+
+
 def extract_entities(data: dict) -> dict[str, Any]:
     dev_type = str(data.get("type") or data.get("device_type") or "").lower()
     if not dev_type:
@@ -519,4 +508,5 @@ def extract_entities(data: dict) -> dict[str, Any]:
             val = pick_value(data, spec["keys"])
         if val is not None:
             entities[spec["id"]] = val
+    entities.update(extract_statistics_entities(data, dev_type))
     return entities

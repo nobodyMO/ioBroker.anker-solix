@@ -32,6 +32,7 @@
 	"requestDelay": "Pause zwischen API-Anfragen (s, HA: 0,3)",
 	"endpointLimit": "API-Limit pro Endpunkt/Minute (HA: 10, 0=aus)",
 	"mqttUsage": "MQTT-Verbindung nutzen (wie HA-Integration)",
+	"enableEnergyStatistics": "Tagesstatistiken (kWh) von der Cloud abrufen",
 	"pythonPath": "Python-Befehl (leer = py/python3)",
 	"acceptTerms": "Nutzungsbedingungen akzeptieren",
 	"terms_hint": "Dieser Adapter nutzt die inoffizielle Anker-Cloud-API (wie https://github.com/thomluther/ha-anker-solix). Nutzung auf eigenes Risiko. Python 3.12+ (unter Linux zusätzlich python3-venv). Pakete werden in python/.venv installiert.",

@@ -1,4 +1,11 @@
-import { ENTITY_MAP, isWritable, USAGE_MODE_STATES, type EntityMeta } from "./entities";
+import {
+	ENTITY_MAP,
+	isWritable,
+	STATISTICS_ENTITY_IDS,
+	STATISTICS_LABELS,
+	USAGE_MODE_STATES,
+	type EntityMeta,
+} from "./entities";
 import type { BridgeDevice } from "./types";
 
 function resolveStateType(meta: EntityMeta | undefined, value: unknown): ioBroker.CommonType {
@@ -10,6 +17,9 @@ function resolveStateType(meta: EntityMeta | undefined, value: unknown): ioBroke
 	}
 	if (meta?.kind === "list") {
 		return "string";
+	}
+	if (meta?.kind === "statistics") {
+		return meta.role === "value.date" ? "string" : "number";
 	}
 	if (typeof value === "boolean") {
 		return "boolean";
@@ -82,13 +92,19 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 			...Object.keys(device.entities),
 			...device.writable.filter((id) => ENTITY_MAP.get(id)?.kind !== "sensor"),
 		]);
+		if (device.hasStatistics) {
+			for (const id of STATISTICS_ENTITY_IDS) {
+				entityIds.add(id);
+			}
+		}
 
 		for (const entityId of entityIds) {
 			const value = device.entities[entityId];
 			const meta = ENTITY_MAP.get(entityId);
 			const writable = meta ? isWritable(entityId, device.writable) : false;
 			const kind = meta?.kind ?? "sensor";
-			const subfolder = kind === "sensor" ? "sensors" : "control";
+			const subfolder =
+				kind === "statistics" ? "statistics" : kind === "sensor" ? "sensors" : "control";
 			const stateId = `${channelPath}.${subfolder}.${entityId}`;
 			const stateType = resolveStateType(meta, value);
 			const hasValue = value !== null && value !== undefined;
@@ -96,12 +112,14 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 				? coerceStateValue(stateType, value)
 				: meta?.kind === "switch"
 					? false
-					: meta?.kind === "number"
-						? (meta.min ?? 0)
-						: "";
+					: meta?.kind === "statistics"
+						? null
+						: meta?.kind === "number"
+							? (meta.min ?? 0)
+							: "";
 
 			const common: ioBroker.StateCommon = {
-				name: entityId,
+				name: STATISTICS_LABELS[entityId] || entityId,
 				type: stateType,
 				role: meta?.role ?? "value",
 				read: true,
@@ -156,6 +174,8 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 			}
 			if (hasValue || writable) {
 				await adapter.setState(stateId, stateVal, true);
+			} else if (meta?.kind === "statistics") {
+				// Object exists; values arrive after first energy poll (detail refresh)
 			}
 		}
 	}

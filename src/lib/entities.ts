@@ -1,6 +1,6 @@
 /** HA-aligned entity metadata (ha-anker-solix sensor/switch/number). */
 
-export type EntityKind = "sensor" | "switch" | "number" | "list";
+export type EntityKind = "sensor" | "switch" | "number" | "list" | "statistics";
 
 export interface EntityMeta {
 	id: string;
@@ -96,8 +96,53 @@ const CONTROL_ENTITIES: EntityMeta[] = [
 	{ id: "ac_fast_charge_switch", kind: "switch", role: "switch" },
 ];
 
+/** Daily energy statistics (kWh), HA energy_details.today / last_period */
+export const STATISTICS_ENTITIES: EntityMeta[] = [
+	{ id: "energy_statistics_date", kind: "statistics", role: "value.date" },
+	{ id: "daily_solar_production", kind: "statistics", role: "value.energy", unit: "kWh" },
+	{ id: "daily_charge_energy", kind: "statistics", role: "value.energy", unit: "kWh" },
+	{ id: "daily_discharge_energy", kind: "statistics", role: "value.energy", unit: "kWh" },
+	{ id: "daily_home_usage", kind: "statistics", role: "value.energy", unit: "kWh" },
+	{ id: "daily_solar_to_home", kind: "statistics", role: "value.energy", unit: "kWh" },
+	{ id: "daily_solar_to_battery", kind: "statistics", role: "value.energy", unit: "kWh" },
+	{ id: "daily_battery_to_home", kind: "statistics", role: "value.energy", unit: "kWh" },
+	{ id: "daily_grid_to_home", kind: "statistics", role: "value.energy", unit: "kWh" },
+	{ id: "daily_grid_to_battery", kind: "statistics", role: "value.energy", unit: "kWh" },
+	{ id: "daily_3rd_party_pv_to_bat", kind: "statistics", role: "value.energy", unit: "kWh" },
+	{ id: "daily_ev_charge", kind: "statistics", role: "value.energy", unit: "kWh" },
+	{ id: "daily_grid_import", kind: "statistics", role: "value.energy", unit: "kWh" },
+	{ id: "daily_grid_export", kind: "statistics", role: "value.energy", unit: "kWh" },
+	{ id: "yesterday_solar_production", kind: "statistics", role: "value.energy", unit: "kWh" },
+	{ id: "yesterday_charge_energy", kind: "statistics", role: "value.energy", unit: "kWh" },
+	{ id: "yesterday_discharge_energy", kind: "statistics", role: "value.energy", unit: "kWh" },
+	{ id: "yesterday_home_usage", kind: "statistics", role: "value.energy", unit: "kWh" },
+];
+
+export const STATISTICS_LABELS: Record<string, string> = {
+	energy_statistics_date: "Statistik-Datum",
+	daily_solar_production: "Solarertrag (heute)",
+	daily_charge_energy: "Batterieladung (heute)",
+	daily_discharge_energy: "Batterieentladung (heute)",
+	daily_home_usage: "Hausverbrauch (heute)",
+	daily_solar_to_home: "Solar → Haus (heute)",
+	daily_solar_to_battery: "Solar → Batterie (heute)",
+	daily_battery_to_home: "Batterie → Haus (heute)",
+	daily_grid_to_home: "Netz → Haus (heute)",
+	daily_grid_to_battery: "Netz → Batterie (heute)",
+	daily_3rd_party_pv_to_bat: "3rd-Party PV → Batterie (heute)",
+	daily_ev_charge: "EV-Ladung (heute)",
+	daily_grid_import: "Netzbezug (heute)",
+	daily_grid_export: "Netzeinspeisung (heute)",
+	yesterday_solar_production: "Solarertrag (gestern)",
+	yesterday_charge_energy: "Batterieladung (gestern)",
+	yesterday_discharge_energy: "Batterieentladung (gestern)",
+	yesterday_home_usage: "Hausverbrauch (gestern)",
+};
+
+export const STATISTICS_ENTITY_IDS = STATISTICS_ENTITIES.map((e) => e.id);
+
 export const ENTITY_MAP = new Map<string, EntityMeta>(
-	[...SENSOR_ENTITIES, ...CONTROL_ENTITIES].map((e) => [e.id, e]),
+	[...SENSOR_ENTITIES, ...CONTROL_ENTITIES, ...STATISTICS_ENTITIES].map((e) => [e.id, e]),
 );
 
 export function isWritable(entityId: string, writable: string[]): boolean {

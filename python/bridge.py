@@ -647,6 +647,22 @@ async def run_service(config: dict) -> dict:
         await session.close()
 
 
+def _enrich_cache_entry(
+    client: IoBrokerAnkerApiClient, ctx_id: str, ctx_data: dict, info: dict
+) -> dict:
+    """Attach site-level energy_details to system/site/combiner/solarbank caches."""
+    site_id = str(ctx_data.get("site_id") or "")
+    if info["type"] in ("site", "system") and not site_id:
+        site_id = str(ctx_id)
+    if not site_id:
+        return ctx_data
+    site = client.api.sites.get(site_id) or {}
+    energy = site.get("energy_details")
+    if energy and not ctx_data.get("energy_details"):
+        return {**ctx_data, "energy_details": energy}
+    return ctx_data
+
+
 def _devices_from_caches(
     client: IoBrokerAnkerApiClient, config: dict, caches: dict
 ) -> list[dict]:
@@ -657,6 +673,7 @@ def _devices_from_caches(
         info = device_info(str(ctx_id), ctx_data)
         if not should_include_device(str(ctx_id), ctx_data, info, config):
             continue
+        ctx_data = _enrich_cache_entry(client, str(ctx_id), ctx_data, info)
         entities = extract_entities(ctx_data)
         writable = writable_controls_for_device(ctx_data, info["type"])
         if not entities and not writable:
@@ -664,12 +681,21 @@ def _devices_from_caches(
         usage_opts = sorted(
             client.api.solarbank_usage_mode_options(deviceSn=str(ctx_id))
         )
+        enable_stats = config.get("enableEnergyStatistics", True)
+        has_statistics = enable_stats and info["type"] in (
+            "system",
+            "site",
+            "combiner_box",
+            "solarbank",
+            "smartmeter",
+        )
         devices.append(
             {
                 "info": info,
                 "entities": _json_safe(entities),
                 "writable": writable,
                 "usage_mode_options": usage_opts,
+                "hasStatistics": has_statistics,
             }
         )
     return devices

@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.7.0",
+		"version": "0.8.0",
 		"messagebox": true,
 		"news": {
+			"0.8.0": {
+				"en": "Daily energy statistics (kWh) under statistics.*; enabled by default",
+				"de": "Tagesstatistiken (kWh) unter statistics.*; standardmäßig aktiv",
+				"ru": "Дневная статистика энергии",
+				"pt": "Estatísticas diárias de energia",
+				"nl": "Dagelijkse energiestatistieken",
+				"fr": "Statistiques énergétiques journalières",
+				"it": "Statistiche energetiche giornaliere",
+				"es": "Estadísticas de energía diarias",
+				"pl": "Dzienne statystyki energii",
+				"uk": "Денна статистика енергії",
+				"zh-cn": "每日能量统计"
+			},
 			"0.7.0": {
 				"en": "Add usage mode (preset_usage_mode) and AC fast charge switch",
 				"de": "Nutzungsmodus (Benutzerdefiniert, Eigenverbrauch, Smart, …) und Schnellladung",
@@ -359,6 +372,7 @@
 		"requestTimeout": 10,
 		"endpointLimit": 10,
 		"mqttUsage": true,
+		"enableEnergyStatistics": true,
 		"acceptTerms": false,
 		"pythonPath": "",
 		"autoInstallPython": true,

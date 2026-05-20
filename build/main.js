@@ -63,7 +63,8 @@ class AnkerSolix extends utils.Adapter {
       ),
       requestDelay: Number(this.config.requestDelay) || 0.3,
       requestTimeout: Number(this.config.requestTimeout) || 10,
-      endpointLimit: Number(this.config.endpointLimit) || 10
+      endpointLimit: Number(this.config.endpointLimit) || 10,
+      enableEnergyStatistics: this.config.enableEnergyStatistics !== false
     };
   }
   /** Remove legacy install symlink from old GitHub repo name "AnkerSolix". */

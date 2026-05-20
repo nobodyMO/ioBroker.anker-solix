@@ -33,6 +33,9 @@ function resolveStateType(meta, value) {
   if ((meta == null ? void 0 : meta.kind) === "list") {
     return "string";
   }
+  if ((meta == null ? void 0 : meta.kind) === "statistics") {
+    return meta.role === "value.date" ? "string" : "number";
+  }
   if (typeof value === "boolean") {
     return "boolean";
   }
@@ -101,18 +104,23 @@ async function syncDevices(adapter, devices) {
         return ((_a2 = import_entities.ENTITY_MAP.get(id)) == null ? void 0 : _a2.kind) !== "sensor";
       })
     ]);
+    if (device.hasStatistics) {
+      for (const id of import_entities.STATISTICS_ENTITY_IDS) {
+        entityIds.add(id);
+      }
+    }
     for (const entityId of entityIds) {
       const value = device.entities[entityId];
       const meta = import_entities.ENTITY_MAP.get(entityId);
       const writable = meta ? (0, import_entities.isWritable)(entityId, device.writable) : false;
       const kind = (_a = meta == null ? void 0 : meta.kind) != null ? _a : "sensor";
-      const subfolder = kind === "sensor" ? "sensors" : "control";
+      const subfolder = kind === "statistics" ? "statistics" : kind === "sensor" ? "sensors" : "control";
       const stateId = `${channelPath}.${subfolder}.${entityId}`;
       const stateType = resolveStateType(meta, value);
       const hasValue = value !== null && value !== void 0;
-      const stateVal = hasValue ? coerceStateValue(stateType, value) : (meta == null ? void 0 : meta.kind) === "switch" ? false : (meta == null ? void 0 : meta.kind) === "number" ? (_b = meta.min) != null ? _b : 0 : "";
+      const stateVal = hasValue ? coerceStateValue(stateType, value) : (meta == null ? void 0 : meta.kind) === "switch" ? false : (meta == null ? void 0 : meta.kind) === "statistics" ? null : (meta == null ? void 0 : meta.kind) === "number" ? (_b = meta.min) != null ? _b : 0 : "";
       const common = {
-        name: entityId,
+        name: import_entities.STATISTICS_LABELS[entityId] || entityId,
         type: stateType,
         role: (_c = meta == null ? void 0 : meta.role) != null ? _c : "value",
         read: true,
@@ -163,6 +171,7 @@ async function syncDevices(adapter, devices) {
       }
       if (hasValue || writable) {
         await adapter.setState(stateId, stateVal, true);
+      } else if ((meta == null ? void 0 : meta.kind) === "statistics") {
       }
     }
   }

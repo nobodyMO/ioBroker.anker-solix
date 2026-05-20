@@ -22,6 +22,14 @@ DEFAULT_DELAY_TIME: float = SolixDefaults.REQUEST_DELAY_DEF
 DEFAULT_TIMEOUT: int = SolixDefaults.REQUEST_TIMEOUT_DEF
 
 DEFAULT_EXCLUDE_CATEGORIES: list[str] = [
+    ApiCategories.device_parm,
+    ApiCategories.solarbank_solar_info,
+    ApiCategories.device_auto_upgrade,
+    ApiCategories.device_tag,
+    ApiCategories.site_price,
+]
+
+ENERGY_EXCLUDE_CATEGORIES: list[str] = [
     ApiCategories.solarbank_energy,
     ApiCategories.solarbank_pps_energy,
     ApiCategories.smartmeter_energy,
@@ -31,6 +39,14 @@ DEFAULT_EXCLUDE_CATEGORIES: list[str] = [
     ApiCategories.powerpanel_energy,
     ApiCategories.hes_energy,
 ]
+
+
+def build_exclude_categories(config: dict) -> list[str]:
+    """HA-style excludes; energy polls when enableEnergyStatistics is true (default)."""
+    exclude = list(config.get("exclude") or DEFAULT_EXCLUDE_CATEGORIES)
+    if not config.get("enableEnergyStatistics", True):
+        exclude.extend(ENERGY_EXCLUDE_CATEGORIES)
+    return exclude
 
 
 class IoBrokerAnkerApiClient:
@@ -61,9 +77,7 @@ class IoBrokerAnkerApiClient:
             int(config.get("endpointLimit", DEFAULT_ENDPOINT_LIMIT))
         )
 
-        self.exclude_categories = list(
-            config.get("exclude") or DEFAULT_EXCLUDE_CATEGORIES
-        )
+        self.exclude_categories = build_exclude_categories(config)
         self._deviceintervals = max(
             1, int(config.get("deviceDetailMultiplier", DEFAULT_DEVICE_MULTIPLIER))
         )
@@ -235,9 +249,7 @@ class IoBrokerAnkerApiClient:
 
     def apply_runtime_config(self, config: dict) -> None:
         """Update poll options without tearing down the persistent session."""
-        self.exclude_categories = list(
-            config.get("exclude") or DEFAULT_EXCLUDE_CATEGORIES
-        )
+        self.exclude_categories = build_exclude_categories(config)
         self._deviceintervals = max(
             1, int(config.get("deviceDetailMultiplier", self._deviceintervals))
         )

@@ -24,6 +24,8 @@ export interface BridgeDevice {
 	writable: string[];
 	/** Valid SolarbankUsageMode names for preset_usage_mode (HA solarbank_usage_mode_options). */
 	usage_mode_options?: string[];
+	/** Site/device has energy_details from API (statistics channel). */
+	hasStatistics?: boolean;
 }
 
 export interface DeviceListEntry {
@@ -63,6 +65,8 @@ export interface BridgeConfig {
 	requestDelay?: number;
 	requestTimeout?: number;
 	endpointLimit?: number;
+	/** Poll daily energy statistics (HA solarbank_energy etc.). Default true. */
+	enableEnergyStatistics?: boolean;
 }
 
 export interface BridgeSetConfig extends BridgeConfig {
