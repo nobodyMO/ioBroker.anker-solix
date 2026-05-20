@@ -56,9 +56,8 @@ class BridgeDaemon {
   }
   async start(config) {
     var _a;
-    const cfg = config;
     if (this.isRunning) {
-      await this.request("configure", cfg);
+      await this.request("configure", config);
       return;
     }
     const script = bridgeScriptPath();
@@ -114,7 +113,7 @@ class BridgeDaemon {
       });
     });
     await this.readyPromise;
-    await this.request("configure", cfg);
+    await this.request("configure", config);
     this.configured = true;
     (_a = this.log) == null ? void 0 : _a.info("Anker Solix bridge daemon running (persistent API/MQTT session like HA)");
   }
@@ -144,7 +143,7 @@ class BridgeDaemon {
       (_a = this.log) == null ? void 0 : _a.warn(`Invalid daemon response: ${trimmed} (${error.message})`);
     }
   }
-  async request(action, config = {}) {
+  async request(action, config) {
     const run = this.queue.then(() => this._requestOnce(action, config));
     this.queue = run.then(
       () => void 0,
@@ -160,7 +159,8 @@ class BridgeDaemon {
       var _a, _b;
       const id = String(++this.reqCounter);
       this.pending.set(id, { resolve, reject });
-      const payload = JSON.stringify({ id, action, config }) + "\n";
+      const payload = `${JSON.stringify({ id, action, config })}
+`;
       const ok = (_b = (_a = this.proc) == null ? void 0 : _a.stdin) == null ? void 0 : _b.write(payload);
       if (!ok) {
         this.pending.delete(id);
@@ -174,7 +174,7 @@ class BridgeDaemon {
       return;
     }
     try {
-      await this.request("shutdown", {});
+      await this.request("shutdown");
     } catch {
     }
     (_a = this.proc) == null ? void 0 : _a.kill();

@@ -15,11 +15,7 @@ const sitePackages = path.join(adapterRoot, "python", "site-packages");
 
 function isNpmTempInstall() {
 	const root = adapterRoot.replace(/\\/g, "/").toLowerCase();
-	return (
-		root.includes("/_cacache/") ||
-		root.includes("/tmp/git-clone") ||
-		root.includes("/npm/_cacache/")
-	);
+	return root.includes("/_cacache/") || root.includes("/tmp/git-clone") || root.includes("/npm/_cacache/");
 }
 
 function isSoftFail() {
@@ -167,9 +163,7 @@ function finish(success, message) {
 		if (!isSoftFail()) {
 			process.exit(1);
 		}
-		log(
-			"Install deferred – start the adapter instance or use admin: Install Python dependencies.",
-		);
+		log("Install deferred – start the adapter instance or use admin: Install Python dependencies.");
 		log("On Debian/Ubuntu without venv: sudo apt install python3-venv python3-pip");
 	}
 	process.exit(0);
@@ -209,10 +203,7 @@ function main() {
 		process.exit(0);
 	}
 
-	finish(
-		false,
-		"Could not install Python packages (venv and site-packages fallback failed).",
-	);
+	finish(false, "Could not install Python packages (venv and site-packages fallback failed).");
 }
 
 main();

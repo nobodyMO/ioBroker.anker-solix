@@ -12,11 +12,8 @@ function adapterRoot(): string {
 	return path.join(__dirname, "..", "..");
 }
 
-export function runPythonInstaller(
-	pythonPath: string,
-	log?: ioBroker.Logger,
-): Promise<PythonCheckResult> {
-	return new Promise((resolve) => {
+export function runPythonInstaller(pythonPath: string, log?: ioBroker.Logger): Promise<PythonCheckResult> {
+	return new Promise(resolve => {
 		const script = path.join(adapterRoot(), "tools", "install-python.js");
 		if (!fs.existsSync(script)) {
 			resolve({ ok: false, message: `Installer not found: ${script}` });
@@ -43,7 +40,7 @@ export function runPythonInstaller(
 		proc.stderr.on("data", (c: Buffer) => {
 			stderr += c.toString();
 		});
-		proc.on("close", (code) => {
+		proc.on("close", code => {
 			const text = (stdout + stderr).trim();
 			if (text) {
 				log?.info?.(text);
@@ -53,7 +50,7 @@ export function runPythonInstaller(
 				message: code === 0 ? "Python dependencies OK" : text || `Installer exit ${code}`,
 			});
 		});
-		proc.on("error", (err) => {
+		proc.on("error", err => {
 			resolve({ ok: false, message: err.message });
 		});
 	});

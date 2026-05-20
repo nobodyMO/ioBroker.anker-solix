@@ -14,12 +14,7 @@ import { runPythonInstaller } from "./lib/ensurePython";
 import { ensureBridgeDaemon, runBridge, stopBridgeDaemon } from "./lib/pythonBridge";
 import { SERVICE_STATES, setupServiceStates } from "./lib/services";
 import { parseControlStateId, syncDevices } from "./lib/stateSync";
-import type {
-	BridgeConfig,
-	BridgeDevice,
-	BridgeServiceConfig,
-	DeviceControlContext,
-} from "./lib/types";
+import type { BridgeConfig, BridgeDevice, BridgeServiceConfig, DeviceControlContext } from "./lib/types";
 
 class AnkerSolix extends utils.Adapter {
 	private pollTimer: ioBroker.Interval | undefined;
@@ -51,10 +46,7 @@ class AnkerSolix extends utils.Adapter {
 			enableAllDevices: this.config.enableAllDevices !== false,
 			selectedSiteId: this.config.selectedSiteId || "",
 			selectedDeviceIds: selectedIds,
-			deviceDetailMultiplier: Math.max(
-				1,
-				Number(this.config.deviceDetailMultiplier) || 10,
-			),
+			deviceDetailMultiplier: Math.max(1, Number(this.config.deviceDetailMultiplier) || 10),
 			requestDelay: Number(this.config.requestDelay) || 0.3,
 			requestTimeout: Number(this.config.requestTimeout) || 10,
 			endpointLimit: Number(this.config.endpointLimit) || 10,
@@ -100,9 +92,7 @@ class AnkerSolix extends utils.Adapter {
 			return;
 		}
 		if (!this.config.password?.trim()) {
-			this.log.warn(
-				"Password missing – open instance config in Admin, re-enter Anker password and save.",
-			);
+			this.log.warn("Password missing – open instance config in Admin, re-enter Anker password and save.");
 			await this.setState("info.connection", false, true);
 			return;
 		}
@@ -113,12 +103,7 @@ class AnkerSolix extends utils.Adapter {
 		}
 
 		try {
-			const result = await runBridge(
-				"poll",
-				this.getBridgeConfig(),
-				this.config.pythonPath || "",
-				this.log,
-			);
+			const result = await runBridge("poll", this.getBridgeConfig(), this.config.pythonPath || "", this.log);
 
 			const pollDevices = result.devices as BridgeDevice[] | undefined;
 			if (pollDevices?.length) {
@@ -136,9 +121,7 @@ class AnkerSolix extends utils.Adapter {
 				result.intervalcount !== undefined && result.deviceintervals !== undefined
 					? `, next detail in ~${result.intervalcount} polls`
 					: "";
-			this.log.debug(
-				`Poll OK (${pollDevices?.length ?? 0} devices, ${detailHint}${intervalHint})`,
-			);
+			this.log.debug(`Poll OK (${pollDevices?.length ?? 0} devices, ${detailHint}${intervalHint})`);
 		} catch (error) {
 			await this.setState("info.connection", false, true);
 			const msg = (error as Error).message || String(error);
@@ -204,33 +187,21 @@ class AnkerSolix extends utils.Adapter {
 		};
 
 		try {
-			const result = await runBridge(
-				"service",
-				{
-					...this.getBridgeConfig(),
-					service: action,
-					params,
-				} as BridgeServiceConfig,
-				this.config.pythonPath || "",
-				this.log,
-			);
+			const serviceConfig: BridgeServiceConfig = {
+				...this.getBridgeConfig(),
+				service: action,
+				params,
+			};
+			const result = await runBridge("service", serviceConfig, this.config.pythonPath || "", this.log);
 
 			if (action === "get_schedule" && result.schedule !== undefined) {
-				await this.setState(
-					SERVICE_STATES.scheduleJson,
-					JSON.stringify(result.schedule, null, 2),
-					true,
-				);
+				await this.setState(SERVICE_STATES.scheduleJson, JSON.stringify(result.schedule, null, 2), true);
 			}
 			if (action === "export_systems" && result.path) {
 				await this.setState(SERVICE_STATES.exportResult, String(result.path), true);
 			}
 			if (action === "get_system_info" && result.system !== undefined) {
-				await this.setState(
-					SERVICE_STATES.systemInfo,
-					JSON.stringify(result.system, null, 2),
-					true,
-				);
+				await this.setState(SERVICE_STATES.systemInfo, JSON.stringify(result.system, null, 2), true);
 			}
 
 			await this.setState(stateId, false, true);
@@ -343,15 +314,9 @@ class AnkerSolix extends utils.Adapter {
 				const fs = await import("node:fs/promises");
 				try {
 					const files = await fs.readdir(cacheDir);
-					await Promise.all(
-						files.map((f) => fs.unlink(path.join(cacheDir, f)).catch(() => undefined)),
-					);
+					await Promise.all(files.map(f => fs.unlink(path.join(cacheDir, f)).catch(() => undefined)));
 					await stopBridgeDaemon();
-					await ensureBridgeDaemon(
-						this.getBridgeConfig(),
-						this.config.pythonPath || "",
-						this.log,
-					);
+					await ensureBridgeDaemon(this.getBridgeConfig(), this.config.pythonPath || "", this.log);
 					respond({ ok: true, cleared: files.length });
 				} catch {
 					respond({ ok: true, cleared: 0 });
@@ -433,11 +398,7 @@ class AnkerSolix extends utils.Adapter {
 
 		await this.ensurePythonDeps();
 
-		await ensureBridgeDaemon(
-			this.getBridgeConfig(),
-			this.config.pythonPath || "",
-			this.log,
-		);
+		await ensureBridgeDaemon(this.getBridgeConfig(), this.config.pythonPath || "", this.log);
 
 		this.subscribeStates(`${this.namespace}.*.control.*`);
 		this.subscribeStates(`${this.namespace}.services.*`);

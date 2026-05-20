@@ -139,10 +139,10 @@ export const STATISTICS_LABELS: Record<string, string> = {
 	yesterday_home_usage: "Hausverbrauch (gestern)",
 };
 
-export const STATISTICS_ENTITY_IDS = STATISTICS_ENTITIES.map((e) => e.id);
+export const STATISTICS_ENTITY_IDS = STATISTICS_ENTITIES.map(e => e.id);
 
 export const ENTITY_MAP = new Map<string, EntityMeta>(
-	[...SENSOR_ENTITIES, ...CONTROL_ENTITIES, ...STATISTICS_ENTITIES].map((e) => [e.id, e]),
+	[...SENSOR_ENTITIES, ...CONTROL_ENTITIES, ...STATISTICS_ENTITIES].map(e => [e.id, e]),
 );
 
 export function isWritable(entityId: string, writable: string[]): boolean {

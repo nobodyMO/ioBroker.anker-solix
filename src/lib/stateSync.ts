@@ -47,7 +47,16 @@ function coerceStateValue(type: ioBroker.CommonType, value: unknown): ioBroker.S
 		}
 		return Boolean(value);
 	}
-	return String(value ?? "");
+	if (value == null) {
+		return "";
+	}
+	if (typeof value === "string") {
+		return value;
+	}
+	if (typeof value === "number" || typeof value === "boolean") {
+		return String(value);
+	}
+	return JSON.stringify(value);
 }
 
 function sanitizeIdPart(value: string): string {
@@ -90,7 +99,7 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 
 		const entityIds = new Set([
 			...Object.keys(device.entities),
-			...device.writable.filter((id) => ENTITY_MAP.get(id)?.kind !== "sensor"),
+			...device.writable.filter(id => ENTITY_MAP.get(id)?.kind !== "sensor"),
 		]);
 		if (device.hasStatistics) {
 			for (const id of STATISTICS_ENTITY_IDS) {
@@ -103,8 +112,7 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 			const meta = ENTITY_MAP.get(entityId);
 			const writable = meta ? isWritable(entityId, device.writable) : false;
 			const kind = meta?.kind ?? "sensor";
-			const subfolder =
-				kind === "statistics" ? "statistics" : kind === "sensor" ? "sensors" : "control";
+			const subfolder = kind === "statistics" ? "statistics" : kind === "sensor" ? "sensors" : "control";
 			const stateId = `${channelPath}.${subfolder}.${entityId}`;
 			const stateType = resolveStateType(meta, value);
 			const hasValue = value !== null && value !== undefined;
@@ -181,10 +189,7 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 	}
 }
 
-export function parseControlStateId(
-	namespace: string,
-	stateId: string,
-): { deviceId: string; control: string } | null {
+export function parseControlStateId(namespace: string, stateId: string): { deviceId: string; control: string } | null {
 	const prefix = `${namespace}.`;
 	if (!stateId.startsWith(prefix) || !stateId.includes(".control.")) {
 		return null;

@@ -20,7 +20,7 @@ export class ControlQueue {
 		if (existing) {
 			clearTimeout(existing);
 		}
-		this.queue = this.queue.filter((entry) => entry.stateId !== job.stateId);
+		this.queue = this.queue.filter(entry => entry.stateId !== job.stateId);
 		this.queue.push(job);
 		this.debounceTimers.set(
 			job.stateId,
@@ -40,7 +40,7 @@ export class ControlQueue {
 			while (this.queue.length > 0) {
 				const waitMs = CONTROL_MIN_INTERVAL_MS - (Date.now() - this.lastRunAt);
 				if (waitMs > 0) {
-					await new Promise((resolve) => setTimeout(resolve, waitMs));
+					await new Promise(resolve => setTimeout(resolve, waitMs));
 				}
 				const job = this.queue.shift();
 				if (!job) {

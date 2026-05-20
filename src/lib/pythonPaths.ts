@@ -9,9 +9,7 @@ export function adapterRoot(): string {
 export function venvPythonPath(): string | null {
 	const venv = path.join(adapterRoot(), "python", ".venv");
 	const py =
-		process.platform === "win32"
-			? path.join(venv, "Scripts", "python.exe")
-			: path.join(venv, "bin", "python3");
+		process.platform === "win32" ? path.join(venv, "Scripts", "python.exe") : path.join(venv, "bin", "python3");
 	return fs.existsSync(py) ? py : null;
 }
 

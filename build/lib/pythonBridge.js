@@ -81,9 +81,7 @@ async function runBridgeOnce(action, config, pythonPath, log) {
         const lastLine = stdout.trim().split(/\r?\n/).filter(Boolean).pop();
         if (!lastLine) {
           const errDetail = stderr.trim() ? stderr.trim().split(/\r?\n/).slice(-8).join("\n") : `exit code ${code != null ? code : "unknown"}`;
-          reject(
-            new Error(`Python bridge returned no output: ${errDetail}`)
-          );
+          reject(new Error(`Python bridge returned no output: ${errDetail}`));
           return;
         }
         const parsed = JSON.parse(lastLine);
@@ -93,12 +91,8 @@ async function runBridgeOnce(action, config, pythonPath, log) {
         }
         resolve(parsed);
       } catch (error) {
-        reject(
-          new Error(
-            `Invalid bridge response (code ${code}): ${error.message}
-${stdout}`
-          )
-        );
+        reject(new Error(`Invalid bridge response (code ${code}): ${error.message}
+${stdout}`));
       }
     });
   });
@@ -142,9 +136,7 @@ async function runBridge(action, config, pythonPath, log, options) {
     const msg = error.message;
     const daemon = (0, import_bridgeDaemon.getBridgeDaemon)(pythonPath, log);
     if (daemon.isRunning && isTransientApiError(msg)) {
-      log == null ? void 0 : log.warn(
-        `Bridge daemon API error (${msg}) \u2013 retrying once after 15s\u2026`
-      );
+      log == null ? void 0 : log.warn(`Bridge daemon API error (${msg}) \u2013 retrying once after 15s\u2026`);
       await new Promise((r) => setTimeout(r, 15e3));
       try {
         return await runBridgeDaemon(action, config, pythonPath, log);

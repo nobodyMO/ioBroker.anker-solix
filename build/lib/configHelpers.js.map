@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sources": ["../../src/lib/configHelpers.ts"],
-  "sourcesContent": ["/** Parse selectedDeviceIds from admin text (comma/semicolon/space) or array. */\nexport function parseSelectedDeviceIds(value: string | string[] | undefined): string[] {\n\tif (Array.isArray(value)) {\n\t\treturn value.map((id) => String(id).trim()).filter(Boolean);\n\t}\n\tif (!value || typeof value !== \"string\") {\n\t\treturn [];\n\t}\n\treturn value\n\t\t.split(/[,;\\s]+/)\n\t\t.map((id) => id.trim())\n\t\t.filter(Boolean);\n}\n"],
-  "mappings": ";;;;;;;;;;;;;;;;;;AAAA;AAAA;AAAA;AAAA;AAAA;AACO,SAAS,uBAAuB,OAAgD;AACtF,MAAI,MAAM,QAAQ,KAAK,GAAG;AACzB,WAAO,MAAM,IAAI,CAAC,OAAO,OAAO,EAAE,EAAE,KAAK,CAAC,EAAE,OAAO,OAAO;AAAA,EAC3D;AACA,MAAI,CAAC,SAAS,OAAO,UAAU,UAAU;AACxC,WAAO,CAAC;AAAA,EACT;AACA,SAAO,MACL,MAAM,SAAS,EACf,IAAI,CAAC,OAAO,GAAG,KAAK,CAAC,EACrB,OAAO,OAAO;AACjB;",
+  "sourcesContent": ["/** Parse selectedDeviceIds from admin text (comma/semicolon/space) or array. */\nexport function parseSelectedDeviceIds(value: string | string[] | undefined): string[] {\n\tif (Array.isArray(value)) {\n\t\treturn value.map(id => String(id).trim()).filter(Boolean);\n\t}\n\tif (!value || typeof value !== \"string\") {\n\t\treturn [];\n\t}\n\treturn value\n\t\t.split(/[,;\\s]+/)\n\t\t.map(id => id.trim())\n\t\t.filter(Boolean);\n}\n"],
+  "mappings": ";;;;;;;;;;;;;;;;;;AAAA;AAAA;AAAA;AAAA;AAAA;AACO,SAAS,uBAAuB,OAAgD;AACtF,MAAI,MAAM,QAAQ,KAAK,GAAG;AACzB,WAAO,MAAM,IAAI,QAAM,OAAO,EAAE,EAAE,KAAK,CAAC,EAAE,OAAO,OAAO;AAAA,EACzD;AACA,MAAI,CAAC,SAAS,OAAO,UAAU,UAAU;AACxC,WAAO,CAAC;AAAA,EACT;AACA,SAAO,MACL,MAAM,SAAS,EACf,IAAI,QAAM,GAAG,KAAK,CAAC,EACnB,OAAO,OAAO;AACjB;",
   "names": []
 }

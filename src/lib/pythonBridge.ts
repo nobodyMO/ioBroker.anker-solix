@@ -7,12 +7,9 @@ import { getBridgeDaemon, stopBridgeDaemon } from "./bridgeDaemon";
 
 export { stopBridgeDaemon };
 import { buildPythonEnv, isPyLauncher, resolvePythonExecutable } from "./pythonPaths";
-import type {
-	BridgeConfig,
-	BridgePollResult,
-	BridgeServiceConfig,
-	BridgeSetConfig,
-} from "./types";
+import type { BridgeConfig, BridgePollResult, BridgeServiceConfig, BridgeSetConfig } from "./types";
+
+type BridgeRunConfig = BridgeConfig | BridgeSetConfig | BridgeServiceConfig;
 
 function bridgeScriptPath(): string {
 	return path.join(__dirname, "..", "..", "python", "bridge.py");
@@ -44,9 +41,7 @@ async function runBridgeOnce(
 	fs.writeFileSync(tmpFile, JSON.stringify(config), "utf8");
 
 	const python = resolvePythonExecutable(pythonPath);
-	const args = isPyLauncher(python)
-		? ["-3", script, action, tmpFile]
-		: [script, action, tmpFile];
+	const args = isPyLauncher(python) ? ["-3", script, action, tmpFile] : [script, action, tmpFile];
 
 	return new Promise((resolve, reject) => {
 		const proc = spawn(python, args, {
@@ -64,29 +59,23 @@ async function runBridgeOnce(
 			stderr += chunk.toString("utf8");
 		});
 
-		proc.on("error", (err) => {
+		proc.on("error", err => {
 			fs.unlink(tmpFile, () => undefined);
 			reject(err);
 		});
 
-		proc.on("close", (code) => {
+		proc.on("close", code => {
 			fs.unlink(tmpFile, () => undefined);
 			if (stderr.trim()) {
 				log?.debug?.(`Python stderr: ${stderr.trim()}`);
 			}
 			try {
-				const lastLine = stdout
-					.trim()
-					.split(/\r?\n/)
-					.filter(Boolean)
-					.pop();
+				const lastLine = stdout.trim().split(/\r?\n/).filter(Boolean).pop();
 				if (!lastLine) {
 					const errDetail = stderr.trim()
 						? stderr.trim().split(/\r?\n/).slice(-8).join("\n")
 						: `exit code ${code ?? "unknown"}`;
-					reject(
-						new Error(`Python bridge returned no output: ${errDetail}`),
-					);
+					reject(new Error(`Python bridge returned no output: ${errDetail}`));
 					return;
 				}
 				const parsed = JSON.parse(lastLine) as BridgePollResult;
@@ -96,11 +85,7 @@ async function runBridgeOnce(
 				}
 				resolve(parsed);
 			} catch (error) {
-				reject(
-					new Error(
-						`Invalid bridge response (code ${code}): ${(error as Error).message}\n${stdout}`,
-					),
-				);
+				reject(new Error(`Invalid bridge response (code ${code}): ${(error as Error).message}\n${stdout}`));
 			}
 		});
 	});
@@ -108,7 +93,7 @@ async function runBridgeOnce(
 
 /** Start daemon process only (auth happens on first poll). */
 export async function ensureBridgeDaemon(
-	config: BridgeConfig,
+	config: BridgeRunConfig,
 	pythonPath: string,
 	log?: ioBroker.Logger,
 ): Promise<boolean> {
@@ -117,7 +102,7 @@ export async function ensureBridgeDaemon(
 		if (!daemon.isRunning) {
 			await daemon.start(config);
 		} else {
-			await daemon.request("configure", config as unknown as Record<string, unknown>);
+			await daemon.request("configure", config);
 		}
 		return true;
 	} catch (error) {
@@ -130,22 +115,22 @@ export async function ensureBridgeDaemon(
 
 async function runBridgeDaemon(
 	action: "poll" | "login" | "set" | "list_devices" | "service",
-	config: BridgeConfig | BridgeSetConfig | BridgeServiceConfig,
+	config: BridgeRunConfig,
 	pythonPath: string,
 	log?: ioBroker.Logger,
 ): Promise<BridgePollResult> {
 	const daemon = getBridgeDaemon(pythonPath, log);
 
 	if (!daemon.isRunning) {
-		const started = await ensureBridgeDaemon(config as BridgeConfig, pythonPath, log);
+		const started = await ensureBridgeDaemon(config, pythonPath, log);
 		if (!started) {
 			throw new Error("Bridge daemon is not running");
 		}
 	} else {
-		await daemon.request("configure", config as unknown as Record<string, unknown>);
+		await daemon.request("configure", config);
 	}
 
-	return daemon.request(action, config as unknown as Record<string, unknown>);
+	return daemon.request(action, config);
 }
 
 export async function runBridge(
@@ -168,10 +153,8 @@ export async function runBridge(
 		const daemon = getBridgeDaemon(pythonPath, log);
 
 		if (daemon.isRunning && isTransientApiError(msg)) {
-			log?.warn(
-				`Bridge daemon API error (${msg}) – retrying once after 15s…`,
-			);
-			await new Promise((r) => setTimeout(r, 15_000));
+			log?.warn(`Bridge daemon API error (${msg}) – retrying once after 15s…`);
+			await new Promise(r => setTimeout(r, 15_000));
 			try {
 				return await runBridgeDaemon(action, config, pythonPath, log);
 			} catch (retryErr) {

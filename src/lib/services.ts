@@ -1,5 +1,5 @@
 import { runBridge } from "./pythonBridge";
-import type { BridgeConfig } from "./types";
+import type { BridgeConfig, BridgeServiceConfig } from "./types";
 
 export const SERVICE_STATES = {
 	getSchedule: "services.get_schedule",
@@ -116,14 +116,7 @@ export async function runServiceAction(
 	params: Record<string, unknown>,
 	pythonPath: string,
 ): Promise<unknown> {
-	const result = await runBridge(
-		"service",
-		{ ...config, service: action, params } as BridgeConfig & {
-			service: string;
-			params: Record<string, unknown>;
-		},
-		pythonPath,
-		adapter.log,
-	);
+	const serviceConfig: BridgeServiceConfig = { ...config, service: action, params };
+	const result = await runBridge("service", serviceConfig, pythonPath, adapter.log);
 	return result;
 }

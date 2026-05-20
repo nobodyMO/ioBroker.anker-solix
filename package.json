@@ -69,6 +69,7 @@
     "test": "npm run test:ts && npm run test:package",
     "check": "tsc --noEmit",
     "lint": "eslint -c eslint.config.mjs .",
+    "format": "prettier --write \"src/**/*.ts\" \"tools/*.js\"",
     "translate": "translate-adapter",
     "release": "release-script"
   },

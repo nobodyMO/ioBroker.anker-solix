@@ -57,10 +57,7 @@ class AnkerSolix extends utils.Adapter {
       enableAllDevices: this.config.enableAllDevices !== false,
       selectedSiteId: this.config.selectedSiteId || "",
       selectedDeviceIds: selectedIds,
-      deviceDetailMultiplier: Math.max(
-        1,
-        Number(this.config.deviceDetailMultiplier) || 10
-      ),
+      deviceDetailMultiplier: Math.max(1, Number(this.config.deviceDetailMultiplier) || 10),
       requestDelay: Number(this.config.requestDelay) || 0.3,
       requestTimeout: Number(this.config.requestTimeout) || 10,
       endpointLimit: Number(this.config.endpointLimit) || 10,
@@ -102,9 +99,7 @@ class AnkerSolix extends utils.Adapter {
       return;
     }
     if (!((_b = this.config.password) == null ? void 0 : _b.trim())) {
-      this.log.warn(
-        "Password missing \u2013 open instance config in Admin, re-enter Anker password and save."
-      );
+      this.log.warn("Password missing \u2013 open instance config in Admin, re-enter Anker password and save.");
       await this.setState("info.connection", false, true);
       return;
     }
@@ -113,12 +108,7 @@ class AnkerSolix extends utils.Adapter {
       return;
     }
     try {
-      const result = await (0, import_pythonBridge.runBridge)(
-        "poll",
-        this.getBridgeConfig(),
-        this.config.pythonPath || "",
-        this.log
-      );
+      const result = await (0, import_pythonBridge.runBridge)("poll", this.getBridgeConfig(), this.config.pythonPath || "", this.log);
       const pollDevices = result.devices;
       if (pollDevices == null ? void 0 : pollDevices.length) {
         this.rememberDeviceContexts(pollDevices);
@@ -130,9 +120,7 @@ class AnkerSolix extends utils.Adapter {
       await this.setState("info.connection", true, true);
       const detailHint = result.refreshDetails ? "devices+mqtt" : "sites";
       const intervalHint = result.intervalcount !== void 0 && result.deviceintervals !== void 0 ? `, next detail in ~${result.intervalcount} polls` : "";
-      this.log.debug(
-        `Poll OK (${(_c = pollDevices == null ? void 0 : pollDevices.length) != null ? _c : 0} devices, ${detailHint}${intervalHint})`
-      );
+      this.log.debug(`Poll OK (${(_c = pollDevices == null ? void 0 : pollDevices.length) != null ? _c : 0} devices, ${detailHint}${intervalHint})`);
     } catch (error) {
       await this.setState("info.connection", false, true);
       const msg = error.message || String(error);
@@ -183,32 +171,20 @@ class AnkerSolix extends utils.Adapter {
       includeMqtt: this.config.mqttUsage !== false
     };
     try {
-      const result = await (0, import_pythonBridge.runBridge)(
-        "service",
-        {
-          ...this.getBridgeConfig(),
-          service: action,
-          params
-        },
-        this.config.pythonPath || "",
-        this.log
-      );
+      const serviceConfig = {
+        ...this.getBridgeConfig(),
+        service: action,
+        params
+      };
+      const result = await (0, import_pythonBridge.runBridge)("service", serviceConfig, this.config.pythonPath || "", this.log);
       if (action === "get_schedule" && result.schedule !== void 0) {
-        await this.setState(
-          import_services.SERVICE_STATES.scheduleJson,
-          JSON.stringify(result.schedule, null, 2),
-          true
-        );
+        await this.setState(import_services.SERVICE_STATES.scheduleJson, JSON.stringify(result.schedule, null, 2), true);
       }
       if (action === "export_systems" && result.path) {
         await this.setState(import_services.SERVICE_STATES.exportResult, String(result.path), true);
       }
       if (action === "get_system_info" && result.system !== void 0) {
-        await this.setState(
-          import_services.SERVICE_STATES.systemInfo,
-          JSON.stringify(result.system, null, 2),
-          true
-        );
+        await this.setState(import_services.SERVICE_STATES.systemInfo, JSON.stringify(result.system, null, 2), true);
       }
       await this.setState(stateId, false, true);
     } catch (error) {
@@ -305,15 +281,9 @@ class AnkerSolix extends utils.Adapter {
         const fs2 = await Promise.resolve().then(() => __toESM(require("node:fs/promises")));
         try {
           const files = await fs2.readdir(cacheDir);
-          await Promise.all(
-            files.map((f) => fs2.unlink(path.join(cacheDir, f)).catch(() => void 0))
-          );
+          await Promise.all(files.map((f) => fs2.unlink(path.join(cacheDir, f)).catch(() => void 0)));
           await (0, import_pythonBridge.stopBridgeDaemon)();
-          await (0, import_pythonBridge.ensureBridgeDaemon)(
-            this.getBridgeConfig(),
-            this.config.pythonPath || "",
-            this.log
-          );
+          await (0, import_pythonBridge.ensureBridgeDaemon)(this.getBridgeConfig(), this.config.pythonPath || "", this.log);
           respond({ ok: true, cleared: files.length });
         } catch {
           respond({ ok: true, cleared: 0 });
@@ -386,11 +356,7 @@ class AnkerSolix extends utils.Adapter {
       `Anker Solix adapter started (poll every ${intervalSec}s, MQTT: ${this.config.mqttUsage !== false})`
     );
     await this.ensurePythonDeps();
-    await (0, import_pythonBridge.ensureBridgeDaemon)(
-      this.getBridgeConfig(),
-      this.config.pythonPath || "",
-      this.log
-    );
+    await (0, import_pythonBridge.ensureBridgeDaemon)(this.getBridgeConfig(), this.config.pythonPath || "", this.log);
     this.subscribeStates(`${this.namespace}.*.control.*`);
     this.subscribeStates(`${this.namespace}.services.*`);
     await this.pollOnce();

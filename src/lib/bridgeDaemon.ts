@@ -3,7 +3,7 @@ import * as readline from "node:readline";
 import * as fs from "node:fs";
 
 import { buildPythonEnv, isPyLauncher, resolvePythonExecutable } from "./pythonPaths";
-import type { BridgeConfig, BridgePollResult } from "./types";
+import type { BridgeConfig, BridgePollResult, BridgeServiceConfig, BridgeSetConfig } from "./types";
 
 function bridgeScriptPath(): string {
 	return `${__dirname}/../../python/bridge.py`;
@@ -11,7 +11,7 @@ function bridgeScriptPath(): string {
 
 type BridgeAction = "configure" | "poll" | "login" | "set" | "list_devices" | "service" | "shutdown";
 
-type DaemonConfig = Record<string, unknown>;
+type DaemonConfig = BridgeConfig | BridgeSetConfig | BridgeServiceConfig;
 
 interface DaemonResponse extends BridgePollResult {
 	id?: string;
@@ -40,9 +40,8 @@ export class BridgeDaemon {
 	}
 
 	async start(config: BridgeConfig): Promise<void> {
-		const cfg = config as unknown as DaemonConfig;
 		if (this.isRunning) {
-			await this.request("configure", cfg);
+			await this.request("configure", config);
 			return;
 		}
 
@@ -78,7 +77,7 @@ export class BridgeDaemon {
 				}
 			});
 
-			proc.on("close", (code) => {
+			proc.on("close", code => {
 				this.proc = undefined;
 				this.configured = false;
 				const err = new Error(`Bridge daemon exited (code ${code ?? "unknown"})`);
@@ -95,7 +94,7 @@ export class BridgeDaemon {
 			}
 
 			const rl = readline.createInterface({ input: proc.stdout });
-			rl.on("line", (line) => {
+			rl.on("line", line => {
 				this.onLine(line);
 				if (!readyResolved && line.includes('"ready"')) {
 					readyResolved = true;
@@ -105,7 +104,7 @@ export class BridgeDaemon {
 		});
 
 		await this.readyPromise;
-		await this.request("configure", cfg);
+		await this.request("configure", config);
 		this.configured = true;
 		this.log?.info("Anker Solix bridge daemon running (persistent API/MQTT session like HA)");
 	}
@@ -136,7 +135,7 @@ export class BridgeDaemon {
 		}
 	}
 
-	async request(action: BridgeAction, config: DaemonConfig = {}): Promise<BridgePollResult> {
+	async request(action: BridgeAction, config?: DaemonConfig): Promise<BridgePollResult> {
 		const run = this.queue.then(() => this._requestOnce(action, config));
 		this.queue = run.then(
 			() => undefined,
@@ -145,14 +144,14 @@ export class BridgeDaemon {
 		return run;
 	}
 
-	private _requestOnce(action: BridgeAction, config: DaemonConfig): Promise<BridgePollResult> {
+	private _requestOnce(action: BridgeAction, config?: DaemonConfig): Promise<BridgePollResult> {
 		if (!this.isRunning) {
 			return Promise.reject(new Error("Bridge daemon is not running"));
 		}
 		return new Promise<BridgePollResult>((resolve, reject) => {
 			const id = String(++this.reqCounter);
 			this.pending.set(id, { resolve, reject });
-			const payload = JSON.stringify({ id, action, config }) + "\n";
+			const payload = `${JSON.stringify({ id, action, config })}\n`;
 			const ok = this.proc?.stdin?.write(payload);
 			if (!ok) {
 				this.pending.delete(id);
@@ -166,7 +165,7 @@ export class BridgeDaemon {
 			return;
 		}
 		try {
-			await this.request("shutdown", {});
+			await this.request("shutdown");
 		} catch {
 			// daemon may already be gone
 		}
