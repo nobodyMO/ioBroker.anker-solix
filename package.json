@@ -1,6 +1,6 @@
 {
   "name": "iobroker.anker-solix",
-  "version": "0.9.6",
+  "version": "0.9.7",
   "description": "ioBroker adapter for Anker Solix (based on ha-anker-solix)",
   "author": {
     "name": "MatthiasUlrich1",
@@ -39,7 +39,7 @@
     "@iobroker/testing": "^5.2.2",
     "@tsconfig/node22": "^22.0.5",
     "@types/iobroker": "npm:@iobroker/types@^7.1.2",
-    "@types/node": "^22.19.0",
+    "@types/node": "^22",
     "rimraf": "^6.1.3",
     "source-map-support": "^0.5.21",
     "ts-node": "^10.9.2",
@@ -51,6 +51,10 @@
     "admin{,/!(src)/**}/*.{html,css,png,svg,jpg,js}",
     "build/",
     "python/",
+    "!python/**/__pycache__/**",
+    "!python/**/*.pyc",
+    "!python/.venv/**",
+    "!python/site-packages/**",
     "tools/",
     "www/",
     "io-package.json",

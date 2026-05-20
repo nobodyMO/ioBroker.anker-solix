@@ -288,6 +288,10 @@ German guides/videos linked from the [HA README](https://github.com/thomluther/h
 
 ## Changelog
 
+### 0.9.7
+
+- Adapter-check: npm news sync, admin responsive layout, README copyright, npm package excludes Python cache
+
 ### 0.9.6
 
 - Adapter-check compliance: Node 22+, admin UI sizes, compact-mode Python install, dependabot
@@ -347,5 +351,7 @@ Older release notes: [CHANGELOG_OLD.md](CHANGELOG_OLD.md) and git history.
 ---
 
 ## License
+
+Copyright (c) 2026 MatthiasUlrich1 info@my-smart-home-support.de
 
 MIT — see [LICENSE](LICENSE)

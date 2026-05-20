@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.9.6",
+		"version": "0.9.7",
 		"messagebox": true,
 		"news": {
+			"0.9.7": {
+				"en": "Adapter-check: news/npm sync, admin layout, README copyright, exclude Python cache from npm package",
+				"de": "Adapter-Check: News/npm abgeglichen, Admin-Layout, README Copyright, Python-Cache nicht im npm-Paket",
+				"ru": "Синхронизация news/npm, правки adapter-check",
+				"pt": "Sincronização news/npm, correções adapter-check",
+				"nl": "News/npm sync, adapter-check fixes",
+				"fr": "Sync news/npm, corrections adapter-check",
+				"it": "Sync news/npm, correzioni adapter-check",
+				"es": "Sync news/npm, correcciones adapter-check",
+				"pl": "Sync news/npm, poprawki adapter-check",
+				"uk": "Синхронізація news/npm",
+				"zh-cn": "news/npm 同步与 adapter-check 修复"
+			},
 			"0.9.6": {
 				"en": "Adapter-check fixes: Node 22+, admin UI, compact-mode Python install, dependabot",
 				"de": "Adapter-Check-Fixes: Node 22+, Admin-UI, Compact-Mode Python-Install, Dependabot",
@@ -16,84 +29,6 @@
 				"pl": "Poprawki adapter-check",
 				"uk": "Виправлення adapter-check",
 				"zh-cn": "adapter-check 修复"
-			},
-			"0.9.5": {
-				"en": "Admin warning: clearing login cache forces new API login (captcha risk)",
-				"de": "Admin-Hinweis: Login-Cache löschen erzwingt Neu-Login (Captcha-Risiko)",
-				"ru": "Предупреждение об очистке кэша",
-				"pt": "Aviso ao limpar cache",
-				"nl": "Waarschuwing cache wissen",
-				"fr": "Avertissement cache login",
-				"it": "Avviso cancellazione cache",
-				"es": "Aviso borrar caché",
-				"pl": "Ostrzeżenie czyszczenia cache",
-				"uk": "Попередження про кеш",
-				"zh-cn": "清除缓存警告"
-			},
-			"0.9.4": {
-				"en": "Log exact authcache path when login cache file is missing",
-				"de": "Loggt exakten authcache-Pfad wenn Login-Cache fehlt",
-				"ru": "Путь authcache в логе",
-				"pt": "Caminho authcache no log",
-				"nl": "Authcache-pad in log",
-				"fr": "Chemin authcache dans les logs",
-				"it": "Percorso authcache nel log",
-				"es": "Ruta authcache en log",
-				"pl": "Ścieżka authcache w logu",
-				"uk": "Шлях authcache у логах",
-				"zh-cn": "缺少缓存时记录路径"
-			},
-			"0.9.3": {
-				"en": "Fix login cache treated as failed after restart (captcha 100032 after saving entity groups)",
-				"de": "Login-Cache nach Neustart wieder nutzen (Captcha 100032 nach Entitätsgruppen)",
-				"ru": "Исправлен кэш входа",
-				"pt": "Correção do cache de login",
-				"nl": "Login-cache fix",
-				"fr": "Correction cache login",
-				"it": "Fix cache login",
-				"es": "Corrección caché login",
-				"pl": "Naprawa cache logowania",
-				"uk": "Виправлено кеш входу",
-				"zh-cn": "修复登录缓存"
-			},
-			"0.9.2": {
-				"en": "Keep authcache on re-auth after config save; fewer captcha errors (100032)",
-				"de": "Login-Cache bei Neu-Anmeldung erhalten; weniger Captcha-Fehler (100032)",
-				"ru": "Сохранение authcache",
-				"pt": "Manter authcache",
-				"nl": "Authcache behouden",
-				"fr": "Conserver authcache",
-				"it": "Mantiene authcache",
-				"es": "Conservar authcache",
-				"pl": "Zachowanie authcache",
-				"uk": "Збереження authcache",
-				"zh-cn": "保留登录缓存"
-			},
-			"0.9.1": {
-				"en": "Clearer handling of Anker captcha login error (100032); README troubleshooting",
-				"de": "Klarere Meldungen bei Anker-Captcha-Login (100032); README Fehlerbehebung",
-				"ru": "Ошибка captcha 100032",
-				"pt": "Erro captcha 100032",
-				"nl": "Captcha-loginfout 100032",
-				"fr": "Erreur captcha 100032",
-				"it": "Errore captcha 100032",
-				"es": "Error captcha 100032",
-				"pl": "Błąd captcha 100032",
-				"uk": "Помилка captcha 100032",
-				"zh-cn": "验证码登录错误 100032"
-			},
-			"0.9.0": {
-				"en": "Configurable entity groups (HA-style); many optional sensors/controls, default off",
-				"de": "Konfigurierbare Entitätsgruppen (HA-ähnlich); viele optionale Sensoren/Steuerungen, standard aus",
-				"ru": "Группы сущностей",
-				"pt": "Grupos de entidades",
-				"nl": "Entiteitsgroepen",
-				"fr": "Groupes d'entités",
-				"it": "Gruppi entità",
-				"es": "Grupos de entidades",
-				"pl": "Grupy encji",
-				"uk": "Групи сутностей",
-				"zh-cn": "可配置实体组"
 			}
 		},
 		"titleLang": {

@@ -104,21 +104,27 @@
 					"default": true,
 					"xs": 12,
 					"sm": 6,
-					"md": 4
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				},
 				"selectedSiteId": {
 					"type": "text",
 					"label": "selectedSiteId",
 					"xs": 12,
 					"sm": 6,
-					"md": 4
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				},
 				"selectedDeviceIds": {
 					"type": "text",
 					"label": "selectedDeviceIds",
 					"xs": 12,
 					"sm": 12,
-					"md": 8
+					"md": 8,
+					"lg": 8,
+					"xl": 8
 				},
 				"deviceListJson": {
 					"type": "text",
@@ -145,7 +151,9 @@
 					"default": 60,
 					"xs": 12,
 					"sm": 6,
-					"md": 4
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				},
 				"deviceDetailMultiplier": {
 					"type": "number",
@@ -155,7 +163,9 @@
 					"default": 10,
 					"xs": 12,
 					"sm": 6,
-					"md": 4
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				},
 				"requestDelay": {
 					"type": "number",

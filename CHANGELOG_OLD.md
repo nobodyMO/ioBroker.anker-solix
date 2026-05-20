@@ -1,5 +1,9 @@
 # Older changelog entries (moved from io-package.json common.news)
 
+## 0.9.5 – 0.9.0
+
+See git history / GitHub releases for 0.9.x notes (login cache, entity groups, captcha handling).
+
 ## 0.8.1
 
 - **en:** Fix Python bridge import crash (invalid ApiCategories.device_parm)
