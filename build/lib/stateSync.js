@@ -30,6 +30,9 @@ function resolveStateType(meta, value) {
   if ((meta == null ? void 0 : meta.kind) === "switch") {
     return "boolean";
   }
+  if ((meta == null ? void 0 : meta.kind) === "list") {
+    return "string";
+  }
   if (typeof value === "boolean") {
     return "boolean";
   }
@@ -66,7 +69,7 @@ function channelForDevice(info) {
   return `${typePart}.${idPart}`;
 }
 async function syncDevices(adapter, devices) {
-  var _a, _b, _c;
+  var _a, _b, _c, _d;
   for (const device of devices) {
     const base = channelForDevice(device.info);
     const channelPath = `${adapter.namespace}.${base}`;
@@ -117,6 +120,20 @@ async function syncDevices(adapter, devices) {
       };
       if (meta == null ? void 0 : meta.unit) {
         common.unit = meta.unit;
+      }
+      if ((meta == null ? void 0 : meta.kind) === "list") {
+        const opts = ((_d = device.usage_mode_options) == null ? void 0 : _d.length) ? device.usage_mode_options : Object.keys(import_entities.USAGE_MODE_STATES);
+        const states = {};
+        for (const key of opts) {
+          if (import_entities.USAGE_MODE_STATES[key]) {
+            states[key] = import_entities.USAGE_MODE_STATES[key];
+          }
+        }
+        if (Object.keys(states).length > 0) {
+          common.states = states;
+        } else if (meta.states) {
+          common.states = meta.states;
+        }
       }
       if (stateType === "number" || stateType === "mixed") {
         let min = meta == null ? void 0 : meta.min;

@@ -21,7 +21,9 @@ from entities import (  # noqa: E402
     SOLARBANK,
     controls_for_type,
     extract_entities,
+    parse_usage_mode_set_value,
     should_include_device,
+    usage_mode_name,
     writable_controls_for_device,
 )
 from ha_api_client import (  # noqa: E402
@@ -36,6 +38,7 @@ from solixapi.apitypes import (  # noqa: E402
     ApiCategories,
     SolixDeviceType,
     SolixParmType,
+    SolarbankUsageMode,
 )
 from solixapi.mqtt_factory import SolixMqttDeviceFactory  # noqa: E402
 from solixapi.mqttcmdmap import SolixMqttCommands  # noqa: E402
@@ -356,6 +359,46 @@ async def _set_ac_charge_limit(
     )
 
 
+async def _set_preset_usage_mode(
+    api: AnkerSolixApi,
+    site_id: str,
+    device_id: str,
+    device: dict,
+    value: Any,
+) -> Any:
+    """HA preset_usage_mode via set_sb2_home_load (combiner or main solarbank)."""
+    mode_name = parse_usage_mode_set_value(value)
+    usage_mode = getattr(SolarbankUsageMode, mode_name, None)
+    if usage_mode is None:
+        raise ValueError(f"Unsupported usage mode: {mode_name}")
+    options = api.solarbank_usage_mode_options(deviceSn=device_id)
+    if mode_name not in options and mode_name != SolarbankUsageMode.manual.name:
+        raise ValueError(
+            f"Usage mode '{mode_name}' not available for this system (options: {sorted(options)})"
+        )
+    if usage_mode == SolarbankUsageMode.backup:
+        return await api.set_sb2_ac_charge(
+            siteId=site_id,
+            deviceSn=device_id,
+            backup_switch=True,
+        )
+    current = usage_mode_name(device.get("preset_usage_mode")) or usage_mode_name(
+        (device.get("schedule") or {}).get("mode_type")
+    )
+    if current == SolarbankUsageMode.backup.name:
+        await api.set_sb2_ac_charge(
+            siteId=site_id,
+            deviceSn=device_id,
+            backup_switch=False,
+            test_schedule=device.get("schedule") or {},
+        )
+    return await api.set_sb2_home_load(
+        siteId=site_id,
+        deviceSn=device_id,
+        usage_mode=usage_mode.value,
+    )
+
+
 async def _set_min_soc(
     api: AnkerSolixApi,
     site_id: str,
@@ -449,6 +492,24 @@ async def apply_control(
             int(value),
             ha_client=ha_client,
         )
+    elif control == "preset_usage_mode":
+        result = await _set_preset_usage_mode(
+            api, site_id, device_id, device, value
+        )
+    elif control == "ac_fast_charge_switch":
+        enabled = bool(value)
+        mqtt_ok = await _mqtt_command(
+            api,
+            device_id,
+            SolixMqttCommands.ac_fast_charge_switch,
+            1 if enabled else 0,
+            "set_ac_fast_charge_switch",
+            ha_client=ha_client,
+        )
+        if mqtt_ok:
+            result = {"mqtt": True}
+        else:
+            raise RuntimeError("ac_fast_charge_switch rejected (MQTT control failed)")
     elif control == "min_soc":
         result = await _set_min_soc(
             api, site_id, control_sn, device_id, device, int(value)
@@ -600,11 +661,15 @@ def _devices_from_caches(
         writable = writable_controls_for_device(ctx_data, info["type"])
         if not entities and not writable:
             continue
+        usage_opts = sorted(
+            client.api.solarbank_usage_mode_options(deviceSn=str(ctx_id))
+        )
         devices.append(
             {
                 "info": info,
                 "entities": _json_safe(entities),
                 "writable": writable,
+                "usage_mode_options": usage_opts,
             }
         )
     return devices

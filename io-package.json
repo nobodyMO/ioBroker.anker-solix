@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.6.5",
+		"version": "0.7.0",
 		"messagebox": true,
 		"news": {
+			"0.7.0": {
+				"en": "Add usage mode (preset_usage_mode) and AC fast charge switch",
+				"de": "Nutzungsmodus (Benutzerdefiniert, Eigenverbrauch, Smart, …) und Schnellladung",
+				"ru": "Режим использования и быстрая зарядка",
+				"pt": "Modo de uso e carga rápida",
+				"nl": "Gebruiksmodus en snelladen",
+				"fr": "Mode d'utilisation et charge rapide",
+				"it": "Modalità uso e ricarica rapida",
+				"es": "Modo de uso y carga rápida",
+				"pl": "Tryb użytkowania i szybkie ładowanie",
+				"uk": "Режим використання та швидка зарядка",
+				"zh-cn": "使用模式与快速充电"
+			},
 			"0.6.5": {
 				"en": "Fix ac_charge_limit: MQTT cmds, power limit poll, all_ac_input_limit on combiner (read); push 0.6.3+ fixes",
 				"de": "ac_charge_limit: MQTT-Befehle, Power-Limit-Poll, all_ac_input_limit am Combiner (lesen)",

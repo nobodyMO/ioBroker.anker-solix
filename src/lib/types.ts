@@ -22,6 +22,8 @@ export interface BridgeDevice {
 	info: DeviceInfo;
 	entities: Record<string, string | number | boolean | null>;
 	writable: string[];
+	/** Valid SolarbankUsageMode names for preset_usage_mode (HA solarbank_usage_mode_options). */
+	usage_mode_options?: string[];
 }
 
 export interface DeviceListEntry {

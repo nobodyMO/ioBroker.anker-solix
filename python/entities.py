@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from solixapi.apitypes import SolarbankUsageMode  # noqa: E402
+
 SOLARBANK = "solarbank"
 SYSTEM = "system"
 SITE = "site"
@@ -252,7 +254,66 @@ CONTROL_ENTITIES: list[dict[str, Any]] = [
         "min": 0,  # 0 = off/disabled in API; writes 100–100000 W validated in bridge
         "max": 100000,
     },
+    {
+        "id": "preset_usage_mode",
+        "keys": ["preset_usage_mode", "mode_type", "usage_mode"],
+        "role": "value.mode",
+        "types": [SOLARBANK, COMBINER],
+        "control": "preset_usage_mode",
+        "kind": "list",
+    },
+    {
+        "id": "ac_fast_charge_switch",
+        "keys": ["ac_fast_charge_switch", "fast_charge_switch"],
+        "role": "switch",
+        "types": [SOLARBANK],
+        "control": "ac_fast_charge_switch",
+    },
 ]
+
+# ioBroker state keys → German labels (HA de.json)
+USAGE_MODE_STATES: dict[str, str] = {
+    SolarbankUsageMode.manual.name: "Benutzerdefiniert",
+    SolarbankUsageMode.smartmeter.name: "Eigenverbrauch",
+    SolarbankUsageMode.smartplugs.name: "Smarte Steckdosen",
+    SolarbankUsageMode.smart.name: "Smart-Modus",
+    SolarbankUsageMode.use_time.name: "Zeit-Nutzung",
+    SolarbankUsageMode.time_slot.name: "Dynamischer Tarif",
+    SolarbankUsageMode.backup.name: "Notstromladung",
+}
+
+_USAGE_MODE_ALIASES: dict[str, str] = {}
+for _mode_key, _mode_label in USAGE_MODE_STATES.items():
+    _USAGE_MODE_ALIASES[_mode_key] = _mode_key
+    _USAGE_MODE_ALIASES[_mode_key.lower()] = _mode_key
+    _USAGE_MODE_ALIASES[_mode_label.lower()] = _mode_key
+
+
+def usage_mode_name(value: Any) -> str | None:
+    """Normalize API/MQTT usage mode to SolarbankUsageMode name."""
+    if value is None or value == "":
+        return None
+    if isinstance(value, str):
+        key = value.strip().lower().replace(" ", "_")
+        if key in _USAGE_MODE_ALIASES:
+            return _USAGE_MODE_ALIASES[key]
+        if value in SolarbankUsageMode.__members__:
+            return value
+        return None
+    if isinstance(value, int | float):
+        try:
+            return SolarbankUsageMode(int(value)).name
+        except (ValueError, KeyError):
+            return None
+    return None
+
+
+def parse_usage_mode_set_value(value: Any) -> str:
+    """Accept enum name or German label from ioBroker."""
+    name = usage_mode_name(value)
+    if not name:
+        raise ValueError(f"Unknown usage mode: {value!r}")
+    return name
 
 _NESTED_KEYS = ("solarbank_info", "solarbank_pps_info", "average_power")
 _POWER_KEYS = frozenset(
@@ -306,7 +367,13 @@ def pick_value(data: dict, keys: list[str], nested: bool = False) -> Any:
                 ):
                     cleaned = val.replace("W", "").strip()
                     return int(cleaned) if cleaned.isdigit() else val
-                if key in ("allow_grid_export", "switch_0w", "grid_export_disabled"):
+                if key in (
+                "allow_grid_export",
+                "switch_0w",
+                "grid_export_disabled",
+                "ac_fast_charge_switch",
+                "fast_charge_switch",
+            ):
                     if key == "switch_0w":
                         return not bool(int(val) if str(val).isdigit() else val)
                     if key == "grid_export_disabled":
@@ -335,7 +402,13 @@ def pick_value(data: dict, keys: list[str], nested: bool = False) -> Any:
             ):
                 cleaned = val.replace("W", "").strip()
                 return int(cleaned) if cleaned.isdigit() else val
-            if key in ("allow_grid_export", "switch_0w", "grid_export_disabled"):
+            if key in (
+                "allow_grid_export",
+                "switch_0w",
+                "grid_export_disabled",
+                "ac_fast_charge_switch",
+                "fast_charge_switch",
+            ):
                 if key == "switch_0w":
                     return not bool(int(val) if str(val).isdigit() else val)
                 if key == "grid_export_disabled":
@@ -378,8 +451,19 @@ def controls_for_type(dev_type: str) -> list[str]:
     ]
 
 
+def _is_main_usage_mode_device(data: dict, dev_type: str) -> bool:
+    """HA: usage mode only on main device (combiner or standalone SB)."""
+    station_sn = str(data.get("station_sn") or "")
+    device_sn = str(data.get("device_sn") or "")
+    if dev_type == COMBINER:
+        return True
+    if dev_type == SOLARBANK and int(data.get("generation") or 0) >= 2:
+        return not station_sn or station_sn == device_sn
+    return False
+
+
 def writable_controls_for_device(data: dict, dev_type: str) -> list[str]:
-    """HA: preset_ac_input_limit only on solarbanks with MQTT; combiner uses all_ac_input_limit (read)."""
+    """HA-aligned writable controls per device capabilities."""
     controls = controls_for_type(dev_type)
     if dev_type == SOLARBANK and "ac_charge_limit" in controls:
         if not (
@@ -388,6 +472,13 @@ def writable_controls_for_device(data: dict, dev_type: str) -> list[str]:
             or pick_value(data, ["ac_input_limit", "ac_power_limit"]) is not None
         ):
             controls = [c for c in controls if c != "ac_charge_limit"]
+    if "preset_usage_mode" in controls and not _is_main_usage_mode_device(
+        data, dev_type
+    ):
+        controls = [c for c in controls if c != "preset_usage_mode"]
+    if "ac_fast_charge_switch" in controls:
+        if dev_type != SOLARBANK or int(data.get("generation") or 0) < 2:
+            controls = [c for c in controls if c != "ac_fast_charge_switch"]
     return controls
 
 
@@ -419,7 +510,13 @@ def extract_entities(data: dict) -> dict[str, Any]:
         if spec["id"] == "ac_output_limit" and dev_type == SOLARBANK:
             if data.get("station_sn") or "all_power_limit" in data:
                 continue
-        val = pick_value(data, spec["keys"])
+        if spec.get("kind") == "list" and spec["id"] == "preset_usage_mode":
+            val = usage_mode_name(
+                pick_value(data, spec["keys"])
+                or (data.get("schedule") or {}).get("mode_type")
+            )
+        else:
+            val = pick_value(data, spec["keys"])
         if val is not None:
             entities[spec["id"]] = val
     return entities

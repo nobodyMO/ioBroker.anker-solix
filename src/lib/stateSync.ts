@@ -1,4 +1,4 @@
-import { ENTITY_MAP, isWritable, type EntityMeta } from "./entities";
+import { ENTITY_MAP, isWritable, USAGE_MODE_STATES, type EntityMeta } from "./entities";
 import type { BridgeDevice } from "./types";
 
 function resolveStateType(meta: EntityMeta | undefined, value: unknown): ioBroker.CommonType {
@@ -7,6 +7,9 @@ function resolveStateType(meta: EntityMeta | undefined, value: unknown): ioBroke
 	}
 	if (meta?.kind === "switch") {
 		return "boolean";
+	}
+	if (meta?.kind === "list") {
+		return "string";
 	}
 	if (typeof value === "boolean") {
 		return "boolean";
@@ -106,6 +109,22 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 			};
 			if (meta?.unit) {
 				common.unit = meta.unit;
+			}
+			if (meta?.kind === "list") {
+				const opts = device.usage_mode_options?.length
+					? device.usage_mode_options
+					: Object.keys(USAGE_MODE_STATES);
+				const states: Record<string, string> = {};
+				for (const key of opts) {
+					if (USAGE_MODE_STATES[key]) {
+						states[key] = USAGE_MODE_STATES[key];
+					}
+				}
+				if (Object.keys(states).length > 0) {
+					common.states = states;
+				} else if (meta.states) {
+					common.states = meta.states;
+				}
 			}
 			if (stateType === "number" || stateType === "mixed") {
 				let min = meta?.min;

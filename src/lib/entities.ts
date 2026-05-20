@@ -1,6 +1,6 @@
 /** HA-aligned entity metadata (ha-anker-solix sensor/switch/number). */
 
-export type EntityKind = "sensor" | "switch" | "number";
+export type EntityKind = "sensor" | "switch" | "number" | "list";
 
 export interface EntityMeta {
 	id: string;
@@ -9,7 +9,19 @@ export interface EntityMeta {
 	unit?: string;
 	min?: number;
 	max?: number;
+	states?: Record<string, string>;
 }
+
+/** HA de.json labels for preset_usage_mode */
+export const USAGE_MODE_STATES: Record<string, string> = {
+	manual: "Benutzerdefiniert",
+	smartmeter: "Eigenverbrauch",
+	smartplugs: "Smarte Steckdosen",
+	smart: "Smart-Modus",
+	use_time: "Zeit-Nutzung",
+	time_slot: "Dynamischer Tarif",
+	backup: "Notstromladung",
+};
 
 const SENSOR_ENTITIES: EntityMeta[] = [
 	{ id: "input_power", kind: "sensor", role: "value.power", unit: "W" },
@@ -75,6 +87,13 @@ const CONTROL_ENTITIES: EntityMeta[] = [
 		min: 0,
 		max: 100000,
 	},
+	{
+		id: "preset_usage_mode",
+		kind: "list",
+		role: "value.mode",
+		states: USAGE_MODE_STATES,
+	},
+	{ id: "ac_fast_charge_switch", kind: "switch", role: "switch" },
 ];
 
 export const ENTITY_MAP = new Map<string, EntityMeta>(
