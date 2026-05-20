@@ -187,11 +187,11 @@ class AnkerSolix extends utils.Adapter {
 			if (msg.includes("CaptchaRequired") || msg.includes("100032") || msg.toLowerCase().includes("captcha")) {
 				const cacheFile = this.getAuthCacheFile();
 				const missing = !fs.existsSync(cacheFile);
+				const hint = missing
+					? `Erwartete Datei: ${cacheFile} – von funktionierender Anker/Solix-Integration (z. B. ha-anker-solix) dorthin kopieren, Ordner anlegen falls nötig, Adapter neu starten.`
+					: `Cache vorhanden aber ungültig: ${cacheFile} – frische Datei von HA kopieren oder Passwort in Admin neu speichern.`;
 				this.log.error(
-					`Poll failed: ${msg} – API-Neulogin nötig${missing ? " (kein Login-Cache)" : ""}. ` +
-						(missing
-							? `Erwartete Datei: ${cacheFile} – von funktionierender Anker/Solix-Integration (z. B. ha-anker-solix) dorthin kopieren, Ordner anlegen falls nötig, Adapter neu starten.`
-							: `Cache vorhanden aber ungültig: ${cacheFile} – frische Datei von HA kopieren oder Passwort in Admin neu speichern.`),
+					`Poll failed: ${msg} – API-Neulogin nötig${missing ? " (kein Login-Cache)" : ""}. ${hint}`,
 				);
 				if (missing) {
 					this.logAuthCacheStatus();
