@@ -144,11 +144,10 @@ class AnkerSolix extends utils.Adapter {
 			const msg = (error as Error).message || String(error);
 			if (msg.includes("CaptchaRequired") || msg.includes("100032") || msg.toLowerCase().includes("captcha")) {
 				this.log.error(
-					`Poll failed: ${msg} – Anker verlangt Captcha für API-Login. ` +
-						"Häufig nach Instanz-Neustart (z. B. Entitätsgruppe aktivieren): nur ein API-Token pro Konto – App-Login kann ioBroker-Token ungültig machen. " +
-						"App kurz abmelden oder HA-Login-Cache kopieren, dann Adapter neu starten. Kein VPN. " +
-						"„Anker-Login-Cache löschen“ nur bei bewusstem Neu-Login. Cache nach " +
-						`iobroker-data/${this.namespace}/authcache/<E-Mail>.json (z. B. von ha-anker-solix).`,
+					`Poll failed: ${msg} – Anker verlangt Captcha für einen erzwungenen API-Neulogin. ` +
+						"Nach Instanz-Neustart (z. B. Entitätsgruppe speichern) soll der vorhandene Login-Cache genutzt werden – prüfen ob " +
+						`iobroker-data/${this.namespace}/authcache/<E-Mail>.json existiert. ` +
+						"Mit 0.9.3 behoben: Cache wurde fälschlich als ungültig gewertet. Update installieren und Adapter neu starten.",
 				);
 			} else if (msg.includes("Cached Anker login is invalid") || msg.includes("invalidated by the mobile app")) {
 				this.log.error(

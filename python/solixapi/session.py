@@ -411,13 +411,14 @@ class AnkerSolixClientSession:
             )
         else:
             self._token_expiration = None
-            self._loggedIn = False
         if data.get("user_id"):
             # gtoken is MD5 hash of user_id from login response
             self._gtoken = md5(data.get("user_id"))
             # reset retry flag upon valid authentication response for normal request retry attempts
             if isinstance(self._retry_attempt, bool):
                 self._retry_attempt = False
+            # Cached login: tokens are loaded above; mark session valid (HA relies on this too)
+            self._loggedIn = bool(self._token and self._gtoken)
         else:
             self._gtoken = None
             self._loggedIn = False

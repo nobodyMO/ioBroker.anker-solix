@@ -25,6 +25,18 @@ function isTransientApiError(message: string): boolean {
 	);
 }
 
+function isAuthError(message: string): boolean {
+	const lower = message.toLowerCase();
+	return (
+		message.includes("CaptchaRequired") ||
+		message.includes("100032") ||
+		lower.includes("captcha") ||
+		message.includes("InvalidCredentials") ||
+		message.includes("Authentication failed") ||
+		message.includes("Cached Anker login is invalid")
+	);
+}
+
 /** One-shot bridge (fallback when daemon unavailable or API rate-limited). */
 async function runBridgeOnce(
 	action: "poll" | "login" | "set" | "list_devices" | "service",
@@ -160,6 +172,10 @@ export async function runBridge(
 			} catch (retryErr) {
 				log?.warn(`Daemon retry failed: ${(retryErr as Error).message}`);
 			}
+		}
+
+		if (isAuthError(msg)) {
+			throw error;
 		}
 
 		await daemon.stop().catch(() => undefined);

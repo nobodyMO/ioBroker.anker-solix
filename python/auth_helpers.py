@@ -47,19 +47,20 @@ async def safe_authenticate(api: AnkerSolixApi, logger: logging.Logger) -> None:
     last_exc: Exception | None = None
     for attempt in range(3):
         try:
-            if await api.async_authenticate():
+            await api.async_authenticate()
+            if api.apisession._token and api.apisession._gtoken:
+                api.apisession._loggedIn = True
                 return
             if auth_path.is_file():
-                # Force re-read (HA or another instance may have refreshed the file)
                 api.apisession._authFileTime = 0
-                if await api.async_authenticate():
+                await api.async_authenticate()
+                if api.apisession._token and api.apisession._gtoken:
+                    api.apisession._loggedIn = True
                     return
                 raise errors.InvalidCredentialsError(
-                    "Cached Anker login is invalid (expired or replaced by the mobile app). "
-                    "Anker allows only one active API token per account. "
-                    "Copy a fresh authcache/<email>.json from Home Assistant (ha-anker-solix), "
-                    "or log out the Anker app briefly, then restart the adapter. "
-                    "Do not use “Clear login cache” unless you plan a new API login."
+                    "Cached Anker login is invalid or expired. "
+                    "Copy a fresh authcache/<email>.json from a working Anker/Solix setup "
+                    "(e.g. ha-anker-solix), or use Admin “Load devices” after re-entering the password."
                 )
             if await api.async_authenticate(restart=True):
                 return

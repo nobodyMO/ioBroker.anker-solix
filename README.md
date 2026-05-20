@@ -76,9 +76,7 @@ HA-aligned entities per device under:
 
 Anker’s cloud sometimes blocks **direct API login** from servers (ioBroker host, VPS, VPN) and asks for captcha verification. The unofficial API cannot solve that captcha yet.
 
-**Often after saving instance config** (e.g. enabling an **Entities** group): ioBroker restarts the adapter, which must use the API again. That is not caused by the extra sensors themselves, but by **re-authentication** and sometimes **more API calls** on the first detail poll.
-
-**Single API token:** Anker allows only one active API token per account. Logging into the **mobile app** can invalidate the token in `authcache/<email>.json`. The adapter then tries a fresh cloud login → captcha on many hosts. Prefer copying a working `authcache` file from Home Assistant instead of clearing the cache.
+**Often after saving instance config** (e.g. enabling an **Entities** group): ioBroker restarts the adapter. Before v0.9.3 a bug could ignore a valid `authcache` file and force a new cloud login → captcha, even when the Anker app or another integration still worked.
 
 **Try in order:**
 
@@ -102,6 +100,10 @@ This is **not** an official Anker product. The cloud API may change or break at 
 - [thomluther/anker-solix-api](https://github.com/thomluther/anker-solix-api) – Python API library
 
 ## Changelog
+
+### 0.9.3
+
+- **Fix:** After adapter restart, a valid `authcache` file was wrongly treated as failed login → forced new API login → captcha (100032). Often seen right after enabling an **Entities** group (config save restarts the instance). App / other Anker integrations were unaffected.
 
 ### 0.9.2
 
@@ -263,7 +265,7 @@ After merge, the adapter appears in Admin → **Adapter** search and in `iobroke
 
 ### 4. Recommended before first publication
 
-- README and `io-package.json` version in sync (currently **0.9.2**)
+- README and `io-package.json` version in sync (currently **0.9.3**)
 - Test a clean install on a Linux ioBroker host: `iobroker url` → `iobroker upload` → instance + poll
 - Mention unofficial API and Python 3.12+ in the ioBroker forum thread when announcing
 

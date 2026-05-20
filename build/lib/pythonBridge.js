@@ -45,6 +45,10 @@ function bridgeScriptPath() {
 function isTransientApiError(message) {
   return message.includes("26161") || message.includes("429") || message.includes("Too Many Requests") || message.includes("Failed to request") || message.includes("Busy");
 }
+function isAuthError(message) {
+  const lower = message.toLowerCase();
+  return message.includes("CaptchaRequired") || message.includes("100032") || lower.includes("captcha") || message.includes("InvalidCredentials") || message.includes("Authentication failed") || message.includes("Cached Anker login is invalid");
+}
 async function runBridgeOnce(action, config, pythonPath, log) {
   const script = bridgeScriptPath();
   if (!fs.existsSync(script)) {
@@ -143,6 +147,9 @@ async function runBridge(action, config, pythonPath, log, options) {
       } catch (retryErr) {
         log == null ? void 0 : log.warn(`Daemon retry failed: ${retryErr.message}`);
       }
+    }
+    if (isAuthError(msg)) {
+      throw error;
     }
     await daemon.stop().catch(() => void 0);
     log == null ? void 0 : log.warn(`Using one-shot Python bridge (daemon unavailable: ${msg})`);
