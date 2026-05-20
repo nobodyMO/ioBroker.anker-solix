@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.9.8",
+		"version": "0.9.9",
 		"messagebox": true,
 		"news": {
+			"0.9.9": {
+				"en": "package.json keyword ioBroker; entity group headers with size (schema)",
+				"de": "Keyword ioBroker in package.json; Entitäts-Header mit size (Schema)",
+				"ru": "Ключевое слово ioBroker; заголовки с size",
+				"pt": "Keyword ioBroker; cabeçalhos com size",
+				"nl": "Keyword ioBroker; headers met size",
+				"fr": "Mot-clé ioBroker; en-têtes avec size",
+				"it": "Keyword ioBroker; header con size",
+				"es": "Keyword ioBroker; encabezados con size",
+				"pl": "Słowo kluczowe ioBroker; nagłówki z size",
+				"uk": "Ключове слово ioBroker",
+				"zh-cn": "ioBroker 关键词与 header size"
+			},
 			"0.9.8": {
 				"en": "Complete admin responsive layout (lg/xl); green CI release",
 				"de": "Admin-Layout lg/xl vervollständigt; grüner CI-Release",

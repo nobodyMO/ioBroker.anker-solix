@@ -249,6 +249,7 @@
 				"_grp_energy": {
 					"type": "header",
 					"text": "grp_energy",
+					"size": 5,
 					"xs": 12,
 					"sm": 12,
 					"md": 12,
@@ -278,6 +279,7 @@
 				"_grp_solarbank": {
 					"type": "header",
 					"text": "grp_solarbank",
+					"size": 5,
 					"xs": 12,
 					"sm": 12,
 					"md": 12,
@@ -367,6 +369,7 @@
 				"_grp_devices": {
 					"type": "header",
 					"text": "grp_devices",
+					"size": 5,
 					"xs": 12,
 					"sm": 12,
 					"md": 12,
