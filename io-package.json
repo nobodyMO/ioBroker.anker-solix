@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.9.7",
+		"version": "0.9.8",
 		"messagebox": true,
 		"news": {
+			"0.9.8": {
+				"en": "Complete admin responsive layout (lg/xl); green CI release",
+				"de": "Admin-Layout lg/xl vervollständigt; grüner CI-Release",
+				"ru": "Полная адаптивная вёрстка Admin",
+				"pt": "Layout responsivo Admin completo",
+				"nl": "Volledig responsief Admin-layout",
+				"fr": "Mise en page Admin responsive complète",
+				"it": "Layout Admin responsive completo",
+				"es": "Diseño Admin responsive completo",
+				"pl": "Pełny responsywny layout Admin",
+				"uk": "Повна адаптивна вёрстка Admin",
+				"zh-cn": "完善 Admin 响应式布局"
+			},
 			"0.9.7": {
 				"en": "Adapter-check: news/npm sync, admin layout, README copyright, exclude Python cache from npm package",
 				"de": "Adapter-Check: News/npm abgeglichen, Admin-Layout, README Copyright, Python-Cache nicht im npm-Paket",

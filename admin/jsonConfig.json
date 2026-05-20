@@ -176,7 +176,9 @@
 					"default": 0.3,
 					"xs": 12,
 					"sm": 6,
-					"md": 4
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				},
 				"endpointLimit": {
 					"type": "number",
@@ -186,7 +188,9 @@
 					"default": 10,
 					"xs": 12,
 					"sm": 6,
-					"md": 4
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				},
 				"mqttUsage": {
 					"type": "checkbox",
@@ -194,7 +198,9 @@
 					"default": true,
 					"xs": 12,
 					"sm": 6,
-					"md": 4
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				},
 				"autoInstallPython": {
 					"type": "checkbox",
@@ -202,14 +208,18 @@
 					"default": true,
 					"xs": 12,
 					"sm": 6,
-					"md": 4
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				},
 				"pythonPath": {
 					"type": "text",
 					"label": "pythonPath",
 					"xs": 12,
 					"sm": 6,
-					"md": 4
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				}
 			}
 		},
@@ -220,7 +230,11 @@
 				"_entities_hint": {
 					"type": "staticText",
 					"text": "entities_hint",
-					"xs": 12
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				},
 				"enableCoreEntities": {
 					"type": "checkbox",
@@ -228,7 +242,9 @@
 					"default": true,
 					"xs": 12,
 					"sm": 6,
-					"md": 4
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				},
 				"_grp_energy": {
 					"type": "header",
@@ -245,7 +261,9 @@
 					"default": false,
 					"xs": 12,
 					"sm": 6,
-					"md": 4
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				},
 				"enableEnergyDetail": {
 					"type": "checkbox",
@@ -253,7 +271,9 @@
 					"default": false,
 					"xs": 12,
 					"sm": 6,
-					"md": 4
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				},
 				"_grp_solarbank": {
 					"type": "header",
@@ -270,7 +290,9 @@
 					"default": false,
 					"xs": 12,
 					"sm": 6,
-					"md": 4
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				},
 				"enableDiagnostics": {
 					"type": "checkbox",
@@ -278,7 +300,9 @@
 					"default": false,
 					"xs": 12,
 					"sm": 6,
-					"md": 4
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				},
 				"enableBinaryIndicators": {
 					"type": "checkbox",
@@ -286,7 +310,9 @@
 					"default": false,
 					"xs": 12,
 					"sm": 6,
-					"md": 4
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				},
 				"enableAdvancedControls": {
 					"type": "checkbox",
@@ -294,7 +320,9 @@
 					"default": false,
 					"xs": 12,
 					"sm": 6,
-					"md": 4
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				},
 				"enableSolarbankMeta": {
 					"type": "checkbox",
@@ -302,7 +330,9 @@
 					"default": false,
 					"xs": 12,
 					"sm": 6,
-					"md": 4
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				},
 				"enableSystemOverview": {
 					"type": "checkbox",
@@ -310,7 +340,9 @@
 					"default": false,
 					"xs": 12,
 					"sm": 6,
-					"md": 4
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				},
 				"enableSitePrice": {
 					"type": "checkbox",
@@ -318,7 +350,9 @@
 					"default": false,
 					"xs": 12,
 					"sm": 6,
-					"md": 4
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				},
 				"enableAccountInfo": {
 					"type": "checkbox",
@@ -326,7 +360,9 @@
 					"default": false,
 					"xs": 12,
 					"sm": 6,
-					"md": 4
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				},
 				"_grp_devices": {
 					"type": "header",
@@ -343,7 +379,9 @@
 					"default": false,
 					"xs": 12,
 					"sm": 6,
-					"md": 4
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				},
 				"enablePps": {
 					"type": "checkbox",
@@ -351,7 +389,9 @@
 					"default": false,
 					"xs": 12,
 					"sm": 6,
-					"md": 4
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				},
 				"enableEvCharger": {
 					"type": "checkbox",
@@ -359,7 +399,9 @@
 					"default": false,
 					"xs": 12,
 					"sm": 6,
-					"md": 4
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				},
 				"enableVehicle": {
 					"type": "checkbox",
@@ -367,7 +409,9 @@
 					"default": false,
 					"xs": 12,
 					"sm": 6,
-					"md": 4
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				},
 				"enableHes": {
 					"type": "checkbox",
@@ -375,7 +419,9 @@
 					"default": false,
 					"xs": 12,
 					"sm": 6,
-					"md": 4
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				},
 				"enablePowerPanel": {
 					"type": "checkbox",
@@ -383,7 +429,9 @@
 					"default": false,
 					"xs": 12,
 					"sm": 6,
-					"md": 4
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				},
 				"enableInverter": {
 					"type": "checkbox",
@@ -391,7 +439,9 @@
 					"default": false,
 					"xs": 12,
 					"sm": 6,
-					"md": 4
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				}
 			}
 		},
@@ -402,12 +452,20 @@
 				"_services_hint": {
 					"type": "staticText",
 					"text": "services_hint",
-					"xs": 12
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				},
 				"_service_note": {
 					"type": "staticText",
 					"text": "services_note",
-					"xs": 12
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				}
 			}
 		},
@@ -418,12 +476,20 @@
 				"acceptTerms": {
 					"type": "checkbox",
 					"label": "acceptTerms",
-					"xs": 12
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				},
 				"_terms_hint": {
 					"type": "staticText",
 					"text": "terms_hint",
-					"xs": 12
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				}
 			}
 		}
