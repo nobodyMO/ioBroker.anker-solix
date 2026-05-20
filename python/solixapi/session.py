@@ -442,10 +442,15 @@ class AnkerSolixClientSession:
             and (self._token_expiration - datetime.now()).total_seconds() < 60
         ):
             self._logger.warning(
-                "WARNING: Access token expired, fetching a new one%s",
+                "WARNING: Access token expired, reloading cache%s",
                 (" for " + str(self.nickname)) if self.nickname else "",
             )
-            await self.async_authenticate(restart=True)
+            self._authFileTime = 0
+            if not await self.async_authenticate():
+                self._logger.warning(
+                    "Cache reload after expiry failed; API re-login may be required"
+                )
+                await self.async_authenticate(restart=True)
         # For non-Login requests, ensure authentication will be updated if not logged in yet or cached file was refreshed
         if endpoint != API_LOGIN and (
             not self._loggedIn
@@ -652,7 +657,19 @@ class AnkerSolixClientSession:
                         "Invalid Login, retrying authentication%s",
                         (" for " + str(self.nickname)) if self.nickname else "",
                     )
-                    if await self.async_authenticate(restart=True):
+                    self._authFileTime = 0
+                    if await self.async_authenticate():
+                        return await self.request(
+                            method, endpoint, headers=headers, json=json
+                        )
+                    if Path(self._authFile).is_file():
+                        self._logger.error(
+                            "Login failed for %s: cached token invalid (mobile app "
+                            "may have replaced the API token). Copy fresh authcache "
+                            "from HA or restart after app logout.",
+                            self._email,
+                        )
+                    elif await self.async_authenticate(restart=True):
                         return await self.request(
                             method, endpoint, headers=headers, json=json
                         )

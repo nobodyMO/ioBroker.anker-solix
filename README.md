@@ -76,6 +76,10 @@ HA-aligned entities per device under:
 
 Anker’s cloud sometimes blocks **direct API login** from servers (ioBroker host, VPS, VPN) and asks for captcha verification. The unofficial API cannot solve that captcha yet.
 
+**Often after saving instance config** (e.g. enabling an **Entities** group): ioBroker restarts the adapter, which must use the API again. That is not caused by the extra sensors themselves, but by **re-authentication** and sometimes **more API calls** on the first detail poll.
+
+**Single API token:** Anker allows only one active API token per account. Logging into the **mobile app** can invalidate the token in `authcache/<email>.json`. The adapter then tries a fresh cloud login → captcha on many hosts. Prefer copying a working `authcache` file from Home Assistant instead of clearing the cache.
+
 **Try in order:**
 
 1. Log in with the **official Anker / Solix app** on a phone in the **same LAN** as ioBroker; confirm account and password work.
@@ -98,6 +102,11 @@ This is **not** an official Anker product. The cloud API may change or break at 
 - [thomluther/anker-solix-api](https://github.com/thomluther/anker-solix-api) – Python API library
 
 ## Changelog
+
+### 0.9.2
+
+- Do not auto-delete `authcache` on failed login when a cache file exists (reduces captcha 100032 after config save / entity groups)
+- Reload cached token on 401 before forcing a new API login; clearer errors when the mobile app invalidates the token
 
 ### 0.9.1
 
@@ -254,7 +263,7 @@ After merge, the adapter appears in Admin → **Adapter** search and in `iobroke
 
 ### 4. Recommended before first publication
 
-- README and `io-package.json` version in sync (currently **0.9.1**)
+- README and `io-package.json` version in sync (currently **0.9.2**)
 - Test a clean install on a Linux ioBroker host: `iobroker url` → `iobroker upload` → instance + poll
 - Mention unofficial API and Python 3.12+ in the ioBroker forum thread when announcing
 

@@ -143,7 +143,11 @@ class AnkerSolix extends utils.Adapter {
       const msg = error.message || String(error);
       if (msg.includes("CaptchaRequired") || msg.includes("100032") || msg.toLowerCase().includes("captcha")) {
         this.log.error(
-          `Poll failed: ${msg} \u2013 Anker verlangt Captcha f\xFCr API-Login. Mit offizieller Anker/Solix-App im gleichen Netz anmelden, einige Minuten warten, Adapter neu starten. Kein VPN auf dem ioBroker-Host. Admin: \u201EAnker-Login-Cache l\xF6schen\u201C nur wenn n\xF6tig. Falls HA (ha-anker-solix) l\xE4uft: Login-Cache von dort nach iobroker-data/${this.namespace}/authcache/<E-Mail>.json kopieren.`
+          `Poll failed: ${msg} \u2013 Anker verlangt Captcha f\xFCr API-Login. H\xE4ufig nach Instanz-Neustart (z. B. Entit\xE4tsgruppe aktivieren): nur ein API-Token pro Konto \u2013 App-Login kann ioBroker-Token ung\xFCltig machen. App kurz abmelden oder HA-Login-Cache kopieren, dann Adapter neu starten. Kein VPN. \u201EAnker-Login-Cache l\xF6schen\u201C nur bei bewusstem Neu-Login. Cache nach iobroker-data/${this.namespace}/authcache/<E-Mail>.json (z. B. von ha-anker-solix).`
+        );
+      } else if (msg.includes("Cached Anker login is invalid") || msg.includes("invalidated by the mobile app")) {
+        this.log.error(
+          `Poll failed: ${msg} \u2013 Gespeicherter API-Token ung\xFCltig (abgelaufen oder durch App ersetzt). Nicht \u201ECache l\xF6schen\u201C \u2013 stattdessen frische authcache-Datei von HA kopieren oder App kurz abmelden, dann neu starten.`
         );
       } else if (msg.includes("InvalidCredentials") || msg.includes("Authentication failed")) {
         this.log.error(

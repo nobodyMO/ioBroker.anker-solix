@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.9.1",
+		"version": "0.9.2",
 		"messagebox": true,
 		"news": {
+			"0.9.2": {
+				"en": "Keep authcache on re-auth after config save; fewer captcha errors (100032)",
+				"de": "Login-Cache bei Neu-Anmeldung erhalten; weniger Captcha-Fehler (100032)",
+				"ru": "Сохранение authcache",
+				"pt": "Manter authcache",
+				"nl": "Authcache behouden",
+				"fr": "Conserver authcache",
+				"it": "Mantiene authcache",
+				"es": "Conservar authcache",
+				"pl": "Zachowanie authcache",
+				"uk": "Збереження authcache",
+				"zh-cn": "保留登录缓存"
+			},
 			"0.9.1": {
 				"en": "Clearer handling of Anker captcha login error (100032); README troubleshooting",
 				"de": "Klarere Meldungen bei Anker-Captcha-Login (100032); README Fehlerbehebung",

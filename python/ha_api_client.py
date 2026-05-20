@@ -22,6 +22,7 @@ DEFAULT_DELAY_TIME: float = SolixDefaults.REQUEST_DELAY_DEF
 DEFAULT_TIMEOUT: int = SolixDefaults.REQUEST_TIMEOUT_DEF
 
 # Non-energy optional excludes (HA optional list subset; no ApiCategories.device_parm).
+from auth_helpers import purge_invalid_auth_cache, safe_authenticate  # noqa: E402
 from entity_groups import build_exclude_categories  # noqa: E402
 
 # Re-export for bridge.py
@@ -55,6 +56,7 @@ class IoBrokerAnkerApiClient:
         self.api.apisession.endpointLimit(
             int(config.get("endpointLimit", DEFAULT_ENDPOINT_LIMIT))
         )
+        purge_invalid_auth_cache(self.api, logger)
 
         self.exclude_categories = build_exclude_categories(config)
         self._deviceintervals = max(
@@ -114,36 +116,7 @@ class IoBrokerAnkerApiClient:
                 )
 
     async def authenticate(self) -> None:
-        import asyncio
-        from solixapi import errors  # noqa: PLC0415
-
-        last_exc: Exception | None = None
-        for attempt in range(3):
-            try:
-                if await self.api.async_authenticate():
-                    return
-                if await self.api.async_authenticate(restart=True):
-                    return
-                last_exc = RuntimeError("Authentication failed")
-            except errors.CaptchaRequiredError:
-                raise
-            except errors.AnkerSolixError as exc:
-                if "100032" in str(exc) or "captcha" in str(exc).lower():
-                    raise errors.CaptchaRequiredError(str(exc)) from exc
-                raise
-            except errors.RequestError as exc:
-                last_exc = exc
-                if "26161" in str(exc) or "429" in str(exc):
-                    delay = 15 * (attempt + 1)
-                    self._logger.warning(
-                        "Auth rate-limited, retry %s/3 in %ss", attempt + 2, delay
-                    )
-                    await asyncio.sleep(delay)
-                    continue
-                raise
-        if last_exc:
-            raise last_exc
-        raise RuntimeError("Authentication failed")
+        await safe_authenticate(self.api, self._logger)
 
     async def async_get_data(self) -> dict[str, Any]:
         """Same sequence as HA AnkerSolixApiClient.async_get_data (normal poll path)."""
