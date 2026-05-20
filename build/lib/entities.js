@@ -57,7 +57,7 @@ const CONTROL_ENTITIES = [
     role: "level.power",
     unit: "W",
     min: 0,
-    max: 800
+    max: 5e3
   },
   { id: "min_soc", kind: "number", role: "level.battery", unit: "%", min: 0, max: 100 },
   {
@@ -81,7 +81,7 @@ const CONTROL_ENTITIES = [
     kind: "number",
     role: "level.power",
     unit: "W",
-    min: 100,
+    min: 0,
     max: 1e5
   }
 ];

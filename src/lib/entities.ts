@@ -47,7 +47,7 @@ const CONTROL_ENTITIES: EntityMeta[] = [
 		role: "level.power",
 		unit: "W",
 		min: 0,
-		max: 800,
+		max: 5000,
 	},
 	{ id: "min_soc", kind: "number", role: "level.battery", unit: "%", min: 0, max: 100 },
 	{
@@ -71,7 +71,7 @@ const CONTROL_ENTITIES: EntityMeta[] = [
 		kind: "number",
 		role: "level.power",
 		unit: "W",
-		min: 100,
+		min: 0,
 		max: 100000,
 	},
 ];

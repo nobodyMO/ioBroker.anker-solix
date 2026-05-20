@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.6.1",
+		"version": "0.6.2",
 		"messagebox": true,
 		"news": {
+			"0.6.2": {
+				"en": "Fix control state min/max for multisystem AC output (4800 W) and grid export limit 0",
+				"de": "Min/Max der Steuer-States für Multisystem AC-Ausgang (4800 W) und Netzeinspeisung 0 korrigiert",
+				"ru": "Исправлены min/max состояний",
+				"pt": "Correção min/max dos estados",
+				"nl": "Min/max staten gecorrigeerd",
+				"fr": "Correction min/max des états",
+				"it": "Corretti min/max stati",
+				"es": "Corregidos min/max de estados",
+				"pl": "Poprawione min/max stanów",
+				"uk": "Виправлено min/max станів",
+				"zh-cn": "修复控制状态 min/max"
+			},
 			"0.6.1": {
 				"en": "Daemon: deferred auth on start, one-shot fallback if API rate-limited (26161)",
 				"de": "Daemon: Auth erst beim Poll, One-Shot-Fallback bei API-Limit (26161)",

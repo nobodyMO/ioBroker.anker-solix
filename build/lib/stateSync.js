@@ -119,11 +119,21 @@ async function syncDevices(adapter, devices) {
         common.unit = meta.unit;
       }
       if (stateType === "number" || stateType === "mixed") {
-        if ((meta == null ? void 0 : meta.min) !== void 0) {
-          common.min = meta.min;
+        let min = meta == null ? void 0 : meta.min;
+        let max = meta == null ? void 0 : meta.max;
+        if (hasValue && typeof stateVal === "number") {
+          if (min !== void 0 && stateVal < min) {
+            min = stateVal;
+          }
+          if (max !== void 0 && stateVal > max) {
+            max = stateVal;
+          }
         }
-        if ((meta == null ? void 0 : meta.max) !== void 0) {
-          common.max = meta.max;
+        if (min !== void 0) {
+          common.min = min;
+        }
+        if (max !== void 0) {
+          common.max = max;
         }
       }
       await adapter.setObjectNotExistsAsync(stateId, {

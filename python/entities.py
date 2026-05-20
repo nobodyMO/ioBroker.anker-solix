@@ -201,7 +201,7 @@ CONTROL_ENTITIES: list[dict[str, Any]] = [
         "types": [SOLARBANK, COMBINER, SYSTEM],
         "control": "ac_output_limit",
         "min": 0,
-        "max": 800,
+        "max": 5000,  # multisystem/combiner up to ~4800 W (HA PRESET_MAX_MULTISYSTEM)
     },
     {
         "id": "min_soc",
@@ -236,7 +236,7 @@ CONTROL_ENTITIES: list[dict[str, Any]] = [
         "role": "level.power",
         "types": [SOLARBANK, COMBINER, SYSTEM],
         "control": "grid_export_limit",
-        "min": 100,
+        "min": 0,  # 0 = off/disabled in API; writes 100–100000 W validated in bridge
         "max": 100000,
     },
 ]

@@ -108,11 +108,21 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 				common.unit = meta.unit;
 			}
 			if (stateType === "number" || stateType === "mixed") {
-				if (meta?.min !== undefined) {
-					common.min = meta.min;
+				let min = meta?.min;
+				let max = meta?.max;
+				if (hasValue && typeof stateVal === "number") {
+					if (min !== undefined && stateVal < min) {
+						min = stateVal;
+					}
+					if (max !== undefined && stateVal > max) {
+						max = stateVal;
+					}
 				}
-				if (meta?.max !== undefined) {
-					common.max = meta.max;
+				if (min !== undefined) {
+					common.min = min;
+				}
+				if (max !== undefined) {
+					common.max = max;
 				}
 			}
 
