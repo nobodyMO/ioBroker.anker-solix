@@ -1,6 +1,8 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 
+import { minimalSpawnEnv } from "./spawnEnv";
+
 /** Adapter package root (contains python/, build/, tools/). */
 export function adapterRoot(): string {
 	return path.join(__dirname, "..", "..");
@@ -40,15 +42,14 @@ export function isPyLauncher(python: string): boolean {
 	return python === "py";
 }
 
-/** PYTHONPATH for python/site-packages fallback (PEP 668 hosts without python3-venv). */
+/** Env for Python child processes (PYTHONPATH for site-packages fallback). */
 export function buildPythonEnv(): NodeJS.ProcessEnv {
-	const env: NodeJS.ProcessEnv = {
-		...process.env,
+	const extra: Record<string, string> = {
 		PYTHONIOENCODING: "utf-8",
 	};
 	if (hasSitePackagesDeps()) {
 		const site = sitePackagesPath();
-		env.PYTHONPATH = env.PYTHONPATH ? `${site}${path.delimiter}${env.PYTHONPATH}` : site;
+		extra.PYTHONPATH = site;
 	}
-	return env;
+	return minimalSpawnEnv(extra);
 }

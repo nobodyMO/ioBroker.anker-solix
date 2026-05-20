@@ -34,6 +34,7 @@ module.exports = __toCommonJS(ensurePython_exports);
 var import_node_child_process = require("node:child_process");
 var fs = __toESM(require("node:fs"));
 var path = __toESM(require("node:path"));
+var import_spawnEnv = require("./spawnEnv");
 function adapterRoot() {
   return path.join(__dirname, "..", "..");
 }
@@ -44,14 +45,10 @@ function runPythonInstaller(pythonPath, log) {
       resolve({ ok: false, message: `Installer not found: ${script}` });
       return;
     }
-    const env = {
-      ...process.env,
-      ANKER_SOLIX_PYTHON: pythonPath || "",
-      ANKER_SOLIX_AUTO_INSTALL_PYTHON: process.platform === "linux" ? "1" : "0"
-    };
-    const proc = (0, import_node_child_process.spawn)(process.execPath, [script], {
+    const args = ["--python", pythonPath || ""];
+    const proc = (0, import_node_child_process.spawn)(process.execPath, [script, ...args], {
       cwd: adapterRoot(),
-      env,
+      env: (0, import_spawnEnv.minimalSpawnEnv)(),
       windowsHide: true
     });
     let stdout = "";

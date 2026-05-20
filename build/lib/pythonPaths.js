@@ -39,6 +39,7 @@ __export(pythonPaths_exports, {
 module.exports = __toCommonJS(pythonPaths_exports);
 var fs = __toESM(require("node:fs"));
 var path = __toESM(require("node:path"));
+var import_spawnEnv = require("./spawnEnv");
 function adapterRoot() {
   return path.join(__dirname, "..", "..");
 }
@@ -70,15 +71,14 @@ function isPyLauncher(python) {
   return python === "py";
 }
 function buildPythonEnv() {
-  const env = {
-    ...process.env,
+  const extra = {
     PYTHONIOENCODING: "utf-8"
   };
   if (hasSitePackagesDeps()) {
     const site = sitePackagesPath();
-    env.PYTHONPATH = env.PYTHONPATH ? `${site}${path.delimiter}${env.PYTHONPATH}` : site;
+    extra.PYTHONPATH = site;
   }
-  return env;
+  return (0, import_spawnEnv.minimalSpawnEnv)(extra);
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../src/lib/spawnEnv.ts"],
+  "sourcesContent": ["import { env } from \"node:process\";\n\n/** Minimal host env for spawning Python (compact-mode safe; no full process.env spread). */\nexport function minimalSpawnEnv(extra?: Record<string, string>): NodeJS.ProcessEnv {\n\tconst result: NodeJS.ProcessEnv = { ...extra };\n\tconst pathKey = process.platform === \"win32\" ? \"Path\" : \"PATH\";\n\tconst pathVal = env[pathKey] ?? env.PATH;\n\tif (pathVal) {\n\t\tresult[pathKey] = pathVal;\n\t}\n\tif (process.platform === \"win32\" && env.SYSTEMROOT) {\n\t\tresult.SYSTEMROOT = env.SYSTEMROOT;\n\t}\n\tif (env.HOME) {\n\t\tresult.HOME = env.HOME;\n\t}\n\tif (env.USERPROFILE) {\n\t\tresult.USERPROFILE = env.USERPROFILE;\n\t}\n\treturn result;\n}\n"],
+  "mappings": ";;;;;;;;;;;;;;;;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA,0BAAoB;AAGb,SAAS,gBAAgB,OAAmD;AAHnF;AAIC,QAAM,SAA4B,EAAE,GAAG,MAAM;AAC7C,QAAM,UAAU,QAAQ,aAAa,UAAU,SAAS;AACxD,QAAM,WAAU,6BAAI,OAAO,MAAX,YAAgB,wBAAI;AACpC,MAAI,SAAS;AACZ,WAAO,OAAO,IAAI;AAAA,EACnB;AACA,MAAI,QAAQ,aAAa,WAAW,wBAAI,YAAY;AACnD,WAAO,aAAa,wBAAI;AAAA,EACzB;AACA,MAAI,wBAAI,MAAM;AACb,WAAO,OAAO,wBAAI;AAAA,EACnB;AACA,MAAI,wBAAI,aAAa;AACpB,WAAO,cAAc,wBAAI;AAAA,EAC1B;AACA,SAAO;AACR;",
+  "names": []
+}

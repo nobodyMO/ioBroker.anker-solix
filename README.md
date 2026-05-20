@@ -51,15 +51,21 @@ Poll interval should be **60–180 s** (same recommendation as HA). Site list is
 
 ## Requirements & installation
 
-- ioBroker **js-controller >= 6**, **admin >= 7**
-- **Node.js >= 20**
+- ioBroker **js-controller >= 6**, **admin >= 7.6**
+- **Node.js >= 22**
 - **Python 3.12+** on the ioBroker host (`python3-venv` + `python3-pip` recommended on Debian/Ubuntu)
 
 Python dependencies install into the adapter folder (`python/.venv` or `python/site-packages`). Since v0.2.0: automatic on start (**Options** → `autoInstallPython`) or button **Install Python dependencies**.
 
+Install via ioBroker (recommended):
+
 ```bash
-iobroker url https://github.com/MatthiasUlrich1/ioBroker.anker-solix
-# or: iobroker install anker-solix   (when on npm)
+iobroker install anker-solix
+```
+
+After changing the adapter files locally, upload the instance:
+
+```bash
 iobroker upload anker-solix
 ```
 
@@ -282,6 +288,10 @@ German guides/videos linked from the [HA README](https://github.com/thomluther/h
 
 ## Changelog
 
+### 0.9.6
+
+- Adapter-check compliance: Node 22+, admin UI sizes, compact-mode Python install, dependabot
+
 ### 0.9.5
 
 - Admin warning before **Clear Anker login cache**; log after clear
@@ -326,19 +336,13 @@ German guides/videos linked from the [HA README](https://github.com/thomluther/h
 
 - Python auto-install, device selection, staggered polling, repository rename
 
-See git history for older entries.
+Older release notes: [CHANGELOG_OLD.md](CHANGELOG_OLD.md) and git history.
 
 ---
 
 ## Publishing (npm & ioBroker catalog)
 
-Install from GitHub:
-
-```bash
-iobroker url https://github.com/MatthiasUlrich1/ioBroker.anker-solix
-```
-
-**npm:** `npm publish --access public` after CI green and [adapter check](https://adaptercheck.iobroker.in/). Register in [ioBroker.repositories](https://github.com/ioBroker/ioBroker.repositories).
+**npm:** Release via git tag (`v*`) and CI deploy after [adapter check](https://adaptercheck.iobroker.in/) is green. Register in [ioBroker.repositories](https://github.com/ioBroker/ioBroker.repositories) once the package is on npm.
 
 ---
 

@@ -2,6 +2,8 @@ import { spawn } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
+import { minimalSpawnEnv } from "./spawnEnv";
+
 export interface PythonCheckResult {
 	ok: boolean;
 	message: string;
@@ -20,15 +22,10 @@ export function runPythonInstaller(pythonPath: string, log?: ioBroker.Logger): P
 			return;
 		}
 
-		const env = {
-			...process.env,
-			ANKER_SOLIX_PYTHON: pythonPath || "",
-			ANKER_SOLIX_AUTO_INSTALL_PYTHON: process.platform === "linux" ? "1" : "0",
-		};
-
-		const proc = spawn(process.execPath, [script], {
+		const args = ["--python", pythonPath || ""];
+		const proc = spawn(process.execPath, [script, ...args], {
 			cwd: adapterRoot(),
-			env,
+			env: minimalSpawnEnv(),
 			windowsHide: true,
 		});
 

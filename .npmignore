@@ -1,0 +1,11 @@
+**/__pycache__/
+**/*.pyc
+python/.venv/
+python/site-packages/
+.git/
+.github/
+src/
+test/
+node_modules/
+*.ts
+!build/**

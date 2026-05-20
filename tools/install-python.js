@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Installs Python deps into python/.venv (preferred) or python/site-packages (fallback).
- * npm postinstall: best-effort, never fails npm (exit 0).
+ * npm postinstall: best-effort, never fails npm (exit 0) — use: node tools/install-python.js --soft
  */
 
 const { spawnSync } = require("node:child_process");
@@ -13,17 +13,28 @@ const requirements = path.join(adapterRoot, "python", "requirements.txt");
 const venvDir = path.join(adapterRoot, "python", ".venv");
 const sitePackages = path.join(adapterRoot, "python", "site-packages");
 
+function parseArgs(argv) {
+	let python = "";
+	let soft = false;
+	for (let i = 2; i < argv.length; i++) {
+		if (argv[i] === "--python" && argv[i + 1] != null) {
+			python = argv[++i];
+		} else if (argv[i] === "--soft") {
+			soft = true;
+		}
+	}
+	return { python, soft };
+}
+
+const cli = parseArgs(process.argv);
+
 function isNpmTempInstall() {
 	const root = adapterRoot.replace(/\\/g, "/").toLowerCase();
 	return root.includes("/_cacache/") || root.includes("/tmp/git-clone") || root.includes("/npm/_cacache/");
 }
 
 function isSoftFail() {
-	return (
-		process.env.npm_lifecycle_event === "postinstall" ||
-		process.env.ANKER_SOLIX_SOFT_INSTALL === "1" ||
-		isNpmTempInstall()
-	);
+	return cli.soft || isNpmTempInstall();
 }
 
 function log(msg) {
@@ -37,11 +48,12 @@ function venvPython() {
 	return path.join(venvDir, "bin", "python3");
 }
 
-function tryCommand(cmd, args) {
+function tryCommand(cmd, args, env) {
 	const result = spawnSync(cmd, args, {
 		cwd: adapterRoot,
 		encoding: "utf8",
 		shell: process.platform === "win32",
+		env,
 	});
 	return {
 		ok: result.status === 0,
@@ -85,7 +97,7 @@ function canImportWithSitePackages(systemPython) {
 	if (!fs.existsSync(path.join(sitePackages, "aiohttp"))) {
 		return false;
 	}
-	const env = { ...process.env, PYTHONPATH: sitePackages };
+	const env = { PYTHONPATH: sitePackages };
 	const r = spawnSync(systemPython, pythonArgs(systemPython, ["-c", "import aiohttp"]), {
 		cwd: adapterRoot,
 		encoding: "utf8",
@@ -100,7 +112,7 @@ function depsReady() {
 	if (fs.existsSync(vpy) && canImportAiohttp(vpy)) {
 		return true;
 	}
-	const sys = findSystemPython(process.env.ANKER_SOLIX_PYTHON || "");
+	const sys = findSystemPython(cli.python);
 	return Boolean(sys && canImportWithSitePackages(sys));
 }
 
@@ -161,18 +173,20 @@ function finish(success, message) {
 	if (!success) {
 		log(message);
 		if (!isSoftFail()) {
-			process.exit(1);
+			process.exitCode = 1;
+			return;
 		}
 		log("Install deferred – start the adapter instance or use admin: Install Python dependencies.");
 		log("On Debian/Ubuntu without venv: sudo apt install python3-venv python3-pip");
 	}
-	process.exit(0);
+	process.exitCode = 0;
 }
 
 function main() {
 	if (isNpmTempInstall()) {
 		log("Skipping Python setup in npm cache (runs in adapter folder after install).");
-		process.exit(0);
+		process.exitCode = 0;
+		return;
 	}
 
 	if (!fs.existsSync(requirements)) {
@@ -182,11 +196,11 @@ function main() {
 
 	if (depsReady()) {
 		log("Python dependencies already OK.");
-		process.exit(0);
+		process.exitCode = 0;
+		return;
 	}
 
-	const customPath = process.env.ANKER_SOLIX_PYTHON || "";
-	const systemPython = findSystemPython(customPath);
+	const systemPython = findSystemPython(cli.python);
 	if (!systemPython) {
 		finish(false, "Python 3.12+ not found on this host.");
 		return;
@@ -196,11 +210,13 @@ function main() {
 
 	const py = ensureVenv(systemPython);
 	if (py && installIntoVenv(py)) {
-		process.exit(0);
+		process.exitCode = 0;
+		return;
 	}
 
 	if (installIntoSitePackages(systemPython)) {
-		process.exit(0);
+		process.exitCode = 0;
+		return;
 	}
 
 	finish(false, "Could not install Python packages (venv and site-packages fallback failed).");
