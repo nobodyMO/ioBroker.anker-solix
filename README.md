@@ -81,7 +81,7 @@ Anker’s cloud sometimes blocks **direct API login** from servers (ioBroker hos
 **Try in order:**
 
 1. Log in with the **official Anker / Solix app** on a phone in the **same LAN** as ioBroker; confirm account and password work.
-2. In adapter Admin → **Devices** → **Clear Anker login cache**, then save instance config again (re-enter password) and **restart** the adapter.
+2. Save instance config (re-enter password if needed) and **restart** the adapter. Use **Clear Anker login cache** only if you intentionally need a fresh login (wrong account, corrupted file) — **not** for captcha errors; clearing removes the token file and forces a new cloud login.
 3. **Disable VPN** on the ioBroker machine; use the correct **country code** (e.g. `DE`, `AT`, `CH`) matching your Anker account.
 4. If **Home Assistant** with [ha-anker-solix](https://github.com/thomluther/ha-anker-solix) works for the same account: copy the login cache file  
    `…/authcache/<your-email>.json` from HA into  

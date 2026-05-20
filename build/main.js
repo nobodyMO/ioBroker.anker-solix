@@ -351,8 +351,14 @@ class AnkerSolix extends utils.Adapter {
           await Promise.all(files.map((f) => fs2.unlink(path.join(cacheDir, f)).catch(() => void 0)));
           await (0, import_pythonBridge.stopBridgeDaemon)();
           await (0, import_pythonBridge.ensureBridgeDaemon)(this.getBridgeConfig(), this.config.pythonPath || "", this.log);
+          this.log.warn(
+            `Anker login cache cleared (${files.length} file(s) in ${cacheDir}). Next poll requires a new API login; on many hosts Anker returns captcha (100032). Restore authcache/${(this.config.username || "").trim()}.json from HA or retry login when cloud allows it.`
+          );
           respond({ ok: true, cleared: files.length });
         } catch {
+          this.log.warn(
+            `Anker login cache clear requested but folder empty or missing (${cacheDir}). Adapter must complete a successful API login to create authcache/<email>.json.`
+          );
           respond({ ok: true, cleared: 0 });
         }
         return;

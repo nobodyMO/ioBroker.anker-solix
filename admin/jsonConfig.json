@@ -59,6 +59,15 @@
 					"sm": 6,
 					"md": 4
 				},
+				"_clearAuthCache_warn": {
+					"type": "staticText",
+					"text": "clearAuthCache_warn",
+					"style": {
+						"fontSize": "0.9em",
+						"color": "#b45309"
+					},
+					"xs": 12
+				},
 				"clearAuthCache": {
 					"type": "sendTo",
 					"label": "clearAuthCache",

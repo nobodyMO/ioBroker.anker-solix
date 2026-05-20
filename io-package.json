@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.9.4",
+		"version": "0.9.5",
 		"messagebox": true,
 		"news": {
+			"0.9.5": {
+				"en": "Admin warning: clearing login cache forces new API login (captcha risk)",
+				"de": "Admin-Hinweis: Login-Cache löschen erzwingt Neu-Login (Captcha-Risiko)",
+				"ru": "Предупреждение об очистке кэша",
+				"pt": "Aviso ao limpar cache",
+				"nl": "Waarschuwing cache wissen",
+				"fr": "Avertissement cache login",
+				"it": "Avviso cancellazione cache",
+				"es": "Aviso borrar caché",
+				"pl": "Ostrzeżenie czyszczenia cache",
+				"uk": "Попередження про кеш",
+				"zh-cn": "清除缓存警告"
+			},
 			"0.9.4": {
 				"en": "Log exact authcache path when login cache file is missing",
 				"de": "Loggt exakten authcache-Pfad wenn Login-Cache fehlt",

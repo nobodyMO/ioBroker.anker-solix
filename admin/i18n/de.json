@@ -31,6 +31,7 @@
 	"loadDevices": "Geräte von Anker laden",
 	"installPython": "Python-Abhängigkeiten installieren",
 	"clearAuthCache": "Anker-Login-Cache löschen",
+	"clearAuthCache_warn": "Nur bei falschem Konto, kaputter Cache-Datei oder bewusstem Neu-Login. Löschen erzwingt einen neuen API-Login bei Anker — auf vielen ioBroker-Hosts dann Captcha (100032) und der Adapter läuft nicht mehr, bis eine neue authcache/<E-Mail>.json existiert. Bei Captcha-Fehlern NICHT löschen.",
 	"enableAllDevices": "Alle gefundenen Geräte überwachen",
 	"selectedSiteId": "Site-ID (optional, leer = alle)",
 	"selectedDeviceIds": "Geräte-SNs (kommagetrennt, optional)",

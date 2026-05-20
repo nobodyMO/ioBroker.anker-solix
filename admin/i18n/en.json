@@ -31,6 +31,7 @@
 	"loadDevices": "Load devices from Anker",
 	"installPython": "Install Python dependencies",
 	"clearAuthCache": "Clear Anker login cache",
+	"clearAuthCache_warn": "Only if wrong account, corrupted cache, or you intentionally need a fresh API login. Clearing forces a new Anker cloud login — on many ioBroker hosts that triggers captcha (100032) and the adapter stops until authcache/<email>.json exists again. Do NOT clear when you only see captcha errors.",
 	"enableAllDevices": "Monitor all discovered devices",
 	"selectedSiteId": "Site ID (optional, empty = all)",
 	"selectedDeviceIds": "Device serial numbers (comma-separated, optional)",
