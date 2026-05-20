@@ -81,7 +81,12 @@ async function runBridgeOnce(
 					.filter(Boolean)
 					.pop();
 				if (!lastLine) {
-					reject(new Error(`Python bridge returned no output (code ${code})`));
+					const errDetail = stderr.trim()
+						? stderr.trim().split(/\r?\n/).slice(-8).join("\n")
+						: `exit code ${code ?? "unknown"}`;
+					reject(
+						new Error(`Python bridge returned no output: ${errDetail}`),
+					);
 					return;
 				}
 				const parsed = JSON.parse(lastLine) as BridgePollResult;

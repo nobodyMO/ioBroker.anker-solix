@@ -21,8 +21,8 @@ DEFAULT_ENDPOINT_LIMIT: int = SolixDefaults.ENDPOINT_LIMIT_DEF
 DEFAULT_DELAY_TIME: float = SolixDefaults.REQUEST_DELAY_DEF
 DEFAULT_TIMEOUT: int = SolixDefaults.REQUEST_TIMEOUT_DEF
 
+# Non-energy optional excludes (HA optional list subset; no ApiCategories.device_parm).
 DEFAULT_EXCLUDE_CATEGORIES: list[str] = [
-    ApiCategories.device_parm,
     ApiCategories.solarbank_solar_info,
     ApiCategories.device_auto_upgrade,
     ApiCategories.device_tag,

@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.8.0",
+		"version": "0.8.1",
 		"messagebox": true,
 		"news": {
+			"0.8.1": {
+				"en": "Fix Python bridge import crash (invalid ApiCategories.device_parm)",
+				"de": "Python-Bridge-Absturz behoben (ungültiges ApiCategories.device_parm)",
+				"ru": "Исправлен сбой Python-моста",
+				"pt": "Correção da ponte Python",
+				"nl": "Python-bridge crash opgelost",
+				"fr": "Correction du crash du pont Python",
+				"it": "Corretto crash del bridge Python",
+				"es": "Corregido fallo del puente Python",
+				"pl": "Naprawa awarii mostu Python",
+				"uk": "Виправлено збій Python-мосту",
+				"zh-cn": "修复 Python 桥接导入崩溃"
+			},
 			"0.8.0": {
 				"en": "Daily energy statistics (kWh) under statistics.*; enabled by default",
 				"de": "Tagesstatistiken (kWh) unter statistics.*; standardmäßig aktiv",
