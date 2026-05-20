@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.9.0",
+		"version": "0.9.1",
 		"messagebox": true,
 		"news": {
+			"0.9.1": {
+				"en": "Clearer handling of Anker captcha login error (100032); README troubleshooting",
+				"de": "Klarere Meldungen bei Anker-Captcha-Login (100032); README Fehlerbehebung",
+				"ru": "Ошибка captcha 100032",
+				"pt": "Erro captcha 100032",
+				"nl": "Captcha-loginfout 100032",
+				"fr": "Erreur captcha 100032",
+				"it": "Errore captcha 100032",
+				"es": "Error captcha 100032",
+				"pl": "Błąd captcha 100032",
+				"uk": "Помилка captcha 100032",
+				"zh-cn": "验证码登录错误 100032"
+			},
 			"0.9.0": {
 				"en": "Configurable entity groups (HA-style); many optional sensors/controls, default off",
 				"de": "Konfigurierbare Entitätsgruppen (HA-ähnlich); viele optionale Sensoren/Steuerungen, standard aus",

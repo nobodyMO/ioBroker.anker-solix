@@ -141,7 +141,11 @@ class AnkerSolix extends utils.Adapter {
     } catch (error) {
       await this.setState("info.connection", false, true);
       const msg = error.message || String(error);
-      if (msg.includes("InvalidCredentials") || msg.includes("Authentication failed")) {
+      if (msg.includes("CaptchaRequired") || msg.includes("100032") || msg.toLowerCase().includes("captcha")) {
+        this.log.error(
+          `Poll failed: ${msg} \u2013 Anker verlangt Captcha f\xFCr API-Login. Mit offizieller Anker/Solix-App im gleichen Netz anmelden, einige Minuten warten, Adapter neu starten. Kein VPN auf dem ioBroker-Host. Admin: \u201EAnker-Login-Cache l\xF6schen\u201C nur wenn n\xF6tig. Falls HA (ha-anker-solix) l\xE4uft: Login-Cache von dort nach iobroker-data/${this.namespace}/authcache/<E-Mail>.json kopieren.`
+        );
+      } else if (msg.includes("InvalidCredentials") || msg.includes("Authentication failed")) {
         this.log.error(
           `Poll failed: ${msg} \u2013 Check e-mail, password and country (${this.config.country || "DE"}). In Admin use \u201CInstall Python dependencies\u201D tab or restart after saving config; try country matching your Anker account region.`
         );

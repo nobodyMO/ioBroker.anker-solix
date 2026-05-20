@@ -89,6 +89,10 @@ class NoAccessPermission(AnkerSolixError):
     """The device has no access permission."""
 
 
+class CaptchaRequiredError(AnkerSolixError):
+    """Anker cloud requires captcha verification for this login (API login blocked)."""
+
+
 ERRORS: dict[int, type[AnkerSolixError]] = {
     401: AuthorizationError,
     403: AuthorizationError,
@@ -114,6 +118,7 @@ ERRORS: dict[int, type[AnkerSolixError]] = {
     26108: InvalidCredentialsError,
     26156: InvalidCredentialsError,
     26161: RequestError,
+    100032: CaptchaRequiredError,
     31001: ItemExistsError,
     31003: ItemLimitExceededError,
     100053: RetryExceeded,

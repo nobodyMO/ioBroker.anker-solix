@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import contextlib
 import json
 import logging
 import sys
@@ -80,7 +81,24 @@ def device_info(ctx_id: str, data: dict) -> dict[str, str | int]:
     }
 
 
-def _auth_error_message(api: AnkerSolixApi, country: str) -> str:
+def _is_captcha_error(exc: BaseException) -> bool:
+    text = str(exc).lower()
+    return "100032" in text or "captcha" in text
+
+
+def _auth_error_message(
+    api: AnkerSolixApi, country: str, email: str, *, captcha: bool = False
+) -> str:
+    if captcha:
+        return (
+            "Anker cloud requires captcha verification for API login (100032). "
+            "Log in with the official Anker/Solix app on the same network, wait a few minutes, "
+            "then restart the adapter. Avoid VPN on the ioBroker host. "
+            "If Home Assistant (ha-anker-solix) works on the same account, copy its login cache "
+            f"file to this instance authcache folder as {email}.json "
+            "(HA path: custom_components/anker_solix/solixapi/authcache/ or integration storage). "
+            f"Country in config must match the account ({country})."
+        )
     resp = getattr(api.apisession, "_login_response", None) or {}
     detail = resp.get("msg") or resp.get("message") or ""
     base = "Authentication failed"
@@ -90,6 +108,22 @@ def _auth_error_message(api: AnkerSolixApi, country: str) -> str:
         f"{base} (country={country}). "
         "Check Anker app e-mail/password and country code in adapter config."
     )
+
+
+def _purge_invalid_auth_cache(api: AnkerSolixApi) -> None:
+    """Remove login cache if it cannot yield a valid session (forces clean re-login)."""
+    auth_path = Path(getattr(api.apisession, "_authFile", "") or "")
+    if not auth_path.is_file():
+        return
+    try:
+        data = json.loads(auth_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        data = {}
+    if data.get("user_id") and data.get("auth_token"):
+        return
+    with contextlib.suppress(OSError):
+        auth_path.unlink()
+    _LOGGER.warning("Removed invalid Anker login cache: %s", auth_path)
 
 
 async def _get_api(config: dict) -> tuple[AnkerSolixApi, ClientSession]:
@@ -106,10 +140,23 @@ async def _get_api(config: dict) -> tuple[AnkerSolixApi, ClientSession]:
     api.apisession._authFile = str(cache_dir / f"{email}.json")
     api.apisession.requestDelay(float(config.get("requestDelay") or DEFAULT_DELAY_TIME))
 
-    # Cached token may be expired/invalid – retry once with fresh login (like HA integration)
-    if not await api.async_authenticate():
-        if not await api.async_authenticate(restart=True):
-            raise errors.InvalidCredentialsError(_auth_error_message(api, country))
+    _purge_invalid_auth_cache(api)
+    try:
+        if not await api.async_authenticate():
+            if not await api.async_authenticate(restart=True):
+                raise errors.InvalidCredentialsError(
+                    _auth_error_message(api, country, email)
+                )
+    except errors.CaptchaRequiredError:
+        raise errors.CaptchaRequiredError(
+            _auth_error_message(api, country, email, captcha=True)
+        ) from None
+    except errors.AnkerSolixError as exc:
+        if _is_captcha_error(exc):
+            raise errors.CaptchaRequiredError(
+                _auth_error_message(api, country, email, captcha=True)
+            ) from exc
+        raise
     return api, session
 
 

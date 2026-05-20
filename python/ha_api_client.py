@@ -125,6 +125,12 @@ class IoBrokerAnkerApiClient:
                 if await self.api.async_authenticate(restart=True):
                     return
                 last_exc = RuntimeError("Authentication failed")
+            except errors.CaptchaRequiredError:
+                raise
+            except errors.AnkerSolixError as exc:
+                if "100032" in str(exc) or "captcha" in str(exc).lower():
+                    raise errors.CaptchaRequiredError(str(exc)) from exc
+                raise
             except errors.RequestError as exc:
                 last_exc = exc
                 if "26161" in str(exc) or "429" in str(exc):

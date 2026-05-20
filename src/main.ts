@@ -142,7 +142,15 @@ class AnkerSolix extends utils.Adapter {
 		} catch (error) {
 			await this.setState("info.connection", false, true);
 			const msg = (error as Error).message || String(error);
-			if (msg.includes("InvalidCredentials") || msg.includes("Authentication failed")) {
+			if (msg.includes("CaptchaRequired") || msg.includes("100032") || msg.toLowerCase().includes("captcha")) {
+				this.log.error(
+					`Poll failed: ${msg} – Anker verlangt Captcha für API-Login. ` +
+						"Mit offizieller Anker/Solix-App im gleichen Netz anmelden, einige Minuten warten, Adapter neu starten. " +
+						"Kein VPN auf dem ioBroker-Host. Admin: „Anker-Login-Cache löschen“ nur wenn nötig. " +
+						"Falls HA (ha-anker-solix) läuft: Login-Cache von dort nach " +
+						`iobroker-data/${this.namespace}/authcache/<E-Mail>.json kopieren.`,
+				);
+			} else if (msg.includes("InvalidCredentials") || msg.includes("Authentication failed")) {
 				this.log.error(
 					`Poll failed: ${msg} – Check e-mail, password and country (${this.config.country || "DE"}). ` +
 						"In Admin use “Install Python dependencies” tab or restart after saving config; " +

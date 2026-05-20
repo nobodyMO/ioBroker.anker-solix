@@ -70,6 +70,24 @@ HA-aligned entities per device under:
 - `anker-solix.0.services.*` – schedule/export service buttons
 - `anker-solix.0.info.connection`, `anker-solix.0.info.pythonReady`
 
+## Troubleshooting login / poll
+
+### `(100032) Captcha id empty`
+
+Anker’s cloud sometimes blocks **direct API login** from servers (ioBroker host, VPS, VPN) and asks for captcha verification. The unofficial API cannot solve that captcha yet.
+
+**Try in order:**
+
+1. Log in with the **official Anker / Solix app** on a phone in the **same LAN** as ioBroker; confirm account and password work.
+2. In adapter Admin → **Devices** → **Clear Anker login cache**, then save instance config again (re-enter password) and **restart** the adapter.
+3. **Disable VPN** on the ioBroker machine; use the correct **country code** (e.g. `DE`, `AT`, `CH`) matching your Anker account.
+4. If **Home Assistant** with [ha-anker-solix](https://github.com/thomluther/ha-anker-solix) works for the same account: copy the login cache file  
+   `…/authcache/<your-email>.json` from HA into  
+   `iobroker-data/anker-solix.0/authcache/` (same file name), then restart the adapter.
+5. Wait **15–30 minutes** after many failed logins (rate limits) before retrying.
+
+Daemon “unavailable” messages with the same captcha error are expected until login succeeds once.
+
 ## Disclaimer
 
 This is **not** an official Anker product. The cloud API may change or break at any time. You use this adapter at your own risk.
@@ -80,6 +98,11 @@ This is **not** an official Anker product. The cloud API may change or break at 
 - [thomluther/anker-solix-api](https://github.com/thomluther/anker-solix-api) – Python API library
 
 ## Changelog
+
+### 0.9.1
+
+- Map Anker API error **100032** (`Captcha id empty`) to `CaptchaRequiredError` with actionable log hints (DE/EN)
+- Purge invalid login cache before re-auth; README **Troubleshooting login / poll** section
 
 ### 0.9.0
 
@@ -231,7 +254,7 @@ After merge, the adapter appears in Admin → **Adapter** search and in `iobroke
 
 ### 4. Recommended before first publication
 
-- README and `io-package.json` version in sync (currently **0.9.0**)
+- README and `io-package.json` version in sync (currently **0.9.1**)
 - Test a clean install on a Linux ioBroker host: `iobroker url` → `iobroker upload` → instance + poll
 - Mention unofficial API and Python 3.12+ in the ioBroker forum thread when announcing
 
