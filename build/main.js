@@ -61,7 +61,24 @@ class AnkerSolix extends utils.Adapter {
       requestDelay: Number(this.config.requestDelay) || 0.3,
       requestTimeout: Number(this.config.requestTimeout) || 10,
       endpointLimit: Number(this.config.endpointLimit) || 10,
-      enableEnergyStatistics: this.config.enableEnergyStatistics !== false
+      enableCoreEntities: this.config.enableCoreEntities !== false,
+      enableEnergyStatistics: !!this.config.enableEnergyStatistics,
+      enableEnergyDetail: !!this.config.enableEnergyDetail,
+      enablePowerFlows: !!this.config.enablePowerFlows,
+      enableDiagnostics: !!this.config.enableDiagnostics,
+      enableBinaryIndicators: !!this.config.enableBinaryIndicators,
+      enableAdvancedControls: !!this.config.enableAdvancedControls,
+      enableSystemOverview: !!this.config.enableSystemOverview,
+      enableSitePrice: !!this.config.enableSitePrice,
+      enableAccountInfo: !!this.config.enableAccountInfo,
+      enableSolarbankMeta: !!this.config.enableSolarbankMeta,
+      enableSmartplug: !!this.config.enableSmartplug,
+      enablePps: !!this.config.enablePps,
+      enableEvCharger: !!this.config.enableEvCharger,
+      enableVehicle: !!this.config.enableVehicle,
+      enableHes: !!this.config.enableHes,
+      enablePowerPanel: !!this.config.enablePowerPanel,
+      enableInverter: !!this.config.enableInverter
     };
   }
   /** Remove legacy install symlink from old GitHub repo name "AnkerSolix". */

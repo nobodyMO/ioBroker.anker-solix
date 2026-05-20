@@ -16,8 +16,27 @@ declare global {
 			/** Max same-endpoint requests per minute (HA default 10, 0=off). */
 			endpointLimit?: number;
 			mqttUsage: boolean;
-			/** Fetch daily energy statistics (kWh) from Anker cloud (default on). */
+			/** Core Solarbank/Smartmeter entities (default on). */
+			enableCoreEntities?: boolean;
+			/** Fetch daily energy statistics (kWh) from Anker cloud. */
 			enableEnergyStatistics?: boolean;
+			/** Extended daily stats (PV strings, shares, …). */
+			enableEnergyDetail?: boolean;
+			enablePowerFlows?: boolean;
+			enableDiagnostics?: boolean;
+			enableBinaryIndicators?: boolean;
+			enableAdvancedControls?: boolean;
+			enableSystemOverview?: boolean;
+			enableSitePrice?: boolean;
+			enableAccountInfo?: boolean;
+			enableSolarbankMeta?: boolean;
+			enableSmartplug?: boolean;
+			enablePps?: boolean;
+			enableEvCharger?: boolean;
+			enableVehicle?: boolean;
+			enableHes?: boolean;
+			enablePowerPanel?: boolean;
+			enableInverter?: boolean;
 			acceptTerms: boolean;
 			pythonPath: string;
 			autoInstallPython: boolean;

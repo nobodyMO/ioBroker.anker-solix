@@ -16,6 +16,7 @@ from aiohttp import ClientSession
 # solixapi is vendored from https://github.com/thomluther/ha-anker-solix
 sys.path.insert(0, str(Path(__file__).parent))
 
+from entity_groups import GROUP_ENERGY_DETAIL, GROUP_ENERGY_STATISTICS, enabled_entity_groups
 from entities import (  # noqa: E402
     COMBINER,
     SOLARBANK,
@@ -674,14 +675,15 @@ def _devices_from_caches(
         if not should_include_device(str(ctx_id), ctx_data, info, config):
             continue
         ctx_data = _enrich_cache_entry(client, str(ctx_id), ctx_data, info)
-        entities = extract_entities(ctx_data)
-        writable = writable_controls_for_device(ctx_data, info["type"])
+        entities = extract_entities(ctx_data, config)
+        writable = writable_controls_for_device(ctx_data, info["type"], config)
         if not entities and not writable:
             continue
         usage_opts = sorted(
             client.api.solarbank_usage_mode_options(deviceSn=str(ctx_id))
         )
-        enable_stats = config.get("enableEnergyStatistics", True)
+        _enabled = enabled_entity_groups(config)
+        enable_stats = GROUP_ENERGY_STATISTICS in _enabled or GROUP_ENERGY_DETAIL in _enabled
         has_statistics = enable_stats and info["type"] in (
             "system",
             "site",

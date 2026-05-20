@@ -23,6 +23,7 @@ __export(stateSync_exports, {
 });
 module.exports = __toCommonJS(stateSync_exports);
 var import_entities = require("./entities");
+var import_entityGroups = require("./entityGroups");
 function resolveStateType(meta, value) {
   if ((meta == null ? void 0 : meta.kind) === "number") {
     return "number";
@@ -115,10 +116,15 @@ async function syncDevices(adapter, devices) {
     ]);
     if (device.hasStatistics) {
       for (const id of import_entities.STATISTICS_ENTITY_IDS) {
-        entityIds.add(id);
+        if ((0, import_entityGroups.isEntityEnabled)(id, adapter.config)) {
+          entityIds.add(id);
+        }
       }
     }
     for (const entityId of entityIds) {
+      if (!(0, import_entityGroups.isEntityEnabled)(entityId, adapter.config)) {
+        continue;
+      }
       const value = device.entities[entityId];
       const meta = import_entities.ENTITY_MAP.get(entityId);
       const writable = meta ? (0, import_entities.isWritable)(entityId, device.writable) : false;

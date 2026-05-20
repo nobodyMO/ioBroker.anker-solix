@@ -22,31 +22,10 @@ DEFAULT_DELAY_TIME: float = SolixDefaults.REQUEST_DELAY_DEF
 DEFAULT_TIMEOUT: int = SolixDefaults.REQUEST_TIMEOUT_DEF
 
 # Non-energy optional excludes (HA optional list subset; no ApiCategories.device_parm).
-DEFAULT_EXCLUDE_CATEGORIES: list[str] = [
-    ApiCategories.solarbank_solar_info,
-    ApiCategories.device_auto_upgrade,
-    ApiCategories.device_tag,
-    ApiCategories.site_price,
-]
+from entity_groups import build_exclude_categories  # noqa: E402
 
-ENERGY_EXCLUDE_CATEGORIES: list[str] = [
-    ApiCategories.solarbank_energy,
-    ApiCategories.solarbank_pps_energy,
-    ApiCategories.smartmeter_energy,
-    ApiCategories.solar_energy,
-    ApiCategories.smartplug_energy,
-    ApiCategories.charger_energy,
-    ApiCategories.powerpanel_energy,
-    ApiCategories.hes_energy,
-]
-
-
-def build_exclude_categories(config: dict) -> list[str]:
-    """HA-style excludes; energy polls when enableEnergyStatistics is true (default)."""
-    exclude = list(config.get("exclude") or DEFAULT_EXCLUDE_CATEGORIES)
-    if not config.get("enableEnergyStatistics", True):
-        exclude.extend(ENERGY_EXCLUDE_CATEGORIES)
-    return exclude
+# Re-export for bridge.py
+DEFAULT_EXCLUDE_CATEGORIES: list[str] = []
 
 
 class IoBrokerAnkerApiClient:

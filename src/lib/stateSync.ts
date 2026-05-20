@@ -6,6 +6,7 @@ import {
 	USAGE_MODE_STATES,
 	type EntityMeta,
 } from "./entities";
+import { isEntityEnabled } from "./entityGroups";
 import type { BridgeDevice } from "./types";
 
 function resolveStateType(meta: EntityMeta | undefined, value: unknown): ioBroker.CommonType {
@@ -103,11 +104,16 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 		]);
 		if (device.hasStatistics) {
 			for (const id of STATISTICS_ENTITY_IDS) {
-				entityIds.add(id);
+				if (isEntityEnabled(id, adapter.config)) {
+					entityIds.add(id);
+				}
 			}
 		}
 
 		for (const entityId of entityIds) {
+			if (!isEntityEnabled(entityId, adapter.config)) {
+				continue;
+			}
 			const value = device.entities[entityId];
 			const meta = ENTITY_MAP.get(entityId);
 			const writable = meta ? isWritable(entityId, device.writable) : false;

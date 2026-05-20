@@ -152,14 +152,6 @@
 					"sm": 6,
 					"md": 4
 				},
-				"enableEnergyStatistics": {
-					"type": "checkbox",
-					"label": "enableEnergyStatistics",
-					"default": true,
-					"xs": 12,
-					"sm": 6,
-					"md": 4
-				},
 				"autoInstallPython": {
 					"type": "checkbox",
 					"label": "autoInstallPython",
@@ -171,6 +163,176 @@
 				"pythonPath": {
 					"type": "text",
 					"label": "pythonPath",
+					"xs": 12,
+					"sm": 6,
+					"md": 4
+				}
+			}
+		},
+		"_tab_entities": {
+			"type": "panel",
+			"label": "Entities",
+			"items": {
+				"_entities_hint": {
+					"type": "staticText",
+					"text": "entities_hint",
+					"xs": 12
+				},
+				"enableCoreEntities": {
+					"type": "checkbox",
+					"label": "enableCoreEntities",
+					"default": true,
+					"xs": 12,
+					"sm": 6,
+					"md": 4
+				},
+				"_grp_energy": {
+					"type": "header",
+					"text": "grp_energy",
+					"xs": 12
+				},
+				"enableEnergyStatistics": {
+					"type": "checkbox",
+					"label": "enableEnergyStatistics",
+					"default": false,
+					"xs": 12,
+					"sm": 6,
+					"md": 4
+				},
+				"enableEnergyDetail": {
+					"type": "checkbox",
+					"label": "enableEnergyDetail",
+					"default": false,
+					"xs": 12,
+					"sm": 6,
+					"md": 4
+				},
+				"_grp_solarbank": {
+					"type": "header",
+					"text": "grp_solarbank",
+					"xs": 12
+				},
+				"enablePowerFlows": {
+					"type": "checkbox",
+					"label": "enablePowerFlows",
+					"default": false,
+					"xs": 12,
+					"sm": 6,
+					"md": 4
+				},
+				"enableDiagnostics": {
+					"type": "checkbox",
+					"label": "enableDiagnostics",
+					"default": false,
+					"xs": 12,
+					"sm": 6,
+					"md": 4
+				},
+				"enableBinaryIndicators": {
+					"type": "checkbox",
+					"label": "enableBinaryIndicators",
+					"default": false,
+					"xs": 12,
+					"sm": 6,
+					"md": 4
+				},
+				"enableAdvancedControls": {
+					"type": "checkbox",
+					"label": "enableAdvancedControls",
+					"default": false,
+					"xs": 12,
+					"sm": 6,
+					"md": 4
+				},
+				"enableSolarbankMeta": {
+					"type": "checkbox",
+					"label": "enableSolarbankMeta",
+					"default": false,
+					"xs": 12,
+					"sm": 6,
+					"md": 4
+				},
+				"enableSystemOverview": {
+					"type": "checkbox",
+					"label": "enableSystemOverview",
+					"default": false,
+					"xs": 12,
+					"sm": 6,
+					"md": 4
+				},
+				"enableSitePrice": {
+					"type": "checkbox",
+					"label": "enableSitePrice",
+					"default": false,
+					"xs": 12,
+					"sm": 6,
+					"md": 4
+				},
+				"enableAccountInfo": {
+					"type": "checkbox",
+					"label": "enableAccountInfo",
+					"default": false,
+					"xs": 12,
+					"sm": 6,
+					"md": 4
+				},
+				"_grp_devices": {
+					"type": "header",
+					"text": "grp_devices",
+					"xs": 12
+				},
+				"enableSmartplug": {
+					"type": "checkbox",
+					"label": "enableSmartplug",
+					"default": false,
+					"xs": 12,
+					"sm": 6,
+					"md": 4
+				},
+				"enablePps": {
+					"type": "checkbox",
+					"label": "enablePps",
+					"default": false,
+					"xs": 12,
+					"sm": 6,
+					"md": 4
+				},
+				"enableEvCharger": {
+					"type": "checkbox",
+					"label": "enableEvCharger",
+					"default": false,
+					"xs": 12,
+					"sm": 6,
+					"md": 4
+				},
+				"enableVehicle": {
+					"type": "checkbox",
+					"label": "enableVehicle",
+					"default": false,
+					"xs": 12,
+					"sm": 6,
+					"md": 4
+				},
+				"enableHes": {
+					"type": "checkbox",
+					"label": "enableHes",
+					"default": false,
+					"xs": 12,
+					"sm": 6,
+					"md": 4
+				},
+				"enablePowerPanel": {
+					"type": "checkbox",
+					"label": "enablePowerPanel",
+					"default": false,
+					"xs": 12,
+					"sm": 6,
+					"md": 4
+				},
+				"enableInverter": {
+					"type": "checkbox",
+					"label": "enableInverter",
+					"default": false,
 					"xs": 12,
 					"sm": 6,
 					"md": 4

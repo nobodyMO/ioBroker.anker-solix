@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from entity_groups import GROUP_ENERGY_STATISTICS
+
 SOLARBANK = "solarbank"
 SYSTEM = "system"
 SITE = "site"
@@ -129,6 +131,9 @@ ENERGY_STATISTICS_ENTITIES: list[dict[str, Any]] = [
         "period": "last_period",
     },
 ]
+
+for _spec in ENERGY_STATISTICS_ENTITIES:
+    _spec.setdefault("groups", [GROUP_ENERGY_STATISTICS])
 
 STATISTICS_LABELS_DE: dict[str, str] = {
     "energy_statistics_date": "Statistik-Datum",

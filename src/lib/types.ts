@@ -65,8 +65,24 @@ export interface BridgeConfig {
 	requestDelay?: number;
 	requestTimeout?: number;
 	endpointLimit?: number;
-	/** Poll daily energy statistics (HA solarbank_energy etc.). Default true. */
+	enableCoreEntities?: boolean;
 	enableEnergyStatistics?: boolean;
+	enableEnergyDetail?: boolean;
+	enablePowerFlows?: boolean;
+	enableDiagnostics?: boolean;
+	enableBinaryIndicators?: boolean;
+	enableAdvancedControls?: boolean;
+	enableSystemOverview?: boolean;
+	enableSitePrice?: boolean;
+	enableAccountInfo?: boolean;
+	enableSolarbankMeta?: boolean;
+	enableSmartplug?: boolean;
+	enablePps?: boolean;
+	enableEvCharger?: boolean;
+	enableVehicle?: boolean;
+	enableHes?: boolean;
+	enablePowerPanel?: boolean;
+	enableInverter?: boolean;
 }
 
 export interface BridgeSetConfig extends BridgeConfig {

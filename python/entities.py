@@ -4,7 +4,20 @@ from __future__ import annotations
 
 from typing import Any
 
+from entity_groups import (  # noqa: E402
+    GROUP_CORE,
+    enabled_entity_groups,
+    entity_spec_enabled,
+)
+from extended_entities import (  # noqa: E402
+    EXTENDED_CONTROL_ENTITIES,
+    EXTENDED_ENERGY_STATISTICS,
+    EXTENDED_SENSOR_ENTITIES,
+    EXTENDED_STATISTICS_LABELS_DE,
+)
 from solixapi.apitypes import SolarbankUsageMode  # noqa: E402
+
+_CORE = [GROUP_CORE]
 
 SOLARBANK = "solarbank"
 SYSTEM = "system"
@@ -13,7 +26,7 @@ COMBINER = "combiner_box"  # includes Power Dock (same device type in API)
 SMARTMETER = "smartmeter"
 SMARTPLUG = "smartplug"
 
-SENSOR_ENTITIES: list[dict[str, Any]] = [
+_BASE_SENSOR_ENTITIES: list[dict[str, Any]] = [
     {
         "id": "input_power",
         "keys": ["input_power", "photovoltaic_power"],
@@ -146,7 +159,15 @@ SENSOR_ENTITIES: list[dict[str, Any]] = [
     },
 ]
 
-CONTROL_ENTITIES: list[dict[str, Any]] = [
+for _spec in _BASE_SENSOR_ENTITIES:
+    _spec.setdefault("groups", _CORE)
+
+SENSOR_ENTITIES: list[dict[str, Any]] = [
+    *_BASE_SENSOR_ENTITIES,
+    *EXTENDED_SENSOR_ENTITIES,
+]
+
+_BASE_CONTROL_ENTITIES: list[dict[str, Any]] = [
     {
         "id": "allow_grid_export",
         "keys": ["allow_grid_export", "switch_0w", "grid_export_disabled"],
@@ -242,6 +263,16 @@ CONTROL_ENTITIES: list[dict[str, Any]] = [
         "control": "ac_fast_charge_switch",
     },
 ]
+
+for _spec in _BASE_CONTROL_ENTITIES:
+    _spec.setdefault("groups", _CORE)
+
+CONTROL_ENTITIES: list[dict[str, Any]] = [
+    *_BASE_CONTROL_ENTITIES,
+    *EXTENDED_CONTROL_ENTITIES,
+]
+
+STATISTICS_LABELS_DE_EXTRA: dict[str, str] = EXTENDED_STATISTICS_LABELS_DE
 
 # ioBroker state keys → German labels (HA de.json)
 USAGE_MODE_STATES: dict[str, str] = {
@@ -413,13 +444,14 @@ def should_include_device(
     return ctx_id in selected or info.get("site_id") in selected
 
 
-def controls_for_type(dev_type: str) -> list[str]:
+def controls_for_type(dev_type: str, config: dict | None = None) -> list[str]:
     if not dev_type:
         return []
+    enabled = enabled_entity_groups(config or {})
     return [
         spec["id"]
         for spec in CONTROL_ENTITIES
-        if dev_type in spec.get("types", [])
+        if dev_type in spec.get("types", []) and entity_spec_enabled(spec, enabled)
     ]
 
 
@@ -434,9 +466,25 @@ def _is_main_usage_mode_device(data: dict, dev_type: str) -> bool:
     return False
 
 
-def writable_controls_for_device(data: dict, dev_type: str) -> list[str]:
+def writable_controls_for_device(
+    data: dict, dev_type: str, config: dict | None = None
+) -> list[str]:
     """HA-aligned writable controls per device capabilities."""
-    controls = controls_for_type(dev_type)
+    enabled = enabled_entity_groups(config or {})
+    controls = controls_for_type(dev_type, config)
+    # Advanced / PPS controls: read-only until explicit bridge set support
+    _read_only_controls = {
+        "preset_discharge_priority",
+        "preset_backup_option",
+        "preset_charge_priority",
+        "preset_device_output_power",
+        "max_soc",
+        "backup_soc",
+        "auto_upgrade",
+        "ac_output_power_switch",
+        "ac_fast_charge_switch_pps",
+    }
+    controls = [c for c in controls if c not in _read_only_controls or False]
     if dev_type == SOLARBANK and "ac_charge_limit" in controls:
         if not (
             data.get("mqtt_data")
@@ -454,13 +502,19 @@ def writable_controls_for_device(data: dict, dev_type: str) -> list[str]:
     return controls
 
 
-def extract_statistics_entities(data: dict, dev_type: str) -> dict[str, Any]:
+def extract_statistics_entities(
+    data: dict, dev_type: str, config: dict | None = None
+) -> dict[str, Any]:
     from energy_entities import ENERGY_STATISTICS_ENTITIES, pick_energy_value  # noqa: PLC0415
 
+    enabled = enabled_entity_groups(config or {})
     entities: dict[str, Any] = {}
     if not (data.get("energy_details") or {}).get("today"):
         return entities
-    for spec in ENERGY_STATISTICS_ENTITIES:
+    all_stats = [*ENERGY_STATISTICS_ENTITIES, *EXTENDED_ENERGY_STATISTICS]
+    for spec in all_stats:
+        if not entity_spec_enabled(spec, enabled):
+            continue
         if dev_type and dev_type not in spec.get("types", []):
             continue
         if spec.get("smartmeter_only") and dev_type != SMARTMETER:
@@ -471,21 +525,35 @@ def extract_statistics_entities(data: dict, dev_type: str) -> dict[str, Any]:
     return entities
 
 
-def extract_entities(data: dict) -> dict[str, Any]:
+def extract_entities(data: dict, config: dict | None = None) -> dict[str, Any]:
     dev_type = str(data.get("type") or data.get("device_type") or "").lower()
     if not dev_type:
         if data.get("site_id") and not data.get("device_sn"):
             dev_type = SITE
         elif data.get("solarbank_list") or data.get("site_name"):
             dev_type = SYSTEM
+    enabled = enabled_entity_groups(config or {})
     entities: dict[str, Any] = {}
     for spec in SENSOR_ENTITIES:
+        if not entity_spec_enabled(spec, enabled):
+            continue
         if dev_type and dev_type not in spec.get("types", []):
             continue
         val = pick_value(data, spec["keys"], nested=bool(spec.get("nested")))
         if val is not None:
-            entities[spec["id"]] = val
+            if spec.get("kind") == "boolean":
+                entities[spec["id"]] = bool(val) if not isinstance(val, str) else val.lower() in (
+                    "1",
+                    "true",
+                    "on",
+                    "yes",
+                    "connected",
+                )
+            else:
+                entities[spec["id"]] = val
     for spec in CONTROL_ENTITIES:
+        if not entity_spec_enabled(spec, enabled):
+            continue
         if dev_type and dev_type not in spec.get("types", []):
             continue
         req_types = spec.get("require_types") or []
@@ -508,5 +576,5 @@ def extract_entities(data: dict) -> dict[str, Any]:
             val = pick_value(data, spec["keys"])
         if val is not None:
             entities[spec["id"]] = val
-    entities.update(extract_statistics_entities(data, dev_type))
+    entities.update(extract_statistics_entities(data, dev_type, config))
     return entities

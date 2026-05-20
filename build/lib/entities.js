@@ -59,7 +59,49 @@ const SENSOR_ENTITIES = [
   { id: "daily_grid_import", kind: "sensor", role: "value.energy", unit: "kWh" },
   { id: "daily_grid_export", kind: "sensor", role: "value.energy", unit: "kWh" },
   { id: "phase", kind: "sensor", role: "text" },
-  { id: "smartmeter_list", kind: "sensor", role: "value" }
+  { id: "smartmeter_list", kind: "sensor", role: "value" },
+  // Optional groups (see entityGroups.ts)
+  { id: "solar_power_total", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "grid_power_signed", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "battery_power_signed", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "home_load_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "pv_to_home_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "pv_to_battery_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "battery_to_home_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "grid_to_battery_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "photovoltaic_to_grid_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "ac_input_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "ac_output_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "bat_charge_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "bat_discharge_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "heating_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "status_desc", kind: "sensor", role: "text" },
+  { id: "charging_status_desc", kind: "sensor", role: "text" },
+  { id: "sw_version", kind: "sensor", role: "text" },
+  { id: "device_temperature", kind: "sensor", role: "value.temperature", unit: "\xB0C" },
+  { id: "err_code", kind: "sensor", role: "value" },
+  { id: "device_tag", kind: "sensor", role: "text" },
+  { id: "inverter_info", kind: "sensor", role: "text" },
+  { id: "wifi_connection", kind: "sensor", role: "indicator.reachability" },
+  { id: "mqtt_connection", kind: "sensor", role: "indicator.reachability" },
+  { id: "ota_update_available", kind: "sensor", role: "indicator" },
+  { id: "heating_active", kind: "sensor", role: "indicator" },
+  { id: "protection_active", kind: "sensor", role: "indicator" },
+  { id: "solarbank_list", kind: "sensor", role: "text" },
+  { id: "other_loads_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "smart_plugs_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "total_co2_saving", kind: "sensor", role: "value", unit: "kg" },
+  { id: "dynamic_price_total", kind: "sensor", role: "value", unit: "\u20AC/kWh" },
+  { id: "spot_price_mwh", kind: "sensor", role: "value", unit: "\u20AC/MWh" },
+  { id: "pps_battery_soc", kind: "sensor", role: "value.battery", unit: "%" },
+  { id: "pps_input_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "pps_output_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "smartplug_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "smartplug_energy_today", kind: "sensor", role: "value.energy", unit: "kWh" },
+  { id: "evcharger_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "evcharger_status_desc", kind: "sensor", role: "text" },
+  { id: "hes_grid_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "powerpanel_avg_power", kind: "sensor", role: "value.power", unit: "W" }
 ];
 const CONTROL_ENTITIES = [
   { id: "allow_grid_export", kind: "switch", role: "switch" },
@@ -104,7 +146,16 @@ const CONTROL_ENTITIES = [
     role: "value.mode",
     states: USAGE_MODE_STATES
   },
-  { id: "ac_fast_charge_switch", kind: "switch", role: "switch" }
+  { id: "ac_fast_charge_switch", kind: "switch", role: "switch" },
+  { id: "preset_discharge_priority", kind: "switch", role: "switch" },
+  { id: "preset_backup_option", kind: "switch", role: "switch" },
+  { id: "preset_charge_priority", kind: "number", role: "level", unit: "%", min: 0, max: 100 },
+  { id: "preset_device_output_power", kind: "number", role: "level.power", unit: "W", min: 0, max: 1200 },
+  { id: "max_soc", kind: "number", role: "level.battery", unit: "%", min: 0, max: 100 },
+  { id: "backup_soc", kind: "number", role: "level.battery", unit: "%", min: 0, max: 100 },
+  { id: "auto_upgrade", kind: "switch", role: "switch" },
+  { id: "ac_output_power_switch", kind: "switch", role: "switch" },
+  { id: "ac_fast_charge_switch_pps", kind: "switch", role: "switch" }
 ];
 const STATISTICS_ENTITIES = [
   { id: "energy_statistics_date", kind: "statistics", role: "value.date" },
@@ -124,7 +175,18 @@ const STATISTICS_ENTITIES = [
   { id: "yesterday_solar_production", kind: "statistics", role: "value.energy", unit: "kWh" },
   { id: "yesterday_charge_energy", kind: "statistics", role: "value.energy", unit: "kWh" },
   { id: "yesterday_discharge_energy", kind: "statistics", role: "value.energy", unit: "kWh" },
-  { id: "yesterday_home_usage", kind: "statistics", role: "value.energy", unit: "kWh" }
+  { id: "yesterday_home_usage", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "daily_solar_to_grid", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "daily_solar_production_pv1", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "daily_solar_production_pv2", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "daily_solar_production_pv3", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "daily_solar_production_pv4", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "daily_solar_production_inverter", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "daily_solar_share", kind: "statistics", role: "value", unit: "%" },
+  { id: "daily_battery_share", kind: "statistics", role: "value", unit: "%" },
+  { id: "daily_grid_share", kind: "statistics", role: "value", unit: "%" },
+  { id: "daily_ac_socket", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "daily_smartplugs_total", kind: "statistics", role: "value.energy", unit: "kWh" }
 ];
 const STATISTICS_LABELS = {
   energy_statistics_date: "Statistik-Datum",
@@ -144,7 +206,18 @@ const STATISTICS_LABELS = {
   yesterday_solar_production: "Solarertrag (gestern)",
   yesterday_charge_energy: "Batterieladung (gestern)",
   yesterday_discharge_energy: "Batterieentladung (gestern)",
-  yesterday_home_usage: "Hausverbrauch (gestern)"
+  yesterday_home_usage: "Hausverbrauch (gestern)",
+  daily_solar_to_grid: "Solar \u2192 Netz (heute)",
+  daily_solar_production_pv1: "PV1 Ertrag (heute)",
+  daily_solar_production_pv2: "PV2 Ertrag (heute)",
+  daily_solar_production_pv3: "PV3 Ertrag (heute)",
+  daily_solar_production_pv4: "PV4 Ertrag (heute)",
+  daily_solar_production_inverter: "WR Ertrag (heute)",
+  daily_solar_share: "Solar-Anteil (heute)",
+  daily_battery_share: "Batterie-Anteil (heute)",
+  daily_grid_share: "Netz-Anteil (heute)",
+  daily_ac_socket: "AC-Steckdose (heute)",
+  daily_smartplugs_total: "Steckdosen gesamt (heute)"
 };
 const STATISTICS_ENTITY_IDS = STATISTICS_ENTITIES.map((e) => e.id);
 const ENTITY_MAP = new Map(
