@@ -2,275 +2,346 @@
 
 [![NPM version](https://img.shields.io/npm/v/iobroker.anker-solix.svg)](https://www.npmjs.com/package/iobroker.anker-solix)
 
-ioBroker adapter for **Anker Solix** power systems (Solarbank, Smart Meter, PPS, and more), modeled after the Home Assistant integration [thomluther/ha-anker-solix](https://github.com/thomluther/ha-anker-solix).
+ioBroker adapter for **Anker Solix** power systems (Solarbank, Smart Meter, PPS, EV charger, and more). It is based on the Home Assistant integration [thomluther/ha-anker-solix](https://github.com/thomluther/ha-anker-solix) and uses the same unofficial **solixapi** Python library.
 
-The adapter uses the same unofficial **solixapi** Python library that is embedded in the HA integration. A small Python bridge polls the Anker cloud and exposes values as ioBroker states.
+A small **Python bridge** (persistent daemon, like HA) polls the Anker cloud and optional MQTT, then exposes values as ioBroker states. Optional entity groups (since v0.9.0) mirror HA’s scope: only **Core** is on by default to limit API load.
 
-## Requirements
+## Table of contents
 
-- ioBroker with **js-controller >= 6** and **admin >= 7**
+1. [Disclaimer & usage terms](#disclaimer--usage-terms)
+2. [How this adapter works in ioBroker](#how-this-adapter-works-in-iobroker)
+3. [Requirements & installation](#requirements--installation)
+4. [Configuration](#configuration)
+5. [Anker account & login cache](#anker-account--login-cache)
+6. [Limitations](#limitations)
+7. [Supported devices](#supported-devices)
+8. [State structure & entity groups](#state-structure--entity-groups)
+9. [MQTT](#mqtt-managed-devices)
+10. [Special device notes](#special-device-notes)
+11. [Troubleshooting login / poll](#troubleshooting-login--poll)
+12. [Services](#services)
+13. [Credits & further reading](#credits--further-reading)
+14. [Changelog](#changelog)
+15. [Publishing](#publishing-npm--iobroker-catalog)
+
+---
+
+## Disclaimer & usage terms
+
+This adapter is **not** affiliated with Anker. Trademarks and product names belong to their respective owners.
+
+The adapter uses an **unofficial** Python library to talk to the Anker Power **cloud API** (same as the mobile app). That API can change or break at any time. Improper settings may affect devices; the user accepts these risks when enabling the instance (**Terms** tab). Future adapter updates may extend monitoring or controls.
+
+---
+
+## How this adapter works in ioBroker
+
+| Layer | Role |
+|-------|------|
+| **Node.js adapter** | Instance config, scheduling, ioBroker states, control queue |
+| **Python bridge** (`python/bridge.py`) | Long-lived session: API + optional MQTT (HA-style) |
+| **solixapi** | Cloud login, sites/devices, energy stats, MQTT map |
+| **authcache** | `iobroker-data/<instance>/authcache/<email>.json` — reused after successful API login |
+
+Poll interval should be **60–180 s** (same recommendation as HA). Site list is updated every cycle; device/site details and energy data run on a slower interval (`deviceDetailMultiplier`, default every 10th poll).
+
+> **Important:** The cloud API is **mandatory**. MQTT alone is not enough for full system data. This adapter does **not** replace local BLE or Modbus integrations — see [Additional resources](#credits--further-reading).
+
+---
+
+## Requirements & installation
+
+- ioBroker **js-controller >= 6**, **admin >= 7**
 - **Node.js >= 20**
-- **Python 3.12+** on the ioBroker host (`python3` is enough; **recommended** on Debian/Ubuntu: `sudo apt install python3-venv python3-pip`)
-- Python packages are installed inside the adapter folder:
-  - preferred: **`python/.venv`**
-  - fallback (no `python3-venv`): **`python/site-packages`** via `pip install --target` (PEP 668 safe, adapter-local only)
+- **Python 3.12+** on the ioBroker host (`python3-venv` + `python3-pip` recommended on Debian/Ubuntu)
 
-Manual setup (if needed):
+Python dependencies install into the adapter folder (`python/.venv` or `python/site-packages`). Since v0.2.0: automatic on start (**Options** → `autoInstallPython`) or button **Install Python dependencies**.
+
+```bash
+iobroker url https://github.com/MatthiasUlrich1/ioBroker.anker-solix
+# or: iobroker install anker-solix   (when on npm)
+iobroker upload anker-solix
+```
+
+**Multihost:** use `--host "PC(SmartHome)"` with quotes if the name contains special characters.
+
+Remove legacy symlink if present: `rm -f /opt/iobroker/node_modules/iobroker.AnkerSolix`
+
+Manual Python setup (if needed):
 
 ```bash
 cd node_modules/iobroker.anker-solix
-python3 -m venv python/.venv
-python/.venv/bin/pip install -r python/requirements.txt
+python3 -m venv python/.venv && python/.venv/bin/pip install -r python/requirements.txt
 ```
 
-On Windows use `py -3 -m venv python\.venv` and `python\.venv\Scripts\pip`.
-
-Since **v0.2.0**, dependencies are installed automatically on adapter start (see **Options** → `autoInstallPython`) or via the admin button **Install Python dependencies**.
-
-## Installation
-
-```bash
-iobroker url https://github.com/MatthiasUlrich1/ioBroker.anker-solix
-```
-
-Or from npm (when published):
-
-```bash
-iobroker install anker-solix
-```
-
-**Multihost:** use `--host "PC(SmartHome)"` with quotes if the host name contains special characters. Install on the host where `node_modules` lives, or run `iob url` on each slave.
-
-**Legacy repo URL:** `MatthiasUlrich1/AnkerSolix` redirects to this repository on GitHub. Use the new URL for `iob url`.
-
-Remove old install symlink if present:
-
-```bash
-rm -f /opt/iobroker/node_modules/iobroker.AnkerSolix
-```
+---
 
 ## Configuration
 
-1. Create an instance: `iobroker add anker-solix`
-2. Enter your Anker account e-mail and password in the instance config (save after entering password).
-3. Set the country code (e.g. `DE`) matching your Anker account.
-4. Accept the usage terms (unofficial API – use at your own risk).
-5. Poll interval **60–180 seconds** (same as HA integration).
-6. Optional: enable **MQTT** for additional device data.
-7. Tab **Entities** (since v0.9.0): enable optional entity groups (energy statistics, power flows, PPS, EV charger, …). Only **Core** is on by default; everything else is off to limit API load. Restart the adapter after changes.
+1. Create instance: `iobroker add anker-solix`
+2. **Account:** Anker e-mail, password, country code (e.g. `DE`) — **save after entering password**
+3. **Terms:** accept unofficial API usage
+4. **Options:** poll interval 60–180 s, **MQTT** if needed, `deviceDetailMultiplier` (HA default: 10)
+5. **Devices:** **Load devices**, optional site ID / device SN filter
+6. **Entities** (v0.9.0+): enable optional groups; only **Core** on by default → **restart adapter** after changes
 
-## State structure
+Do **not** use **Clear Anker login cache** unless you need a deliberate re-login (wrong account, corrupted file). Clearing forces a new cloud login and often triggers captcha on server hosts — see [Troubleshooting](#troubleshooting-login--poll).
 
-HA-aligned entities per device under:
+---
 
-- `anker-solix.0.solarbank.<deviceId>.sensors.*` – e.g. `input_power`, `state_of_charge`, `dc_output_power`
-- `anker-solix.0.solarbank.<deviceId>.control.*` – writable controls when supported
-- `anker-solix.0.<device>.<id>.statistics.*` – daily energy statistics (kWh) when enabled in **Entities**
-- `anker-solix.0.smartmeter.<deviceId>.sensors.*` – smart meter values
-- `anker-solix.0.services.*` – schedule/export service buttons
+## Anker account & login cache
+
+After the **first successful API login**, the adapter stores tokens in:
+
+`iobroker-data/anker-solix.0/authcache/<your-email>.json`
+
+(Filename must match the e-mail in **Account** exactly.)
+
+Since Anker app **3.10** (mid-2025), one account can often be used on **multiple clients in parallel** (app + ioBroker + HA). Older docs about “only one token” are less critical today, but a **failed re-login** from ioBroker still cannot refresh the file if Anker returns captcha.
+
+**Shared / member accounts:** A family-shared account may see fewer API details than the owner account (same as HA).
+
+More account notes: [HA INFO.md – accounts](https://github.com/thomluther/ha-anker-solix/blob/main/INFO.md).
+
+---
+
+## Limitations
+
+- **Unofficial API** — no documentation; endpoints can change anytime.
+- **EU vs COM cloud** — wrong **country** in config → login works but **no systems/devices**. Do not switch countries after pairing devices.
+- **Stale cloud data** if device Wi‑Fi is offline; use cloud/MQTT connection indicators when enabled.
+- **MQTT** updates depend on device publish cycle; some values only with **real-time trigger** (high traffic if 24/7).
+- **Standalone devices** (PPS, charger, cooler not in a power system) have **little or no API energy data** — MQTT may be required ([HA limitations](https://github.com/thomluther/ha-anker-solix#limitations)).
+- **Dynamic tariff** beyond Nordpool: forecast/price entities may be wrong or read-only.
+- **Captcha (100032)** on direct API login from VPS/VPN/datacenter — see [Troubleshooting](#troubleshooting-login--poll). Copy `authcache` from HA or another working setup if ioBroker cannot log in once.
+
+To help add devices: export anonymized data via HA [export systems](https://github.com/thomluther/ha-anker-solix/blob/main/INFO.md#export-systems-action) or [anker-solix-api export_system.py](https://github.com/thomluther/anker-solix-api#export_systempy).
+
+---
+
+## Supported devices
+
+Same device coverage as [ha-anker-solix](https://github.com/thomluther/ha-anker-solix#supported-sensors-and-devices) (via solixapi). In ioBroker, data appears under state IDs by device type (`solarbank`, `smartmeter`, `combiner_box`, `system`, …).
+
+| Device type | Examples / notes |
+|-------------|------------------|
+| **system / site** | Power system from the Anker app (= API “site”) |
+| **solarbank** | E1600 (Gen1), SB2 Pro/Plus/AC, SB3 E2700 — API + MQTT |
+| **combiner_box** | Power Dock (multisystem) — merged controls in ioBroker when applicable |
+| **smartmeter** | Anker 3-phase, US meter, Shelly 3EM / 3EM Pro |
+| **inverter** | MI80 standalone (virtual site in API) |
+| **smartplug** | Smart Plug 2500 W |
+| **pps** / **solarbank_pps** | Portable power stations — mostly MQTT |
+| **ev_charger** | V1 Smart EV Charger — mostly MQTT |
+| **vehicle** | Virtual EVs for charger accounts — read-oriented in ioBroker |
+| **powerpanel** / **hes** | US Power Panel, X1 HES — limited API, heavy stats polling |
+| **charger** | Prime / charging stations — MQTT |
+| **home_backup** | E10, AX170 — very limited API |
+
+Device hierarchy (how HA structures entities): [discussion #239](https://github.com/thomluther/ha-anker-solix/discussions/239).
+
+---
+
+## State structure & entity groups
+
+Typical paths (instance `anker-solix.0`):
+
+- `anker-solix.0.solarbank.<deviceId>.sensors.*` — power, SOC, etc.
+- `anker-solix.0.solarbank.<deviceId>.control.*` — writable controls where supported
+- `anker-solix.0.<device>.<id>.statistics.*` — daily kWh (enable **Entities** → energy statistics)
+- `anker-solix.0.smartmeter.<deviceId>.sensors.*`
+- `anker-solix.0.services.*` — export, schedule, refresh (button states)
 - `anker-solix.0.info.connection`, `anker-solix.0.info.pythonReady`
+
+**Entity groups** (Admin → **Entities**): map to HA feature sets — power flows, diagnostics, PPS, EV charger, HES, site price, account info, etc. Disabled groups are excluded from API polls to reduce load.
+
+---
+
+## MQTT managed devices
+
+Enable **MQTT** in **Options** when you need live data or controls that the cloud API does not provide (many PPS/EV/charger functions).
+
+- Extra sensors/controls come from MQTT maps in solixapi (community-decoded per model).
+- **Real-time trigger** and **status request** behave like HA buttons — automating them 24/7 increases traffic and keeps devices awake ([HA MQTT section](https://github.com/thomluther/ha-anker-solix#mqtt-managed-devices)).
+- **Hybrid controls** (station SOC reserve, AC limits, grid export on multisystem) need MQTT + API like HA.
+- Devices in **MQTT local mode** (e.g. E10 behind Power Dock) are proxied via the hub device — see [HA INFO – MQTT local mode](https://github.com/thomluther/ha-anker-solix/blob/main/INFO.md#devices-in-mqtt-local-mode).
+
+Decoding new models: [MQTT guidelines](https://github.com/thomluther/anker-solix-api/discussions/222), tool `mqtt_monitor.py` in [anker-solix-api](https://github.com/thomluther/anker-solix-api).
+
+---
+
+## Special device notes
+
+Condensed from the [HA integration README](https://github.com/thomluther/ha-anker-solix); behavior is the same via solixapi.
+
+### Standalone inverters (MI80)
+
+Not a full app “power system”, but cloud tracks yields. API creates a **virtual site**. Inverter Wi‑Fi state in API is often wrong; cloud connection state is more reliable. **Do not** change inverter limits permanently (hardware write cycles).
+
+### Solarbank 1 (E1600)
+
+Cloud updates ~every **60 s** while producing/discharging; ~hourly in standby. **Schedule bug:** a single all-day API slot can set export to **0 W** — use ≥2 slots in the app if using output preset. Daily discharge statistic since mid-2024 includes bypassed PV (also wrong in app). MQTT monitoring/control from HA v3.4+/3.5+.
+
+### Solarbank 2 + smart meters
+
+Cloud interval often **~5 minutes**; control changes may take up to **~6 minutes** to appear in sensors. Shared accounts historically had unavailable entities (Anker-side fix). Some **output limit** API paths still unknown.
+
+### Solarbank 2 AC
+
+Time-of-use plans via controls where supported; cloud updates can stall after heavy app use ([HA #211](https://github.com/thomluther/ha-anker-solix/issues/211)).
+
+### Combined SB2 + cascaded SB1
+
+Totals/statistics in Anker cloud reflect **SB2 only**; SB1 is partly a “black box”. Enforced minimal schedule on SB1 when SB2 is manual — some ioBroker/HA controls show **unavailable** intentionally. For correct charge/discharge energy, sum **per-device** battery power, not only system NET power ([HA details](https://github.com/thomluther/ha-anker-solix#combined-solarbank-2-systems-containing-cascaded-solarbank-1-devices)).
+
+### Solarbank 3
+
+Smart mode, dynamic price, time-slot modes — often **toggle only** via API (configure in app first). Dynamic price VAT/fees may be **cache-only** customizations. Nordpool forecast most reliable.
+
+### Multisystem with Power Dock
+
+Up to 4 SB3 units; shared station settings (usage mode, SOC reserve, grid export). Controls consolidated on **combiner / Power Dock** in integration logic. Cloud data can lag in early deployments. Multisystem **AC output limit** may not be changeable via API.
+
+### Station controls
+
+SOC reserve, PV/AC limits, grid export often need **API + MQTT** (hybrid). Third-party PV / EV-enable switches are usually one-time app setup — not exposed for automation.
+
+### PPS / Solarbank PPS (F3000 + US meter)
+
+Automation-style home backup in US; control mainly via MQTT.
+
+### EV charger (V1)
+
+Most metrics/controls via MQTT; member accounts supported. Operational modes map to HA-style state machine — in ioBroker, check available control options before scripts. Session history statistics not implemented (use state history).
+
+### Vehicles
+
+Virtual devices per account EV; no creation via adapter — discovered on refresh.
+
+### Power Panel & HES (X1)
+
+Limited API power; workaround uses **~5 min averages** from energy stats (**~80 MB/day** extra traffic per system if enabled). Disable heavy categories in **Entities** if needed. X1: consider local **Modbus** ([Anker spec](https://support.ankersolix.com/de/s/download-preview?urlname=Anker-SOLIX-X1-Series-Modbus-Protocol)) — not part of this adapter.
+
+### Home Backup (E10, AX170)
+
+Almost **no** cloud API for system energy; E10 often **MQTT local mode** via dock.
+
+### Other / standalone devices
+
+Only in a **power system** for full API; otherwise MQTT + community decoding required.
+
+---
 
 ## Troubleshooting login / poll
 
+### No `authcache/<email>.json`
+
+The file is created only after a **successful** API login. If every login returns captcha, copy a working file from [ha-anker-solix](https://github.com/thomluther/ha-anker-solix) (`custom_components/anker_solix/solixapi/authcache/`) into `iobroker-data/anker-solix.0/authcache/`, same filename as in **Account**.
+
 ### `(100032) Captcha id empty`
 
-Anker’s cloud sometimes blocks **direct API login** from servers (ioBroker host, VPS, VPN) and asks for captcha verification. The unofficial API cannot solve that captcha yet.
+Anker blocks some **server/VPN** API logins. The library cannot solve captcha.
 
-**Often after saving instance config** (e.g. enabling an **Entities** group): ioBroker restarts the adapter. Before v0.9.3 a bug could ignore a valid `authcache` file and force a new cloud login → captcha, even when the Anker app or another integration still worked.
+1. Confirm app login on same LAN; correct **country**; no VPN on ioBroker host.
+2. **Do not** clear login cache to “fix” captcha.
+3. Copy `authcache` from HA or re-login when cloud allows.
+4. Wait 15–30 min after many failed attempts.
+5. Use adapter **≥ 0.9.3** so a valid cache is not discarded on restart.
 
-**Try in order:**
+Log shows exact cache path from **0.9.4+**.
 
-1. Log in with the **official Anker / Solix app** on a phone in the **same LAN** as ioBroker; confirm account and password work.
-2. Save instance config (re-enter password if needed) and **restart** the adapter. Use **Clear Anker login cache** only if you intentionally need a fresh login (wrong account, corrupted file) — **not** for captcha errors; clearing removes the token file and forces a new cloud login.
-3. **Disable VPN** on the ioBroker machine; use the correct **country code** (e.g. `DE`, `AT`, `CH`) matching your Anker account.
-4. If **Home Assistant** with [ha-anker-solix](https://github.com/thomluther/ha-anker-solix) works for the same account: copy the login cache file  
-   `…/authcache/<your-email>.json` from HA into  
-   `iobroker-data/anker-solix.0/authcache/` (same file name), then restart the adapter.
-5. Wait **15–30 minutes** after many failed logins (rate limits) before retrying.
+### Rate limits (26161 / 429)
 
-Daemon “unavailable” messages with the same captcha error are expected until login succeeds once.
+Increase poll interval; reduce enabled **Entities** groups; adapter retries and may fall back to one-shot bridge briefly.
 
-## Disclaimer
+---
 
-This is **not** an official Anker product. The cloud API may change or break at any time. You use this adapter at your own risk.
+## Services
 
-## Credits
+States under `anker-solix.0.services.*` (set to `true` to trigger):
 
-- [thomluther/ha-anker-solix](https://github.com/thomluther/ha-anker-solix) – Home Assistant integration and solixapi
-- [thomluther/anker-solix-api](https://github.com/thomluther/anker-solix-api) – Python API library
+- `get_schedule`, `clear_schedule`, `export_systems`, `get_system_info`, `refresh_devices`
+
+Uses `selectedDeviceId` / `selectedSiteId` from config. See Admin **Services** tab.
+
+---
+
+## Credits & further reading
+
+| Resource | Content |
+|----------|---------|
+| [thomluther/ha-anker-solix](https://github.com/thomluther/ha-anker-solix) | Full README, **INFO.md** (config, MQTT, export, tariffs) |
+| [thomluther/anker-solix-api](https://github.com/thomluther/anker-solix-api) | Python API, export, mqtt_monitor |
+| [HA discussions](https://github.com/thomluther/ha-anker-solix/discussions) | Energy dashboard, zero export, efficiency |
+| [SolixBLE](https://github.com/flip-dots/SolixBLE) | Local BLE (not cloud) |
+| [ha-anker-solix-official](https://github.com/anker-charging/ha-anker-solix-official) | Official Modbus (local devices) |
+
+German guides/videos linked from the [HA README](https://github.com/thomluther/ha-anker-solix#additional-resources) apply conceptually to data and limits; wiring is via ioBroker states instead of HA entities.
+
+---
 
 ## Changelog
 
+### 0.9.5
+
+- Admin warning before **Clear Anker login cache**; log after clear
+
+### 0.9.4
+
+- Log exact `authcache` path when login cache file is missing
+
 ### 0.9.3
 
-- **Fix:** After adapter restart, a valid `authcache` file was wrongly treated as failed login → forced new API login → captcha (100032). Often seen right after enabling an **Entities** group (config save restarts the instance). App / other Anker integrations were unaffected.
+- **Fix:** Valid `authcache` no longer treated as failed login after restart (captcha 100032)
 
 ### 0.9.2
 
-- Do not auto-delete `authcache` on failed login when a cache file exists (reduces captcha 100032 after config save / entity groups)
-- Reload cached token on 401 before forcing a new API login; clearer errors when the mobile app invalidates the token
+- Keep `authcache` on re-auth; reload token on 401 before forced login
 
 ### 0.9.1
 
-- Map Anker API error **100032** (`Captcha id empty`) to `CaptchaRequiredError` with actionable log hints (DE/EN)
-- Purge invalid login cache before re-auth; README **Troubleshooting login / poll** section
+- Captcha error 100032 mapping and README troubleshooting
 
 ### 0.9.0
 
-- **Configurable entity groups** (Admin tab **Entities**, HA-style): power flows, diagnostics, binary indicators, extended energy stats, PPS, EV charger, HES, smart plug, site price, account info, and more
-- Optional groups are **off by default**; only **Core** (Solarbank, combiner, smart meter, existing controls) stays enabled
-- API poll scope follows enabled groups (fewer cloud requests when groups are off)
-- ~60 sensor definitions available when groups are enabled (advanced controls read-only for now)
+- Configurable **entity groups** (HA-style); API scope follows enabled groups
 
 ### 0.8.1
 
-- Fix Python bridge crash on start (`ApiCategories.device_parm` import error); polls and daemon work again
-- Poll errors show Python stderr when the bridge returns no output
+- Fix Python bridge `ApiCategories.device_parm` crash
 
 ### 0.8.0
 
-- **Daily energy statistics** (kWh) under `statistics.*` (solar production, charge/discharge, grid import/export, flows, yesterday values)
-- Configurable via **Entities** → energy statistics (in 0.9.0 moved from Options; default off)
+- Daily energy statistics under `statistics.*`
 
 ### 0.7.0
 
-- **Usage mode** control `preset_usage_mode` (Custom, self-consumption, smart mode, dynamic tariff, time-of-use, …) with German labels
-- **AC fast charge** switch `ac_fast_charge_switch` for Solarbank gen ≥ 2
+- Usage mode `preset_usage_mode`, AC fast charge switch
 
-### 0.6.5
+### 0.6.x
 
-- Fix `ac_charge_limit`: MQTT commands, power-limit poll, `all_ac_input_limit` on combiner (read-only)
+- Persistent bridge daemon, HA-aligned poll, multisystem controls, rate-limit fixes
 
-### 0.6.3
+### 0.2.x – 0.5.x
 
-- Fix combiner `ac_output_limit` (API 10004): MQTT parallel max load first, HA-aligned API fallback
+- Python auto-install, device selection, staggered polling, repository rename
 
-### 0.6.2
+See git history for older entries.
 
-- Fix control state min/max for multisystem AC output (up to 4800 W) and grid export limit 0
-
-### 0.6.1
-
-- Daemon: auth on first poll (not at start); one-shot bridge fallback when API rate-limited (26161)
-
-### 0.6.0
-
-- **Persistent bridge daemon** (`bridge.py serve`): API and MQTT session stay open like Home Assistant (no reconnect per poll/control)
-
-### 0.5.0
-
-- Poll cycle matches Home Assistant: interval counter, `requestDelay` / `endpointLimit`, MQTT on detail refresh
-- Poll state in `authcache/poll_client_state.json`
-
-### 0.4.2
-
-- Staggered polling: sites every cycle, device/site details every Nth poll (`deviceDetailMultiplier`, default 10)
-- Retries on transient API errors (429, 26161, busy)
-
-### 0.4.1
-
-- Debounced/serialized controls; MQTT-first AC charge limit; delayed poll after writes (rate-limit fix)
-
-### 0.4.0
-
-- Multisystem controls: total PV, SOC reserve, PV/AC limits, AC output limit, grid export switch/limit (Power Dock/combiner)
-
-### 0.3.0
-
-- Repository renamed to `ioBroker.anker-solix` (fixes `iob url` and Admin display)
-
-### 0.2.7
-
-- Admin: remove legacy GitHub install symlink; uniform display name
-
-### 0.2.6
-
-- Auth: correct instance cache path; retry on stale token
-
-### 0.2.5
-
-- Fix control state types (`grid_export_limit` as number for js-controller 7)
-
-### 0.2.4
-
-- GitHub install symlink for old repo name (superseded by 0.3.0)
-
-### 0.2.3
-
-- Remove npm `postinstall` (fixes ioBroker install); Python setup on adapter start only
-
-### 0.2.2
-
-- Fallback: `pip install --target python/site-packages` when `python3-venv` is missing
-
-### 0.2.0
-
-- Python auto-install, smart meter entities, HA services, device selection in admin
-
-### 0.1.0
-
-- HA-aligned Solarbank sensors and controls
-
-### 0.0.1
-
-- Initial release
+---
 
 ## Publishing (npm & ioBroker catalog)
 
-The adapter is already installable from GitHub:
+Install from GitHub:
 
 ```bash
 iobroker url https://github.com/MatthiasUlrich1/ioBroker.anker-solix
 ```
 
-To publish on **npm** (so users can run `iobroker install anker-solix` without GitHub):
+**npm:** `npm publish --access public` after CI green and [adapter check](https://adaptercheck.iobroker.in/). Register in [ioBroker.repositories](https://github.com/ioBroker/ioBroker.repositories).
 
-### 1. Prerequisites
-
-- GitHub **Actions** green (`Test and Release` workflow: lint, build, package tests)
-- [ioBroker Adapter Checker](https://adaptercheck.iobroker.in/) – open the repo URL or upload a release ZIP; fix reported issues
-- npm account and [2FA](https://docs.npmjs.com/about-two-factor-authentication) enabled
-- Package name `iobroker.anker-solix` must be free on npm (or you must own it)
-
-### 2. Publish to npm
-
-On your development machine, in the adapter directory:
-
-```bash
-npm login
-npm run build
-npm publish --access public
-```
-
-Or use the ioBroker release script (bumps version, builds, publishes – review `.releaseconfig.json`):
-
-```bash
-npm run release
-```
-
-Follow the prompts (version bump, changelog, manual review step).
-
-### 3. Register in the official ioBroker repository
-
-After the package exists on npm:
-
-1. Open [ioBroker.repositories](https://github.com/ioBroker/ioBroker.repositories) and read `README.md`
-2. Add the adapter to the correct list (stable / beta), typically via pull request with:
-   - npm package name: `iobroker.anker-solix`
-   - version to expose
-   - short description and link to your GitHub repo
-3. Alternatively use the [add-adapter form](https://github.com/ioBroker/ioBroker.repositories/issues/new/choose) if available
-
-After merge, the adapter appears in Admin → **Adapter** search and in `iobroker update available`.
-
-### 4. Recommended before first publication
-
-- README and `io-package.json` version in sync (currently **0.9.3**)
-- Test a clean install on a Linux ioBroker host: `iobroker url` → `iobroker upload` → instance + poll
-- Mention unofficial API and Python 3.12+ in the ioBroker forum thread when announcing
-
-**Note:** GitHub install (`iob url`) can stay your primary channel; npm is optional but needed for the official ioBroker adapter list and one-click install without git.
+---
 
 ## License
 
-MIT – see [LICENSE](LICENSE)
+MIT — see [LICENSE](LICENSE)
