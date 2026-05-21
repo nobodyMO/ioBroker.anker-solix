@@ -288,6 +288,10 @@ German guides/videos linked from the [HA README](https://github.com/thomluther/h
 
 ## Changelog
 
+### 0.9.9
+
+- `package.json` keyword `ioBroker`; entity group headers with schema `size` property
+
 ### 0.9.8
 
 - Admin UI: all option/entity fields with lg/xl breakpoints; CI release fix
