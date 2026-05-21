@@ -1,11 +1,12 @@
+# Dependabot: cron schedules spread load (iobroker-bot S8906)
 version: 2
 updates:
   - package-ecosystem: npm
     directory: "/"
     schedule:
-      interval: monthly
-      time: "00:05"
+      interval: cron
       timezone: Europe/Berlin
+      cronjob: "23 2 14 * *"
     cooldown:
       default: 7
     open-pull-requests-limit: 15
@@ -19,9 +20,9 @@ updates:
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
-      interval: monthly
-      time: "00:05"
+      interval: cron
       timezone: Europe/Berlin
+      cronjob: "47 3 22 * *"
     open-pull-requests-limit: 15
     assignees:
       - MatthiasUlrich1
