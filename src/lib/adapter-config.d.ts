@@ -46,6 +46,14 @@ declare global {
 			selectedDeviceIds: string | string[];
 			/** Populated by admin sendTo – device list JSON */
 			deviceListJson?: string;
+			/** Optional curtailment avoidance (solarprognose forecast). */
+			enableCurtailmentAvoidance?: boolean;
+			/** Base path to hourly forecast objects (without .power). */
+			curtailmentForecastPath?: string;
+			curtailmentModeBefore?: "smartmeter" | "smart";
+			curtailmentModeAfter?: "smartmeter" | "smart";
+			/** JSON array of CurtailmentDeviceConfig. */
+			curtailmentDevicesJson?: string;
 		}
 	}
 }

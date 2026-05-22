@@ -1,9 +1,48 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.9.9",
+		"version": "0.10.2",
 		"messagebox": true,
 		"news": {
+			"0.10.2": {
+				"en": "Curtailment AC limits: standalone 800 W; combiner SB2 1000, SB3 1200, SB4 2500 W",
+				"de": "Abregelungs-Limits: einzeln 800 W; Combiner SB2 1000, SB3 1200, SB4 2500 W",
+				"ru": "Лимиты AC: 800 W / Combiner",
+				"pt": "Limites AC corrigidos",
+				"nl": "AC-limieten gecorrigeerd",
+				"fr": "Limites AC corrigées",
+				"it": "Limiti AC corretti",
+				"es": "Límites AC corregidos",
+				"pl": "Poprawione limity AC",
+				"uk": "Виправлені ліміти AC",
+				"zh-cn": "修正 AC 功率限制"
+			},
+			"0.10.1": {
+				"en": "Curtailment: combiner AC limit = sum of up to 4 mixed solarbank profiles",
+				"de": "Abregelungsvermeidung: Combiner-Limit = Summe bis zu 4 gemischter Solarbank-Profile",
+				"ru": "Combiner: сумма лимитов до 4 банков",
+				"pt": "Combiner: soma de até 4 perfis",
+				"nl": "Combiner: som van max. 4 profielen",
+				"fr": "Combiner: somme de 4 profils max.",
+				"it": "Combiner: somma fino a 4 profili",
+				"es": "Combiner: suma de hasta 4 perfiles",
+				"pl": "Combiner: suma do 4 profili",
+				"uk": "Combiner: сума до 4 профілів",
+				"zh-cn": "Combiner：最多4种机型功率相加"
+			},
+			"0.10.0": {
+				"en": "Optional curtailment avoidance via solar forecast (solarprognose adapter)",
+				"de": "Optionale Abregelungsvermeidung per Solarprognose (Adapter solarprognose)",
+				"ru": "Избегание ограничения мощности",
+				"pt": "Evitar limitação de potência",
+				"nl": "Afbegrenzingsvermijding",
+				"fr": "Évitement de limitation",
+				"it": "Evita limitazione potenza",
+				"es": "Evitar limitación de potencia",
+				"pl": "Unikanie ograniczenia mocy",
+				"uk": "Уникнення обмеження потужності",
+				"zh-cn": "可选防限电（太阳能预测）"
+			},
 			"0.9.9": {
 				"en": "package.json keyword ioBroker; entity group headers with size (schema)",
 				"de": "Keyword ioBroker in package.json; Entitäts-Header mit size (Schema)",
@@ -151,7 +190,12 @@
 		"enableAllDevices": true,
 		"selectedSiteId": "",
 		"selectedDeviceIds": "",
-		"deviceListJson": ""
+		"deviceListJson": "",
+		"enableCurtailmentAvoidance": false,
+		"curtailmentForecastPath": "solarprognose.0.forecast.00.hourly",
+		"curtailmentModeBefore": "smartmeter",
+		"curtailmentModeAfter": "smartmeter",
+		"curtailmentDevicesJson": "[]"
 	},
 	"objects": [],
 	"instanceObjects": [

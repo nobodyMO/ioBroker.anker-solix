@@ -26,6 +26,8 @@ var path = __toESM(require("node:path"));
 var utils = __toESM(require("@iobroker/adapter-core"));
 var import_configHelpers = require("./lib/configHelpers");
 var import_controlQueue = require("./lib/controlQueue");
+var import_curtailmentRunner = require("./lib/curtailmentRunner");
+var import_curtailmentStates = require("./lib/curtailmentStates");
 var import_ensurePython = require("./lib/ensurePython");
 var import_pythonBridge = require("./lib/pythonBridge");
 var import_services = require("./lib/services");
@@ -174,6 +176,7 @@ class AnkerSolix extends utils.Adapter {
       const detailHint = result.refreshDetails ? "devices+mqtt" : "sites";
       const intervalHint = result.intervalcount !== void 0 && result.deviceintervals !== void 0 ? `, next detail in ~${result.intervalcount} polls` : "";
       this.log.debug(`Poll OK (${(_c = pollDevices == null ? void 0 : pollDevices.length) != null ? _c : 0} devices, ${detailHint}${intervalHint})`);
+      await this.runCurtailmentAvoidanceIfEnabled();
     } catch (error) {
       await this.setState("info.connection", false, true);
       const msg = error.message || String(error);
@@ -270,6 +273,51 @@ class AnkerSolix extends utils.Adapter {
         station_sn: info.station_sn || "",
         generation: (_a = info.generation) != null ? _a : 0
       });
+    }
+  }
+  async applyAdapterControl(deviceId, control, value, deviceContext) {
+    await (0, import_pythonBridge.runBridge)(
+      "set",
+      {
+        ...this.getBridgeConfig(),
+        deviceId,
+        control,
+        value,
+        deviceContext
+      },
+      this.config.pythonPath || "",
+      this.log
+    );
+  }
+  getCurtailmentHost() {
+    return {
+      namespace: this.namespace,
+      log: this.log,
+      getForeignStateAsync: (id) => this.getForeignStateAsync(id),
+      getStateAsync: (id) => this.getStateAsync(id),
+      setState: async (id, val, ack) => {
+        await this.setState(id, val, ack != null ? ack : true);
+      },
+      getDeviceContext: (deviceId) => this.deviceContexts.get(deviceId),
+      applyControl: (deviceId, control, value, deviceContext) => this.applyAdapterControl(deviceId, control, value, deviceContext)
+    };
+  }
+  async runCurtailmentAvoidanceIfEnabled() {
+    if (!this.config.enableCurtailmentAvoidance) {
+      return;
+    }
+    try {
+      const modeBefore = this.config.curtailmentModeBefore === "smart" ? "smart" : "smartmeter";
+      const modeAfter = this.config.curtailmentModeAfter === "smart" ? "smart" : "smartmeter";
+      await (0, import_curtailmentRunner.runCurtailmentAvoidance)(this.getCurtailmentHost(), {
+        enabled: true,
+        forecastBasePath: (this.config.curtailmentForecastPath || "solarprognose.0.forecast.00.hourly").trim(),
+        devicesJson: this.config.curtailmentDevicesJson || "[]",
+        modeBefore,
+        modeAfter
+      });
+    } catch (err) {
+      this.log.warn(`Curtailment avoidance: ${err.message}`);
     }
   }
   schedulePollAfterControl() {
@@ -423,6 +471,7 @@ class AnkerSolix extends utils.Adapter {
       native: {}
     });
     await (0, import_services.setupServiceStates)(this);
+    await (0, import_curtailmentStates.setupCurtailmentStates)(this);
     await this.setState("info.connection", false, true);
     const intervalSec = Math.max(30, Number(this.config.scanInterval) || 60);
     this.log.info(

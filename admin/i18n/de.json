@@ -72,5 +72,15 @@
 	"min_soc": "Mindest-SOC Reserve (%)",
 	"grid_export_limit": "Einspeise-Limit (W)",
 	"cloud_state": "Cloud-Status",
-	"wifi_state": "WLAN-Status"
+	"wifi_state": "WLAN-Status",
+	"CurtailmentAvoidance": "Abregelungsvermeidung",
+	"curtailment_hint": "Liest die stündliche PV-Prognose vom Adapter solarprognose. An Überproduktions-Tagen: vor dem Fenster normaler Export-Modus; während der Abregelung Modus Benutzerdefiniert mit berechnetem AC-Ladelimit; danach gewählter Modus. MQTT erforderlich. Status unter curtailment.*",
+	"enableCurtailmentAvoidance": "Abregelungsvermeidung aktivieren",
+	"curtailmentForecastPath": "Objektpfad Prognose (stündlich, ohne .power)",
+	"curtailmentModeBefore": "Nutzungsmodus vor Abregelungsfenster",
+	"curtailmentModeAfter": "Nutzungsmodus nach Abregelungsfenster",
+	"mode_smartmeter": "Eigenverbrauch",
+	"mode_smart": "Smart-Modus",
+	"curtailmentDevicesJson": "Geräte JSON (Beispiel unten)",
+	"curtailment_example": "Beispiel Combiner (max. 4 Solarbänke, gemischte Typen – Limit = Summe):\n[{\"deviceId\":\"COMBINER_SN\",\"enabled\":true,\"role\":\"combiner\",\"batteryCapacityWh\":15000,\"units\":[\"solarbank3pro\",\"solarbank3pro\",\"solarbank4pro\",\"solarbank2\"]}]\n→ 1200+1200+2500+1000 = 5900 W. Einzeln: immer 800 W. Am Combiner je Einheit: solarbank2 1000 W, solarbank3pro 1200 W, solarbank4pro 2500 W."
 }

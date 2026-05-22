@@ -472,6 +472,92 @@
 				}
 			}
 		},
+		"_tab_curtailment": {
+			"type": "panel",
+			"label": "CurtailmentAvoidance",
+			"items": {
+				"_curtailment_hint": {
+					"type": "staticText",
+					"text": "curtailment_hint",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+				"enableCurtailmentAvoidance": {
+					"type": "checkbox",
+					"label": "enableCurtailmentAvoidance",
+					"default": false,
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+				"curtailmentForecastPath": {
+					"type": "text",
+					"label": "curtailmentForecastPath",
+					"default": "solarprognose.0.forecast.00.hourly",
+					"xs": 12,
+					"sm": 12,
+					"md": 8,
+					"lg": 8,
+					"xl": 8
+				},
+				"curtailmentModeBefore": {
+					"type": "select",
+					"label": "curtailmentModeBefore",
+					"options": [
+						{ "label": "mode_smartmeter", "value": "smartmeter" },
+						{ "label": "mode_smart", "value": "smart" }
+					],
+					"default": "smartmeter",
+					"xs": 12,
+					"sm": 6,
+					"md": 4,
+					"lg": 4,
+					"xl": 4
+				},
+				"curtailmentModeAfter": {
+					"type": "select",
+					"label": "curtailmentModeAfter",
+					"options": [
+						{ "label": "mode_smartmeter", "value": "smartmeter" },
+						{ "label": "mode_smart", "value": "smart" }
+					],
+					"default": "smartmeter",
+					"xs": 12,
+					"sm": 6,
+					"md": 4,
+					"lg": 4,
+					"xl": 4
+				},
+				"curtailmentDevicesJson": {
+					"type": "text",
+					"label": "curtailmentDevicesJson",
+					"default": "[]",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+				"_curtailment_example": {
+					"type": "staticText",
+					"text": "curtailment_example",
+					"style": {
+						"fontSize": "0.85em",
+						"whiteSpace": "pre-wrap"
+					},
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				}
+			}
+		},
 		"_tab_terms": {
 			"type": "panel",
 			"label": "Terms",
