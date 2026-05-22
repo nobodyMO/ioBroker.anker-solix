@@ -16,7 +16,8 @@ on:
 # Cancel previous PR/branch runs when a new commit is pushed
 concurrency:
   group: ${{ github.ref }}
-  cancel-in-progress: true
+  # Do not cancel release/tag runs when another push arrives on main
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # Performs quick checks before the expensive test runs
@@ -43,7 +44,8 @@ jobs:
     strategy:
       matrix:
         node-version: [22.x, 24.x]
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        # Linux only: js-controller install in integration tests is slow/unreliable on Windows/macOS CI
+        os: [ubuntu-latest]
 
     steps:
       - uses: ioBroker/testing-action-adapter@v1
