@@ -22,6 +22,7 @@ __export(curtailmentRunner_exports, {
 });
 module.exports = __toCommonJS(curtailmentRunner_exports);
 var import_curtailmentProfiles = require("./curtailmentProfiles");
+var import_curtailmentConfig = require("./curtailmentConfig");
 var import_curtailmentForecast = require("./curtailmentForecast");
 var import_curtailmentStates = require("./curtailmentStates");
 function berlinHour() {
@@ -58,11 +59,10 @@ function calcMaxChargeW(batteryCapacityWh, socPercent, chargeDivisorHours) {
   const missingWh = (100 - socPercent) / 100 * batteryCapacityWh;
   return Math.max(0, Math.round(missingWh / chargeDivisorHours));
 }
-async function applyPhaseControls(host, device, phase, maxChargeW, modeBefore, modeAfter) {
+async function applyPhaseControls(host, device, phase, maxChargeW, modeAfter) {
   const ctx = host.getDeviceContext(device.deviceId);
   const controlDeviceId = device.deviceId;
   if (phase === "before") {
-    await host.applyControl(controlDeviceId, "preset_usage_mode", modeBefore, ctx);
     return;
   }
   if (phase === "active") {
@@ -82,7 +82,7 @@ async function runCurtailmentAvoidance(host, config) {
     await host.setState(import_curtailmentStates.CURTAILMENT_STATE_IDS.phase, "disabled", true);
     return;
   }
-  const devices = (0, import_curtailmentProfiles.parseCurtailmentDevicesJson)(config.devicesJson).filter((d) => d.enabled);
+  const devices = (0, import_curtailmentConfig.resolveCurtailmentDevices)(config).filter((d) => d.enabled);
   if (!devices.length) {
     host.log.debug("Curtailment avoidance: no enabled devices configured");
     await host.setState(import_curtailmentStates.CURTAILMENT_STATE_IDS.phase, "no_devices", true);
@@ -121,7 +121,7 @@ async function runCurtailmentAvoidance(host, config) {
       `Curtailment [${device.deviceId}]: phase=${phase}, limit=${limit}W${unitsHint}, window ${window.startHour}-${window.endHour}h, maxCharge=${maxChargeW}W, SOC=${soc}%`
     );
     try {
-      await applyPhaseControls(host, device, phase, maxChargeW, config.modeBefore, config.modeAfter);
+      await applyPhaseControls(host, device, phase, maxChargeW, config.modeAfter);
     } catch (err) {
       host.log.warn(`Curtailment control failed for ${device.deviceId}: ${err.message}`);
     }

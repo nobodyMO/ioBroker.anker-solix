@@ -1,4 +1,5 @@
-import { acExportLimitW, parseCurtailmentDevicesJson } from "./curtailmentProfiles";
+import { acExportLimitW } from "./curtailmentProfiles";
+import { resolveCurtailmentDevices, type CurtailmentStructuredNative } from "./curtailmentConfig";
 import {
 	currentPhase,
 	detectCurtailmentWindow,
@@ -9,13 +10,10 @@ import { CURTAILMENT_STATE_IDS } from "./curtailmentStates";
 import type { CurtailmentDeviceConfig, CurtailmentPhase } from "./curtailmentTypes";
 import type { DeviceControlContext } from "./types";
 
-export interface CurtailmentRunnerConfig {
+export interface CurtailmentRunnerConfig extends CurtailmentStructuredNative {
 	enabled: boolean;
 	forecastBasePath: string;
-	devicesJson: string;
-	/** Usage mode before curtailment window (maximize export). */
-	modeBefore: "smartmeter" | "smart";
-	/** Usage mode after curtailment window. */
+	/** Usage mode after curtailment window (before window: no mode change). */
 	modeAfter: "smartmeter" | "smart";
 }
 
@@ -79,14 +77,13 @@ async function applyPhaseControls(
 	device: CurtailmentDeviceConfig,
 	phase: CurtailmentPhase,
 	maxChargeW: number,
-	modeBefore: "smartmeter" | "smart",
 	modeAfter: "smartmeter" | "smart",
 ): Promise<void> {
 	const ctx = host.getDeviceContext(device.deviceId);
 	const controlDeviceId = device.deviceId;
 
+	// Before window: leave current usage mode unchanged
 	if (phase === "before") {
-		await host.applyControl(controlDeviceId, "preset_usage_mode", modeBefore, ctx);
 		return;
 	}
 	if (phase === "active") {
@@ -110,7 +107,7 @@ export async function runCurtailmentAvoidance(
 		return;
 	}
 
-	const devices = parseCurtailmentDevicesJson(config.devicesJson).filter(d => d.enabled);
+	const devices = resolveCurtailmentDevices(config).filter(d => d.enabled);
 	if (!devices.length) {
 		host.log.debug("Curtailment avoidance: no enabled devices configured");
 		await host.setState(CURTAILMENT_STATE_IDS.phase, "no_devices", true);
@@ -160,7 +157,7 @@ export async function runCurtailmentAvoidance(
 		);
 
 		try {
-			await applyPhaseControls(host, device, phase, maxChargeW, config.modeBefore, config.modeAfter);
+			await applyPhaseControls(host, device, phase, maxChargeW, config.modeAfter);
 		} catch (err) {
 			host.log.warn(`Curtailment control failed for ${device.deviceId}: ${(err as Error).message}`);
 		}

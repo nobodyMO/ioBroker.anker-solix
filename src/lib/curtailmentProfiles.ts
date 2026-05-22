@@ -38,6 +38,10 @@ function parseUnitsList(raw: unknown, fallbackProfile: CurtailmentDeviceProfile)
 			break;
 		}
 		if (typeof entry === "string") {
+			const v = entry.trim().toLowerCase();
+			if (!v || v === "none" || v === "keine") {
+				continue;
+			}
 			units.push(normalizeProfile(entry));
 			continue;
 		}

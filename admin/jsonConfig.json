@@ -505,20 +505,6 @@
 					"lg": 8,
 					"xl": 8
 				},
-				"curtailmentModeBefore": {
-					"type": "select",
-					"label": "curtailmentModeBefore",
-					"options": [
-						{ "label": "mode_smartmeter", "value": "smartmeter" },
-						{ "label": "mode_smart", "value": "smart" }
-					],
-					"default": "smartmeter",
-					"xs": 12,
-					"sm": 6,
-					"md": 4,
-					"lg": 4,
-					"xl": 4
-				},
 				"curtailmentModeAfter": {
 					"type": "select",
 					"label": "curtailmentModeAfter",
@@ -533,22 +519,205 @@
 					"lg": 4,
 					"xl": 4
 				},
-				"curtailmentDevicesJson": {
-					"type": "text",
-					"label": "curtailmentDevicesJson",
-					"default": "[]",
+				"_curtailment_devices_header": {
+					"type": "header",
+					"text": "curtailment_devices_header",
+					"size": 5,
 					"xs": 12,
 					"sm": 12,
 					"md": 12,
 					"lg": 12,
 					"xl": 12
 				},
-				"_curtailment_example": {
+				"curtailmentHasCombiner": {
+					"type": "checkbox",
+					"label": "curtailmentHasCombiner",
+					"default": false,
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+				"_curtailment_standalone_header": {
+					"type": "header",
+					"text": "curtailment_standalone_header",
+					"size": 6,
+					"hidden": {
+						"jq": "data.curtailmentHasCombiner == true"
+					},
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+				"curtailmentStandaloneDeviceId": {
+					"type": "text",
+					"label": "curtailmentStandaloneDeviceId",
+					"hidden": {
+						"jq": "data.curtailmentHasCombiner == true"
+					},
+					"xs": 12,
+					"sm": 6,
+					"md": 4,
+					"lg": 4,
+					"xl": 4
+				},
+				"curtailmentStandaloneProfile": {
+					"type": "select",
+					"label": "curtailmentStandaloneProfile",
+					"options": [
+						{ "label": "profile_solarbank2", "value": "solarbank2" },
+						{ "label": "profile_solarbank3pro", "value": "solarbank3pro" },
+						{ "label": "profile_solarbank4pro", "value": "solarbank4pro" }
+					],
+					"default": "solarbank3pro",
+					"hidden": {
+						"jq": "data.curtailmentHasCombiner == true"
+					},
+					"xs": 12,
+					"sm": 6,
+					"md": 4,
+					"lg": 4,
+					"xl": 4
+				},
+				"curtailmentStandaloneBatteryWh": {
+					"type": "number",
+					"label": "curtailmentStandaloneBatteryWh",
+					"min": 1000,
+					"max": 100000,
+					"default": 5000,
+					"hidden": {
+						"jq": "data.curtailmentHasCombiner == true"
+					},
+					"xs": 12,
+					"sm": 6,
+					"md": 4,
+					"lg": 4,
+					"xl": 4
+				},
+				"_curtailment_combiner_header": {
+					"type": "header",
+					"text": "curtailment_combiner_header",
+					"size": 6,
+					"hidden": {
+						"jq": "data.curtailmentHasCombiner != true"
+					},
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+				"curtailmentCombinerDeviceId": {
+					"type": "text",
+					"label": "curtailmentCombinerDeviceId",
+					"hidden": {
+						"jq": "data.curtailmentHasCombiner != true"
+					},
+					"xs": 12,
+					"sm": 6,
+					"md": 4,
+					"lg": 4,
+					"xl": 4
+				},
+				"curtailmentCombinerBatteryWh": {
+					"type": "number",
+					"label": "curtailmentCombinerBatteryWh",
+					"min": 1000,
+					"max": 200000,
+					"default": 15000,
+					"hidden": {
+						"jq": "data.curtailmentHasCombiner != true"
+					},
+					"xs": 12,
+					"sm": 6,
+					"md": 4,
+					"lg": 4,
+					"xl": 4
+				},
+				"curtailmentCombinerUnit1": {
+					"type": "select",
+					"label": "curtailmentCombinerUnit1",
+					"options": [
+						{ "label": "profile_none", "value": "" },
+						{ "label": "profile_solarbank2", "value": "solarbank2" },
+						{ "label": "profile_solarbank3pro", "value": "solarbank3pro" },
+						{ "label": "profile_solarbank4pro", "value": "solarbank4pro" }
+					],
+					"default": "",
+					"hidden": {
+						"jq": "data.curtailmentHasCombiner != true"
+					},
+					"xs": 12,
+					"sm": 6,
+					"md": 3,
+					"lg": 3,
+					"xl": 3
+				},
+				"curtailmentCombinerUnit2": {
+					"type": "select",
+					"label": "curtailmentCombinerUnit2",
+					"options": [
+						{ "label": "profile_none", "value": "" },
+						{ "label": "profile_solarbank2", "value": "solarbank2" },
+						{ "label": "profile_solarbank3pro", "value": "solarbank3pro" },
+						{ "label": "profile_solarbank4pro", "value": "solarbank4pro" }
+					],
+					"default": "",
+					"hidden": {
+						"jq": "data.curtailmentHasCombiner != true"
+					},
+					"xs": 12,
+					"sm": 6,
+					"md": 3,
+					"lg": 3,
+					"xl": 3
+				},
+				"curtailmentCombinerUnit3": {
+					"type": "select",
+					"label": "curtailmentCombinerUnit3",
+					"options": [
+						{ "label": "profile_none", "value": "" },
+						{ "label": "profile_solarbank2", "value": "solarbank2" },
+						{ "label": "profile_solarbank3pro", "value": "solarbank3pro" },
+						{ "label": "profile_solarbank4pro", "value": "solarbank4pro" }
+					],
+					"default": "",
+					"hidden": {
+						"jq": "data.curtailmentHasCombiner != true"
+					},
+					"xs": 12,
+					"sm": 6,
+					"md": 3,
+					"lg": 3,
+					"xl": 3
+				},
+				"curtailmentCombinerUnit4": {
+					"type": "select",
+					"label": "curtailmentCombinerUnit4",
+					"options": [
+						{ "label": "profile_none", "value": "" },
+						{ "label": "profile_solarbank2", "value": "solarbank2" },
+						{ "label": "profile_solarbank3pro", "value": "solarbank3pro" },
+						{ "label": "profile_solarbank4pro", "value": "solarbank4pro" }
+					],
+					"default": "",
+					"hidden": {
+						"jq": "data.curtailmentHasCombiner != true"
+					},
+					"xs": 12,
+					"sm": 6,
+					"md": 3,
+					"lg": 3,
+					"xl": 3
+				},
+				"_curtailment_limits_hint": {
 					"type": "staticText",
-					"text": "curtailment_example",
+					"text": "curtailment_limits_hint",
 					"style": {
-						"fontSize": "0.85em",
-						"whiteSpace": "pre-wrap"
+						"fontSize": "0.85em"
 					},
 					"xs": 12,
 					"sm": 12,

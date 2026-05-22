@@ -50,9 +50,20 @@ declare global {
 			enableCurtailmentAvoidance?: boolean;
 			/** Base path to hourly forecast objects (without .power). */
 			curtailmentForecastPath?: string;
+			/** @deprecated unused – mode before window is not changed */
 			curtailmentModeBefore?: "smartmeter" | "smart";
 			curtailmentModeAfter?: "smartmeter" | "smart";
-			/** JSON array of CurtailmentDeviceConfig. */
+			curtailmentHasCombiner?: boolean;
+			curtailmentStandaloneDeviceId?: string;
+			curtailmentStandaloneProfile?: string;
+			curtailmentStandaloneBatteryWh?: number;
+			curtailmentCombinerDeviceId?: string;
+			curtailmentCombinerBatteryWh?: number;
+			curtailmentCombinerUnit1?: string;
+			curtailmentCombinerUnit2?: string;
+			curtailmentCombinerUnit3?: string;
+			curtailmentCombinerUnit4?: string;
+			/** Legacy JSON array; used if structured fields are empty. */
 			curtailmentDevicesJson?: string;
 		}
 	}

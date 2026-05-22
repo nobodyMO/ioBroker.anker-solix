@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.3",
+		"version": "0.10.4",
 		"messagebox": true,
 		"news": {
+			"0.10.4": {
+				"en": "Curtailment Admin: combiner checkbox, 4 solarbank slots; no mode change before window",
+				"de": "Abregelung Admin: Combiner-Checkbox, 4 Solarbank-Plätze; vor Fenster kein Moduswechsel",
+				"ru": "Админ: Combiner и 4 банка",
+				"pt": "Admin: Combiner e 4 bancos",
+				"nl": "Admin: combiner en 4 banks",
+				"fr": "Admin: combiner et 4 banques",
+				"it": "Admin: combiner e 4 banchi",
+				"es": "Admin: combiner y 4 bancos",
+				"pl": "Admin: combiner i 4 banki",
+				"uk": "Адмін: combiner і 4 банки",
+				"zh-cn": "管理界面：Combiner 与 4 个储能位"
+			},
 			"0.10.3": {
 				"en": "CI: curtailment unit tests use Mocha/Chai (lint)",
 				"de": "CI: Abregelungs-Tests mit Mocha/Chai (Lint)",
@@ -208,6 +221,16 @@
 		"curtailmentForecastPath": "solarprognose.0.forecast.00.hourly",
 		"curtailmentModeBefore": "smartmeter",
 		"curtailmentModeAfter": "smartmeter",
+		"curtailmentHasCombiner": false,
+		"curtailmentStandaloneDeviceId": "",
+		"curtailmentStandaloneProfile": "solarbank3pro",
+		"curtailmentStandaloneBatteryWh": 5000,
+		"curtailmentCombinerDeviceId": "",
+		"curtailmentCombinerBatteryWh": 15000,
+		"curtailmentCombinerUnit1": "",
+		"curtailmentCombinerUnit2": "",
+		"curtailmentCombinerUnit3": "",
+		"curtailmentCombinerUnit4": "",
 		"curtailmentDevicesJson": "[]"
 	},
 	"objects": [],

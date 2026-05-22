@@ -288,13 +288,17 @@ German guides/videos linked from the [HA README](https://github.com/thomluther/h
 
 ## Curtailment avoidance (optional)
 
-Tab **Abregelungsvermeidung** / **Curtailment avoidance**: reads hourly forecast from the [solarprognose](https://github.com/ioBroker/ioBroker.solarprognose) adapter (default path `solarprognose.0.forecast.00.hourly`, states `04.power` … `20.power`). When forecast PV exceeds the configured AC export limit, the adapter switches to **manual** mode during that window and sets **AC charge limit** to use spare battery capacity (`missing_Wh / (curtailment_hours + 1)`). Before/after the window, **self-consumption** or **smart** mode (configurable). Status: `anker-solix.0.curtailment.*`.
+Tab **Abregelungsvermeidung** / **Curtailment avoidance**: reads hourly forecast from the [solarprognose](https://github.com/ioBroker/ioBroker.solarprognose) adapter (default path `solarprognose.0.forecast.00.hourly`, states `04.power` … `20.power`). When forecast PV exceeds the configured AC export limit, the adapter switches to **manual** mode during that window and sets **AC charge limit** to use spare battery capacity (`missing_Wh / (curtailment_hours + 1)`). **Before** the window the current usage mode is **not** changed; **after** the window, **self-consumption** or **smart** mode (configurable). Status: `anker-solix.0.curtailment.*`.
 
-**Combiner (Power Dock):** up to **4** solarbanks; total AC limit = **sum** of per-unit limits (SB2 **1000** W, SB3 Pro **1200** W, SB4 Pro **2500** W per unit). **Standalone** solarbank: always **800** W. Configure via `units` in the devices JSON (see Admin example).
+**Admin:** checkbox *Combiner box present* — without combiner: device ID + solarbank type + battery Wh; with combiner: combiner ID + up to **4** solarbank slots (each slot can be *none*). **Combiner:** total AC limit = **sum** of per-unit limits (SB2 **1000** W, SB3 Pro **1200** W, SB4 Pro **2500** W). **Standalone:** always **800** W.
 
 ---
 
 ## Changelog
+
+### 0.10.4
+
+- Curtailment Admin: combiner checkbox, device ID + solarbank type (standalone) or 4 slots with “none” (combiner); no usage-mode change before curtailment window
 
 ### 0.10.3
 

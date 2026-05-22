@@ -344,14 +344,22 @@ class AnkerSolix extends utils.Adapter {
 			return;
 		}
 		try {
-			const modeBefore = this.config.curtailmentModeBefore === "smart" ? "smart" : "smartmeter";
 			const modeAfter = this.config.curtailmentModeAfter === "smart" ? "smart" : "smartmeter";
 			await runCurtailmentAvoidance(this.getCurtailmentHost(), {
 				enabled: true,
 				forecastBasePath: (this.config.curtailmentForecastPath || "solarprognose.0.forecast.00.hourly").trim(),
-				devicesJson: this.config.curtailmentDevicesJson || "[]",
-				modeBefore,
 				modeAfter,
+				curtailmentHasCombiner: this.config.curtailmentHasCombiner,
+				curtailmentStandaloneDeviceId: this.config.curtailmentStandaloneDeviceId,
+				curtailmentStandaloneProfile: this.config.curtailmentStandaloneProfile,
+				curtailmentStandaloneBatteryWh: this.config.curtailmentStandaloneBatteryWh,
+				curtailmentCombinerDeviceId: this.config.curtailmentCombinerDeviceId,
+				curtailmentCombinerBatteryWh: this.config.curtailmentCombinerBatteryWh,
+				curtailmentCombinerUnit1: this.config.curtailmentCombinerUnit1,
+				curtailmentCombinerUnit2: this.config.curtailmentCombinerUnit2,
+				curtailmentCombinerUnit3: this.config.curtailmentCombinerUnit3,
+				curtailmentCombinerUnit4: this.config.curtailmentCombinerUnit4,
+				curtailmentDevicesJson: this.config.curtailmentDevicesJson,
 			});
 		} catch (err) {
 			this.log.warn(`Curtailment avoidance: ${(err as Error).message}`);

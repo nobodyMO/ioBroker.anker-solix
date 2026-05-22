@@ -25,7 +25,7 @@ __export(curtailmentProfiles_exports, {
 module.exports = __toCommonJS(curtailmentProfiles_exports);
 var import_curtailmentTypes = require("./curtailmentTypes");
 const PROFILE_LIMITS = {
-  solarbank2: { standalone: 800, combinerPerUnit: 800 },
+  solarbank2: { standalone: 800, combinerPerUnit: 1e3 },
   solarbank3pro: { standalone: 800, combinerPerUnit: 1200 },
   solarbank4pro: { standalone: 800, combinerPerUnit: 2500 }
 };
@@ -54,6 +54,10 @@ function parseUnitsList(raw, fallbackProfile) {
       break;
     }
     if (typeof entry === "string") {
+      const v = entry.trim().toLowerCase();
+      if (!v || v === "none" || v === "keine") {
+        continue;
+      }
       units.push(normalizeProfile(entry));
       continue;
     }
