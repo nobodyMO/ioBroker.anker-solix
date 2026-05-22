@@ -296,6 +296,10 @@ Tab **Abregelungsvermeidung** / **Curtailment avoidance**: reads hourly forecast
 
 ## Changelog
 
+### 0.10.3
+
+- CI: curtailment unit tests use Mocha/Chai (fixes adapter-check lint)
+
 ### 0.10.2
 
 - Curtailment AC limits: standalone 800 W; combiner per unit SB2 1000, SB3 1200, SB4 2500 W

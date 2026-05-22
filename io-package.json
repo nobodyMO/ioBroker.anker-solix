@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.2",
+		"version": "0.10.3",
 		"messagebox": true,
 		"news": {
+			"0.10.3": {
+				"en": "CI: curtailment unit tests use Mocha/Chai (lint)",
+				"de": "CI: Abregelungs-Tests mit Mocha/Chai (Lint)",
+				"ru": "CI: тесты Mocha/Chai",
+				"pt": "CI: testes Mocha/Chai",
+				"nl": "CI: tests Mocha/Chai",
+				"fr": "CI: tests Mocha/Chai",
+				"it": "CI: test Mocha/Chai",
+				"es": "CI: tests Mocha/Chai",
+				"pl": "CI: testy Mocha/Chai",
+				"uk": "CI: тести Mocha/Chai",
+				"zh-cn": "CI：Mocha/Chai 单元测试"
+			},
 			"0.10.2": {
 				"en": "Curtailment AC limits: standalone 800 W; combiner SB2 1000, SB3 1200, SB4 2500 W",
 				"de": "Abregelungs-Limits: einzeln 800 W; Combiner SB2 1000, SB3 1200, SB4 2500 W",
