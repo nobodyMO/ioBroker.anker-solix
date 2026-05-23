@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.23",
+		"version": "0.10.24",
 		"messagebox": true,
 		"news": {
+			"0.10.24": {
+				"en": "Fix: import needs_daily_energy_poll and period constants (NameError in 0.10.23)",
+				"de": "Fix: Import needs_daily_energy_poll und Perioden-Konstanten (NameError in 0.10.23)",
+				"ru": "Fix: NameError import",
+				"pt": "Fix: NameError import",
+				"nl": "Fix: NameError import",
+				"fr": "Fix: NameError import",
+				"it": "Fix: NameError import",
+				"es": "Fix: NameError import",
+				"pl": "Fix: NameError import",
+				"uk": "Fix: NameError import",
+				"zh-cn": "修复 0.10.23 导入 NameError"
+			},
 			"0.10.23": {
 				"en": "Fix daemon crash (_update_energy_periods); year-only skips daily energy poll; less API load",
 				"de": "Fix Daemon-Absturz (_update_energy_periods); nur Jahresstatistik ohne Tages-Poll; weniger API-Last",
@@ -237,32 +250,6 @@
 				"pl": "Admin: combiner i 4 banki",
 				"uk": "Адмін: combiner і 4 банки",
 				"zh-cn": "管理界面：Combiner 与 4 个储能位"
-			},
-			"0.10.3": {
-				"en": "CI: curtailment unit tests use Mocha/Chai (lint)",
-				"de": "CI: Abregelungs-Tests mit Mocha/Chai (Lint)",
-				"ru": "CI: тесты Mocha/Chai",
-				"pt": "CI: testes Mocha/Chai",
-				"nl": "CI: tests Mocha/Chai",
-				"fr": "CI: tests Mocha/Chai",
-				"it": "CI: test Mocha/Chai",
-				"es": "CI: tests Mocha/Chai",
-				"pl": "CI: testy Mocha/Chai",
-				"uk": "CI: тести Mocha/Chai",
-				"zh-cn": "CI：Mocha/Chai 单元测试"
-			},
-			"0.10.2": {
-				"en": "Curtailment AC limits: standalone 800 W; combiner SB2 1000, SB3 1200, SB4 2500 W",
-				"de": "Abregelungs-Limits: einzeln 800 W; Combiner SB2 1000, SB3 1200, SB4 2500 W",
-				"ru": "Лимиты AC: 800 W / Combiner",
-				"pt": "Limites AC corrigidos",
-				"nl": "AC-limieten gecorrigeerd",
-				"fr": "Limites AC corrigées",
-				"it": "Limiti AC corretti",
-				"es": "Límites AC corregidos",
-				"pl": "Poprawione limity AC",
-				"uk": "Виправлені ліміти AC",
-				"zh-cn": "修正 AC 功率限制"
 			}
 		},
 		"titleLang": {
