@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.19",
+		"version": "0.10.20",
 		"messagebox": true,
 		"news": {
+			"0.10.20": {
+				"en": "Period energy stats under statistics.week|month|year.* subfolders (enable entity groups)",
+				"de": "Wochen-/Monats-/Jahresstatistik unter statistics.week|month|year.* (Entitätsgruppen aktivieren)",
+				"ru": "Period stats in subfolders",
+				"pt": "Period stats in subfolders",
+				"nl": "Period stats in subfolders",
+				"fr": "Period stats in subfolders",
+				"it": "Period stats in subfolders",
+				"es": "Period stats in subfolders",
+				"pl": "Period stats in subfolders",
+				"uk": "Period stats in subfolders",
+				"zh-cn": "周期统计在 statistics.week|month|year 子目录"
+			},
 			"0.10.18": {
 				"en": "Entity groups: weekly, monthly, yearly energy statistics (kWh) from cloud",
 				"de": "Entitätsgruppen: Wochen-, Monats- und Jahresstatistik (kWh) aus der Cloud",
@@ -237,19 +250,6 @@
 				"pl": "Unikanie ograniczenia mocy",
 				"uk": "Уникнення обмеження потужності",
 				"zh-cn": "可选防限电（太阳能预测）"
-			},
-			"0.9.9": {
-				"en": "package.json keyword ioBroker; entity group headers with size (schema)",
-				"de": "Keyword ioBroker in package.json; Entitäts-Header mit size (Schema)",
-				"ru": "Ключевое слово ioBroker; заголовки с size",
-				"pt": "Keyword ioBroker; cabeçalhos com size",
-				"nl": "Keyword ioBroker; headers met size",
-				"fr": "Mot-clé ioBroker; en-têtes avec size",
-				"it": "Keyword ioBroker; header con size",
-				"es": "Keyword ioBroker; encabezados con size",
-				"pl": "Słowo kluczowe ioBroker; nagłówki z size",
-				"uk": "Ключове слово ioBroker",
-				"zh-cn": "ioBroker 关键词与 header size"
 			}
 		},
 		"titleLang": {
