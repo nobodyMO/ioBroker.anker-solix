@@ -28,6 +28,8 @@ var import_curtailmentForecast = require("./curtailmentForecast");
 var import_curtailmentPower = require("./curtailmentPower");
 var import_curtailmentStates = require("./curtailmentStates");
 const lastAppliedExportW = /* @__PURE__ */ new Map();
+const lastAppliedChargeW = /* @__PURE__ */ new Map();
+const lastAppliedPhase = /* @__PURE__ */ new Map();
 function berlinHour() {
   var _a;
   const parts = new Intl.DateTimeFormat("de-DE", {
@@ -44,6 +46,23 @@ function clampExportW(powerW) {
   }
   return Math.min(1e5, Math.max(100, Math.round(powerW)));
 }
+async function readSocPercent(host, deviceId) {
+  const candidates = [
+    `${host.namespace}.solarbank.${deviceId}.sensors.state_of_charge`,
+    `${host.namespace}.combiner_box.${deviceId}.sensors.state_of_charge`,
+    `${host.namespace}.combiner_box.${deviceId}.sensors.battery_soc`
+  ];
+  for (const id of candidates) {
+    const st = await host.getStateAsync(id);
+    if ((st == null ? void 0 : st.val) !== null && (st == null ? void 0 : st.val) !== void 0) {
+      const n = Number(st.val);
+      if (!Number.isNaN(n)) {
+        return Math.min(100, Math.max(0, n));
+      }
+    }
+  }
+  return 0;
+}
 async function applyOptionalControl(host, deviceId, control, value, ctx) {
   try {
     await host.applyControl(deviceId, control, value, ctx);
@@ -51,13 +70,29 @@ async function applyOptionalControl(host, deviceId, control, value, ctx) {
     host.log.debug(`Curtailment optional control ${control} skipped: ${err.message}`);
   }
 }
-async function applyExportLimit(host, device, exportTargetW, force) {
+async function applyManualAndExportSwitches(host, device) {
+  const ctx = host.getDeviceContext(device.deviceId);
+  await host.applyControl(device.deviceId, "preset_usage_mode", "manual", ctx);
+  await applyOptionalControl(host, device.deviceId, "preset_allow_export", true, ctx);
+  await applyOptionalControl(host, device.deviceId, "allow_grid_export", true, ctx);
+}
+async function applyChargeLimit(host, device, chargeW) {
+  const rounded = Math.max(0, Math.round(chargeW));
+  const last = lastAppliedChargeW.get(device.deviceId);
+  if (last === rounded) {
+    return;
+  }
+  const ctx = host.getDeviceContext(device.deviceId);
+  await host.applyControl(device.deviceId, "ac_charge_limit", rounded, ctx);
+  lastAppliedChargeW.set(device.deviceId, rounded);
+}
+async function applyExportLimit(host, device, exportTargetW) {
   const exportW = clampExportW(exportTargetW);
   if (exportW <= 0) {
     return;
   }
   const last = lastAppliedExportW.get(device.deviceId);
-  if (!force && !(0, import_curtailmentPower.exportLimitShouldUpdate)(last, exportW)) {
+  if (last === exportW) {
     return;
   }
   const ctx = host.getDeviceContext(device.deviceId);
@@ -67,83 +102,93 @@ async function applyExportLimit(host, device, exportTargetW, force) {
   }
   lastAppliedExportW.set(device.deviceId, exportW);
 }
-async function applyCurtailmentMode(host, device, phase, modeAfter) {
+async function applyAfterPhase(host, device, modeAfter) {
+  lastAppliedExportW.delete(device.deviceId);
+  lastAppliedChargeW.delete(device.deviceId);
+  lastAppliedPhase.delete(device.deviceId);
   const ctx = host.getDeviceContext(device.deviceId);
-  const controlDeviceId = device.deviceId;
+  await host.applyControl(device.deviceId, "preset_usage_mode", modeAfter, ctx);
+}
+async function applyCurtailmentSetpoints(host, device, phase, exportW, chargeW, modeAfter, opts) {
+  const prevPhase = lastAppliedPhase.get(device.deviceId);
+  const phaseChanged = prevPhase !== phase;
   if (phase === "after" || phase === "idle") {
-    lastAppliedExportW.delete(device.deviceId);
-    await host.applyControl(controlDeviceId, "preset_usage_mode", modeAfter, ctx);
+    await applyAfterPhase(host, device, modeAfter);
     return;
   }
-  if (phase === "before" || phase === "active") {
-    await host.applyControl(controlDeviceId, "preset_usage_mode", "manual", ctx);
-    await applyOptionalControl(host, controlDeviceId, "preset_allow_export", true, ctx);
-    await applyOptionalControl(host, controlDeviceId, "allow_grid_export", true, ctx);
-    await host.applyControl(controlDeviceId, "ac_charge_limit", 0, ctx);
+  if (phaseChanged || !(opts == null ? void 0 : opts.modeOnly)) {
+    await applyManualAndExportSwitches(host, device);
+    lastAppliedPhase.set(device.deviceId, phase);
   }
+  if (opts == null ? void 0 : opts.modeOnly) {
+    return;
+  }
+  await applyChargeLimit(host, device, chargeW);
+  await applyExportLimit(host, device, exportW);
 }
-async function runDeviceCurtailment(host, device, config, forecast, nowHour, opts) {
-  var _a;
+async function buildDeviceContext(host, device, forecast, nowHour, livePvOverride) {
   const limit = (0, import_curtailmentProfiles.acExportLimitW)(device);
   const window = (0, import_curtailmentForecast.detectCurtailmentWindow)(forecast, limit);
   const phase = (0, import_curtailmentForecast.currentPhase)(window, nowHour);
-  const livePvW = window.today ? await (0, import_curtailmentPower.readLivePvPowerW)(host, device.deviceId) : 0;
-  const exportTargetW = window.today ? (0, import_curtailmentPower.resolveExportTargetW)(livePvW, forecast, nowHour, window) : 0;
+  const livePvW = livePvOverride !== void 0 && livePvOverride >= 0 ? Math.round(livePvOverride) : window.today ? await (0, import_curtailmentPower.readLivePvPowerW)(host, device.deviceId) : 0;
   const remaining = (0, import_curtailmentForecast.remainingCurtailmentHours)(window, nowHour);
-  await host.setState(import_curtailmentStates.CURTAILMENT_STATE_IDS.today, window.today, true);
+  const soc = window.today && phase === "active" ? await readSocPercent(host, device.deviceId) : 0;
+  const maxChargeW = window.today && phase === "active" ? (0, import_curtailmentPower.calcMaxChargeW)(device.batteryCapacityWh, soc, remaining) : 0;
+  const { exportW, chargeW } = (0, import_curtailmentPower.resolveCurtailmentSetpoints)(phase, livePvW, maxChargeW, forecast, nowHour, window);
+  return { limit, window, phase, livePvW, maxChargeW, exportW, chargeW, remaining, soc };
+}
+async function publishDeviceStates(host, ctx) {
+  await host.setState(import_curtailmentStates.CURTAILMENT_STATE_IDS.today, ctx.window.today, true);
   await host.setState(
     import_curtailmentStates.CURTAILMENT_STATE_IDS.start,
-    window.today ? `${window.startHour.toString().padStart(2, "0")}:00` : "",
+    ctx.window.today ? `${ctx.window.startHour.toString().padStart(2, "0")}:00` : "",
     true
   );
   await host.setState(
     import_curtailmentStates.CURTAILMENT_STATE_IDS.end,
-    window.today ? `${window.endHour.toString().padStart(2, "0")}:00` : "",
+    ctx.window.today ? `${ctx.window.endHour.toString().padStart(2, "0")}:00` : "",
     true
   );
-  await host.setState(import_curtailmentStates.CURTAILMENT_STATE_IDS.maxChargeW, exportTargetW, true);
-  await host.setState(import_curtailmentStates.CURTAILMENT_STATE_IDS.remainingHours, remaining, true);
-  await host.setState(import_curtailmentStates.CURTAILMENT_STATE_IDS.phase, phase, true);
-  await host.setState(import_curtailmentStates.CURTAILMENT_STATE_IDS.acLimitW, limit, true);
-  if (!window.today) {
+  await host.setState(import_curtailmentStates.CURTAILMENT_STATE_IDS.maxChargeW, ctx.maxChargeW, true);
+  await host.setState(import_curtailmentStates.CURTAILMENT_STATE_IDS.exportW, ctx.exportW, true);
+  await host.setState(import_curtailmentStates.CURTAILMENT_STATE_IDS.remainingHours, ctx.remaining, true);
+  await host.setState(import_curtailmentStates.CURTAILMENT_STATE_IDS.phase, ctx.phase, true);
+  await host.setState(import_curtailmentStates.CURTAILMENT_STATE_IDS.acLimitW, ctx.limit, true);
+  await host.setState(import_curtailmentStates.CURTAILMENT_STATE_IDS.livePvW, ctx.livePvW, true);
+}
+async function runDeviceCurtailment(host, device, config, forecast, nowHour, opts) {
+  var _a;
+  const ctx = await buildDeviceContext(host, device, forecast, nowHour, opts == null ? void 0 : opts.livePvOverride);
+  await publishDeviceStates(host, ctx);
+  if (!ctx.window.today) {
     return;
   }
-  if (phase !== "before" && phase !== "active") {
-    if (!(opts == null ? void 0 : opts.exportOnly)) {
-      await applyCurtailmentMode(host, device, phase, config.modeAfter);
+  if (ctx.phase !== "before" && ctx.phase !== "active") {
+    if (!(opts == null ? void 0 : opts.setpointsOnly)) {
+      await applyCurtailmentSetpoints(host, device, ctx.phase, ctx.exportW, ctx.chargeW, config.modeAfter);
     }
     return;
   }
-  if (opts == null ? void 0 : opts.exportOnly) {
-    try {
-      await applyExportLimit(host, device, exportTargetW, opts.forceExport === true);
-    } catch (err) {
-      host.log.warn(`Curtailment export update failed for ${device.deviceId}: ${err.message}`);
-    }
-    return;
+  if (!(opts == null ? void 0 : opts.setpointsOnly)) {
+    const unitsHint = device.role === "combiner" && ((_a = device.units) == null ? void 0 : _a.length) ? `, units=${device.units.join("+")} (${device.units.length} banks)` : "";
+    host.log.info(
+      `Curtailment [${device.deviceId}]: phase=${ctx.phase}, limit=${ctx.limit}W${unitsHint}, window ${ctx.window.startHour}-${ctx.window.endHour}h, livePv=${ctx.livePvW}W, charge=${ctx.chargeW}W, export=${ctx.exportW}W, SOC=${ctx.soc}%`
+    );
   }
-  const unitsHint = device.role === "combiner" && ((_a = device.units) == null ? void 0 : _a.length) ? `, units=${device.units.join("+")} (${device.units.length} banks)` : "";
-  host.log.info(
-    `Curtailment [${device.deviceId}]: phase=${phase}, limit=${limit}W${unitsHint}, window ${window.startHour}-${window.endHour}h, livePv=${livePvW}W, exportTarget=${exportTargetW}W`
-  );
   try {
-    await applyCurtailmentMode(host, device, phase, config.modeAfter);
-    await applyExportLimit(host, device, exportTargetW, (opts == null ? void 0 : opts.forceExport) === true);
+    await applyCurtailmentSetpoints(host, device, ctx.phase, ctx.exportW, ctx.chargeW, config.modeAfter, {
+      modeOnly: (opts == null ? void 0 : opts.setpointsOnly) && lastAppliedPhase.get(device.deviceId) === ctx.phase
+    });
   } catch (err) {
     host.log.warn(`Curtailment control failed for ${device.deviceId}: ${err.message}`);
   }
 }
-async function runCurtailmentOnPvChange(host, config, deviceId) {
-  if (!config.enabled) {
+async function runCurtailmentOnPvChange(host, config, deviceId, livePvW) {
+  if (!config.enabled || livePvW < 0) {
     return;
   }
   const devices = (0, import_curtailmentConfig.resolveCurtailmentDevices)(config).filter((d) => d.enabled && d.deviceId === deviceId);
   if (!devices.length) {
-    return;
-  }
-  const phaseSt = await host.getStateAsync(import_curtailmentStates.CURTAILMENT_STATE_IDS.phase);
-  const phase = String((phaseSt == null ? void 0 : phaseSt.val) || "");
-  if (phase !== "before" && phase !== "active") {
     return;
   }
   const basePath = (config.forecastBasePath || "solarprognose.0.forecast.00.hourly").trim();
@@ -154,7 +199,21 @@ async function runCurtailmentOnPvChange(host, config, deviceId) {
   );
   const nowHour = berlinHour();
   for (const device of devices) {
-    await runDeviceCurtailment(host, device, config, forecast, nowHour, { exportOnly: true });
+    const ctx = await buildDeviceContext(host, device, forecast, nowHour, livePvW);
+    if (!ctx.window.today || ctx.phase !== "before" && ctx.phase !== "active") {
+      continue;
+    }
+    await publishDeviceStates(host, ctx);
+    try {
+      await applyCurtailmentSetpoints(host, device, ctx.phase, ctx.exportW, ctx.chargeW, config.modeAfter, {
+        modeOnly: lastAppliedPhase.get(device.deviceId) === ctx.phase
+      });
+      host.log.debug(
+        `Curtailment PV follow [${device.deviceId}]: phase=${ctx.phase}, livePv=${ctx.livePvW}W, charge=${ctx.chargeW}W, export=${ctx.exportW}W`
+      );
+    } catch (err) {
+      host.log.warn(`Curtailment PV follow failed for ${device.deviceId}: ${err.message}`);
+    }
   }
 }
 async function runCurtailmentAvoidance(host, config) {

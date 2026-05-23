@@ -7,7 +7,13 @@ import {
 	type EntityMeta,
 } from "./entities";
 import { isEntityEnabled } from "./entityGroups";
+import { isPvSensorEntity, readPvFromEntities } from "./curtailmentPower";
 import type { BridgeDevice } from "./types";
+
+/** Optional hook on the adapter instance (see main.ts). */
+export interface CurtailmentPvSyncHost extends ioBroker.Adapter {
+	onCurtailmentPvUpdated?: (deviceId: string, livePvW: number) => void;
+}
 
 function resolveStateType(meta: EntityMeta | undefined, value: unknown): ioBroker.CommonType {
 	if (meta?.kind === "number") {
@@ -71,6 +77,7 @@ function channelForDevice(info: BridgeDevice["info"]): string {
 }
 
 export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevice[]): Promise<void> {
+	const curtailmentHost = adapter as CurtailmentPvSyncHost;
 	for (const device of devices) {
 		const base = channelForDevice(device.info);
 		const channelPath = `${adapter.namespace}.${base}`;
@@ -188,6 +195,17 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 			}
 			if (hasValue || writable) {
 				await adapter.setState(stateId, stateVal, true);
+				if (
+					isPvSensorEntity(entityId) &&
+					typeof stateVal === "number" &&
+					curtailmentHost.onCurtailmentPvUpdated
+				) {
+					device.entities[entityId] = stateVal;
+					const livePvW = readPvFromEntities(device.entities);
+					if (livePvW > 0) {
+						curtailmentHost.onCurtailmentPvUpdated(device.info.id, livePvW);
+					}
+				}
 			} else if (meta?.kind === "statistics") {
 				// Object exists; values arrive after first energy poll (detail refresh)
 			}

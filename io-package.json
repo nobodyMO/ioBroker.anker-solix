@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.7",
+		"version": "0.10.8",
 		"messagebox": true,
 		"news": {
+			"0.10.8": {
+				"en": "Curtailment: instant PV export in before; active = calculated charge + export surplus",
+				"de": "Abregelung: before sofort Export=PV; active langsam laden + Rest einspeisen",
+				"ru": "Before: экспорт=PV; active: заряд+экспорт",
+				"pt": "Before: exportação=PV; active: carga lenta",
+				"nl": "Before: export=PV; active: langzaam laden",
+				"fr": "Before: export=PV; active: charge lente",
+				"it": "Before: export=PV; active: carica lenta",
+				"es": "Before: exportación=PV; active: carga lenta",
+				"pl": "Before: eksport=PV; active: wolne ładowanie",
+				"uk": "Before: експорт=PV; active: повільний заряд",
+				"zh-cn": "before 即时并网=光伏；active 慢充+余电上网"
+			},
 			"0.10.7": {
 				"en": "Curtailment: export limit follows live PV (total_pv_power), updates on generation change",
 				"de": "Abregelung: Einspeise-Limit folgt live PV, Nachführung bei Erzeugungsänderung",

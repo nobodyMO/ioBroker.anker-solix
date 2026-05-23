@@ -18,16 +18,19 @@ var __copyProps = (to, from, except, desc) => {
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var curtailmentPower_exports = {};
 __export(curtailmentPower_exports, {
-  EXPORT_LIMIT_MIN_DELTA_W: () => EXPORT_LIMIT_MIN_DELTA_W,
-  exportLimitShouldUpdate: () => exportLimitShouldUpdate,
+  PV_SENSOR_IDS: () => PV_SENSOR_IDS,
+  calcMaxChargeW: () => calcMaxChargeW,
+  isPvSensorEntity: () => isPvSensorEntity,
   parsePvSensorStateId: () => parsePvSensorStateId,
   pvSensorStatePaths: () => pvSensorStatePaths,
   readLivePvPowerW: () => readLivePvPowerW,
-  resolveExportTargetW: () => resolveExportTargetW
+  readPvFromEntities: () => readPvFromEntities,
+  resolveActiveExportW: () => resolveActiveExportW,
+  resolveBeforeExportW: () => resolveBeforeExportW,
+  resolveCurtailmentSetpoints: () => resolveCurtailmentSetpoints
 });
 module.exports = __toCommonJS(curtailmentPower_exports);
 var import_curtailmentForecast = require("./curtailmentForecast");
-const EXPORT_LIMIT_MIN_DELTA_W = 25;
 const PV_SENSOR_IDS = ["total_pv_power", "input_power"];
 function pvSensorStatePaths(namespace, deviceId) {
   const paths = [];
@@ -50,6 +53,9 @@ function parsePvSensorStateId(namespace, stateId) {
     return void 0;
   }
   return { deviceId: (_a = match[1]) != null ? _a : "", sensor: match[2] };
+}
+function isPvSensorEntity(entityId) {
+  return PV_SENSOR_IDS.includes(entityId);
 }
 function readPvFromEntities(entities) {
   if (!entities) {
@@ -80,28 +86,46 @@ async function readLivePvPowerW(host, deviceId) {
   }
   return max > 0 ? Math.round(max) : 0;
 }
-function resolveExportTargetW(livePvW, forecast, nowHour, window) {
+function resolveBeforeExportW(livePvW, forecast, nowHour, window) {
   if (livePvW > 0) {
     return livePvW;
   }
   return (0, import_curtailmentForecast.forecastExportTargetW)(forecast, nowHour, window);
 }
-function exportLimitShouldUpdate(lastAppliedW, targetW) {
-  if (targetW <= 0) {
-    return false;
+function resolveActiveExportW(livePvW, maxChargeW) {
+  if (livePvW <= 0) {
+    return 0;
   }
-  if (lastAppliedW === void 0) {
-    return true;
+  return Math.max(0, Math.round(livePvW) - Math.max(0, Math.round(maxChargeW)));
+}
+function calcMaxChargeW(batteryCapacityWh, socPercent, hoursRemaining) {
+  const hours = Math.max(1, hoursRemaining);
+  if (batteryCapacityWh <= 0) {
+    return 0;
   }
-  return Math.abs(targetW - lastAppliedW) >= EXPORT_LIMIT_MIN_DELTA_W;
+  const missingWh = (100 - socPercent) / 100 * batteryCapacityWh;
+  return Math.max(0, Math.round(missingWh / hours));
+}
+function resolveCurtailmentSetpoints(phase, livePvW, maxChargeW, forecast, nowHour, window) {
+  if (phase === "before") {
+    return { exportW: resolveBeforeExportW(livePvW, forecast, nowHour, window), chargeW: 0 };
+  }
+  if (phase === "active") {
+    return { exportW: resolveActiveExportW(livePvW, maxChargeW), chargeW: maxChargeW };
+  }
+  return { exportW: 0, chargeW: 0 };
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  EXPORT_LIMIT_MIN_DELTA_W,
-  exportLimitShouldUpdate,
+  PV_SENSOR_IDS,
+  calcMaxChargeW,
+  isPvSensorEntity,
   parsePvSensorStateId,
   pvSensorStatePaths,
   readLivePvPowerW,
-  resolveExportTargetW
+  readPvFromEntities,
+  resolveActiveExportW,
+  resolveBeforeExportW,
+  resolveCurtailmentSetpoints
 });
 //# sourceMappingURL=curtailmentPower.js.map

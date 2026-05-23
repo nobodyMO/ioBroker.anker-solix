@@ -74,7 +74,7 @@
 	"cloud_state": "Cloud state",
 	"wifi_state": "WiFi state",
 	"CurtailmentAvoidance": "Curtailment avoidance",
-	"curtailment_hint": "Forecast (solarprognose) detects overproduction days. From detection (including before the window): manual mode, AC charge 0 W. Export limit tracks live PV (total_pv_power/input_power) and is updated when generation changes (poll + MQTT); falls back to hourly forecast if live is missing. After the window, restore selected mode. Requires MQTT. Status curtailment.* (max_charge_w = export target W).",
+	"curtailment_hint": "Forecast (solarprognose) detects overproduction days. Before window: manual, charge 0 W, export limit = live PV (updated immediately on each total_pv_power change). Active window: calculated AC charge limit (slow fill until end), export = PV minus charge limit. Status: curtailment.live_pv_w, export_w, max_charge_w. Requires MQTT.",
 	"enableCurtailmentAvoidance": "Enable curtailment avoidance",
 	"curtailmentForecastPath": "Forecast base path (hourly, e.g. solarprognose.0.forecast.00.hourly)",
 	"curtailmentModeAfter": "Usage mode after curtailment window",

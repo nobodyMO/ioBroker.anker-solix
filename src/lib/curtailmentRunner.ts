@@ -7,9 +7,9 @@ import {
 	remainingCurtailmentHours,
 } from "./curtailmentForecast";
 import {
-	exportLimitShouldUpdate,
+	calcMaxChargeW,
 	readLivePvPowerW,
-	resolveExportTargetW,
+	resolveCurtailmentSetpoints,
 	type CurtailmentPowerHost,
 } from "./curtailmentPower";
 import { CURTAILMENT_STATE_IDS } from "./curtailmentStates";
@@ -19,7 +19,6 @@ import type { DeviceControlContext } from "./types";
 export interface CurtailmentRunnerConfig extends CurtailmentStructuredNative {
 	enabled: boolean;
 	forecastBasePath: string;
-	/** Usage mode after curtailment window. */
 	modeAfter: "smartmeter" | "smart";
 }
 
@@ -42,6 +41,8 @@ export interface CurtailmentRunnerHost extends CurtailmentPowerHost {
 }
 
 const lastAppliedExportW = new Map<string, number>();
+const lastAppliedChargeW = new Map<string, number>();
+const lastAppliedPhase = new Map<string, CurtailmentPhase>();
 
 function berlinHour(): number {
 	const parts = new Intl.DateTimeFormat("de-DE", {
@@ -53,12 +54,29 @@ function berlinHour(): number {
 	return Math.min(23, Math.max(0, Number(h) || 0));
 }
 
-/** Clamp export setpoint to API limits (grid_export_limit min 100 W). */
 function clampExportW(powerW: number): number {
 	if (powerW <= 0) {
 		return 0;
 	}
 	return Math.min(100_000, Math.max(100, Math.round(powerW)));
+}
+
+async function readSocPercent(host: CurtailmentRunnerHost, deviceId: string): Promise<number> {
+	const candidates = [
+		`${host.namespace}.solarbank.${deviceId}.sensors.state_of_charge`,
+		`${host.namespace}.combiner_box.${deviceId}.sensors.state_of_charge`,
+		`${host.namespace}.combiner_box.${deviceId}.sensors.battery_soc`,
+	];
+	for (const id of candidates) {
+		const st = await host.getStateAsync(id);
+		if (st?.val !== null && st?.val !== undefined) {
+			const n = Number(st.val);
+			if (!Number.isNaN(n)) {
+				return Math.min(100, Math.max(0, n));
+			}
+		}
+	}
+	return 0;
 }
 
 async function applyOptionalControl(
@@ -75,18 +93,42 @@ async function applyOptionalControl(
 	}
 }
 
+async function applyManualAndExportSwitches(
+	host: CurtailmentRunnerHost,
+	device: CurtailmentDeviceConfig,
+): Promise<void> {
+	const ctx = host.getDeviceContext(device.deviceId);
+	await host.applyControl(device.deviceId, "preset_usage_mode", "manual", ctx);
+	await applyOptionalControl(host, device.deviceId, "preset_allow_export", true, ctx);
+	await applyOptionalControl(host, device.deviceId, "allow_grid_export", true, ctx);
+}
+
+async function applyChargeLimit(
+	host: CurtailmentRunnerHost,
+	device: CurtailmentDeviceConfig,
+	chargeW: number,
+): Promise<void> {
+	const rounded = Math.max(0, Math.round(chargeW));
+	const last = lastAppliedChargeW.get(device.deviceId);
+	if (last === rounded) {
+		return;
+	}
+	const ctx = host.getDeviceContext(device.deviceId);
+	await host.applyControl(device.deviceId, "ac_charge_limit", rounded, ctx);
+	lastAppliedChargeW.set(device.deviceId, rounded);
+}
+
 async function applyExportLimit(
 	host: CurtailmentRunnerHost,
 	device: CurtailmentDeviceConfig,
 	exportTargetW: number,
-	force: boolean,
 ): Promise<void> {
 	const exportW = clampExportW(exportTargetW);
 	if (exportW <= 0) {
 		return;
 	}
 	const last = lastAppliedExportW.get(device.deviceId);
-	if (!force && !exportLimitShouldUpdate(last, exportW)) {
+	if (last === exportW) {
 		return;
 	}
 	const ctx = host.getDeviceContext(device.deviceId);
@@ -97,27 +139,102 @@ async function applyExportLimit(
 	lastAppliedExportW.set(device.deviceId, exportW);
 }
 
-async function applyCurtailmentMode(
+async function applyAfterPhase(
+	host: CurtailmentRunnerHost,
+	device: CurtailmentDeviceConfig,
+	modeAfter: "smartmeter" | "smart",
+): Promise<void> {
+	lastAppliedExportW.delete(device.deviceId);
+	lastAppliedChargeW.delete(device.deviceId);
+	lastAppliedPhase.delete(device.deviceId);
+	const ctx = host.getDeviceContext(device.deviceId);
+	await host.applyControl(device.deviceId, "preset_usage_mode", modeAfter, ctx);
+}
+
+async function applyCurtailmentSetpoints(
 	host: CurtailmentRunnerHost,
 	device: CurtailmentDeviceConfig,
 	phase: CurtailmentPhase,
+	exportW: number,
+	chargeW: number,
 	modeAfter: "smartmeter" | "smart",
+	opts?: { modeOnly?: boolean },
 ): Promise<void> {
-	const ctx = host.getDeviceContext(device.deviceId);
-	const controlDeviceId = device.deviceId;
+	const prevPhase = lastAppliedPhase.get(device.deviceId);
+	const phaseChanged = prevPhase !== phase;
 
 	if (phase === "after" || phase === "idle") {
-		lastAppliedExportW.delete(device.deviceId);
-		await host.applyControl(controlDeviceId, "preset_usage_mode", modeAfter, ctx);
+		await applyAfterPhase(host, device, modeAfter);
 		return;
 	}
 
-	if (phase === "before" || phase === "active") {
-		await host.applyControl(controlDeviceId, "preset_usage_mode", "manual", ctx);
-		await applyOptionalControl(host, controlDeviceId, "preset_allow_export", true, ctx);
-		await applyOptionalControl(host, controlDeviceId, "allow_grid_export", true, ctx);
-		await host.applyControl(controlDeviceId, "ac_charge_limit", 0, ctx);
+	if (phaseChanged || !opts?.modeOnly) {
+		await applyManualAndExportSwitches(host, device);
+		lastAppliedPhase.set(device.deviceId, phase);
 	}
+
+	if (opts?.modeOnly) {
+		return;
+	}
+
+	await applyChargeLimit(host, device, chargeW);
+	await applyExportLimit(host, device, exportW);
+}
+
+interface DeviceRunContext {
+	limit: number;
+	window: ReturnType<typeof detectCurtailmentWindow>;
+	phase: CurtailmentPhase;
+	livePvW: number;
+	maxChargeW: number;
+	exportW: number;
+	chargeW: number;
+	remaining: number;
+	soc: number;
+}
+
+async function buildDeviceContext(
+	host: CurtailmentRunnerHost,
+	device: CurtailmentDeviceConfig,
+	forecast: Awaited<ReturnType<typeof readHourlyForecast>>,
+	nowHour: number,
+	livePvOverride?: number,
+): Promise<DeviceRunContext> {
+	const limit = acExportLimitW(device);
+	const window = detectCurtailmentWindow(forecast, limit);
+	const phase = currentPhase(window, nowHour);
+	const livePvW =
+		livePvOverride !== undefined && livePvOverride >= 0
+			? Math.round(livePvOverride)
+			: window.today
+				? await readLivePvPowerW(host, device.deviceId)
+				: 0;
+	const remaining = remainingCurtailmentHours(window, nowHour);
+	const soc = window.today && phase === "active" ? await readSocPercent(host, device.deviceId) : 0;
+	const maxChargeW =
+		window.today && phase === "active" ? calcMaxChargeW(device.batteryCapacityWh, soc, remaining) : 0;
+	const { exportW, chargeW } = resolveCurtailmentSetpoints(phase, livePvW, maxChargeW, forecast, nowHour, window);
+	return { limit, window, phase, livePvW, maxChargeW, exportW, chargeW, remaining, soc };
+}
+
+async function publishDeviceStates(host: CurtailmentRunnerHost, ctx: DeviceRunContext): Promise<void> {
+	await host.setState(CURTAILMENT_STATE_IDS.today, ctx.window.today, true);
+	await host.setState(
+		CURTAILMENT_STATE_IDS.start,
+		ctx.window.today ? `${ctx.window.startHour.toString().padStart(2, "0")}:00` : "",
+		true,
+	);
+	await host.setState(
+		CURTAILMENT_STATE_IDS.end,
+		ctx.window.today ? `${ctx.window.endHour.toString().padStart(2, "0")}:00` : "",
+		true,
+	);
+	await host.setState(CURTAILMENT_STATE_IDS.maxChargeW, ctx.maxChargeW, true);
+	await host.setState(CURTAILMENT_STATE_IDS.exportW, ctx.exportW, true);
+	await host.setState(CURTAILMENT_STATE_IDS.remainingHours, ctx.remaining, true);
+	await host.setState(CURTAILMENT_STATE_IDS.phase, ctx.phase, true);
+	await host.setState(CURTAILMENT_STATE_IDS.acLimitW, ctx.limit, true);
+	await host.setState(CURTAILMENT_STATE_IDS.livePvW, ctx.livePvW, true);
 }
 
 async function runDeviceCurtailment(
@@ -126,84 +243,55 @@ async function runDeviceCurtailment(
 	config: CurtailmentRunnerConfig,
 	forecast: Awaited<ReturnType<typeof readHourlyForecast>>,
 	nowHour: number,
-	opts?: { exportOnly?: boolean; forceExport?: boolean },
+	opts?: { livePvOverride?: number; setpointsOnly?: boolean },
 ): Promise<void> {
-	const limit = acExportLimitW(device);
-	const window = detectCurtailmentWindow(forecast, limit);
-	const phase = currentPhase(window, nowHour);
-	const livePvW = window.today ? await readLivePvPowerW(host, device.deviceId) : 0;
-	const exportTargetW = window.today ? resolveExportTargetW(livePvW, forecast, nowHour, window) : 0;
-	const remaining = remainingCurtailmentHours(window, nowHour);
+	const ctx = await buildDeviceContext(host, device, forecast, nowHour, opts?.livePvOverride);
+	await publishDeviceStates(host, ctx);
 
-	await host.setState(CURTAILMENT_STATE_IDS.today, window.today, true);
-	await host.setState(
-		CURTAILMENT_STATE_IDS.start,
-		window.today ? `${window.startHour.toString().padStart(2, "0")}:00` : "",
-		true,
-	);
-	await host.setState(
-		CURTAILMENT_STATE_IDS.end,
-		window.today ? `${window.endHour.toString().padStart(2, "0")}:00` : "",
-		true,
-	);
-	await host.setState(CURTAILMENT_STATE_IDS.maxChargeW, exportTargetW, true);
-	await host.setState(CURTAILMENT_STATE_IDS.remainingHours, remaining, true);
-	await host.setState(CURTAILMENT_STATE_IDS.phase, phase, true);
-	await host.setState(CURTAILMENT_STATE_IDS.acLimitW, limit, true);
-
-	if (!window.today) {
+	if (!ctx.window.today) {
 		return;
 	}
 
-	if (phase !== "before" && phase !== "active") {
-		if (!opts?.exportOnly) {
-			await applyCurtailmentMode(host, device, phase, config.modeAfter);
+	if (ctx.phase !== "before" && ctx.phase !== "active") {
+		if (!opts?.setpointsOnly) {
+			await applyCurtailmentSetpoints(host, device, ctx.phase, ctx.exportW, ctx.chargeW, config.modeAfter);
 		}
 		return;
 	}
 
-	if (opts?.exportOnly) {
-		try {
-			await applyExportLimit(host, device, exportTargetW, opts.forceExport === true);
-		} catch (err) {
-			host.log.warn(`Curtailment export update failed for ${device.deviceId}: ${(err as Error).message}`);
-		}
-		return;
+	if (!opts?.setpointsOnly) {
+		const unitsHint =
+			device.role === "combiner" && device.units?.length
+				? `, units=${device.units.join("+")} (${device.units.length} banks)`
+				: "";
+		host.log.info(
+			`Curtailment [${device.deviceId}]: phase=${ctx.phase}, limit=${ctx.limit}W${unitsHint}, ` +
+				`window ${ctx.window.startHour}-${ctx.window.endHour}h, livePv=${ctx.livePvW}W, ` +
+				`charge=${ctx.chargeW}W, export=${ctx.exportW}W, SOC=${ctx.soc}%`,
+		);
 	}
-
-	const unitsHint =
-		device.role === "combiner" && device.units?.length
-			? `, units=${device.units.join("+")} (${device.units.length} banks)`
-			: "";
-	host.log.info(
-		`Curtailment [${device.deviceId}]: phase=${phase}, limit=${limit}W${unitsHint}, ` +
-			`window ${window.startHour}-${window.endHour}h, livePv=${livePvW}W, exportTarget=${exportTargetW}W`,
-	);
 
 	try {
-		await applyCurtailmentMode(host, device, phase, config.modeAfter);
-		await applyExportLimit(host, device, exportTargetW, opts?.forceExport === true);
+		await applyCurtailmentSetpoints(host, device, ctx.phase, ctx.exportW, ctx.chargeW, config.modeAfter, {
+			modeOnly: opts?.setpointsOnly && lastAppliedPhase.get(device.deviceId) === ctx.phase,
+		});
 	} catch (err) {
 		host.log.warn(`Curtailment control failed for ${device.deviceId}: ${(err as Error).message}`);
 	}
 }
 
-/** React to live PV sensor changes (MQTT) between polls. */
+/** Immediate follow-up when live PV changes (during sync / MQTT). */
 export async function runCurtailmentOnPvChange(
 	host: CurtailmentRunnerHost,
 	config: CurtailmentRunnerConfig,
 	deviceId: string,
+	livePvW: number,
 ): Promise<void> {
-	if (!config.enabled) {
+	if (!config.enabled || livePvW < 0) {
 		return;
 	}
 	const devices = resolveCurtailmentDevices(config).filter(d => d.enabled && d.deviceId === deviceId);
 	if (!devices.length) {
-		return;
-	}
-	const phaseSt = await host.getStateAsync(CURTAILMENT_STATE_IDS.phase);
-	const phase = String(phaseSt?.val || "");
-	if (phase !== "before" && phase !== "active") {
 		return;
 	}
 	const basePath = (config.forecastBasePath || "solarprognose.0.forecast.00.hourly").trim();
@@ -214,7 +302,22 @@ export async function runCurtailmentOnPvChange(
 	);
 	const nowHour = berlinHour();
 	for (const device of devices) {
-		await runDeviceCurtailment(host, device, config, forecast, nowHour, { exportOnly: true });
+		const ctx = await buildDeviceContext(host, device, forecast, nowHour, livePvW);
+		if (!ctx.window.today || (ctx.phase !== "before" && ctx.phase !== "active")) {
+			continue;
+		}
+		await publishDeviceStates(host, ctx);
+		try {
+			await applyCurtailmentSetpoints(host, device, ctx.phase, ctx.exportW, ctx.chargeW, config.modeAfter, {
+				modeOnly: lastAppliedPhase.get(device.deviceId) === ctx.phase,
+			});
+			host.log.debug(
+				`Curtailment PV follow [${device.deviceId}]: phase=${ctx.phase}, livePv=${ctx.livePvW}W, ` +
+					`charge=${ctx.chargeW}W, export=${ctx.exportW}W`,
+			);
+		} catch (err) {
+			host.log.warn(`Curtailment PV follow failed for ${device.deviceId}: ${(err as Error).message}`);
+		}
 	}
 }
 

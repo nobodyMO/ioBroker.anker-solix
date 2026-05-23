@@ -32,13 +32,15 @@ var import_curtailmentStates = require("./lib/curtailmentStates");
 var import_ensurePython = require("./lib/ensurePython");
 var import_pythonBridge = require("./lib/pythonBridge");
 var import_services = require("./lib/services");
+var import_curtailmentConfig = require("./lib/curtailmentConfig");
 var import_stateSync = require("./lib/stateSync");
 class AnkerSolix extends utils.Adapter {
   pollTimer;
   controlQueue = new import_controlQueue.ControlQueue();
   deviceContexts = /* @__PURE__ */ new Map();
   deviceEntities = /* @__PURE__ */ new Map();
-  curtailmentPvDebounce = /* @__PURE__ */ new Map();
+  lastNotifiedPvW = /* @__PURE__ */ new Map();
+  curtailmentDeviceIds = /* @__PURE__ */ new Set();
   pollAfterControlTimer;
   constructor(options = {}) {
     super({
@@ -167,6 +169,9 @@ class AnkerSolix extends utils.Adapter {
     }
     try {
       const result = await (0, import_pythonBridge.runBridge)("poll", this.getBridgeConfig(), this.config.pythonPath || "", this.log);
+      if (this.config.enableCurtailmentAvoidance) {
+        this.refreshCurtailmentDeviceIds();
+      }
       const pollDevices = result.devices;
       if (pollDevices == null ? void 0 : pollDevices.length) {
         this.rememberDeviceContexts(pollDevices);
@@ -332,25 +337,34 @@ class AnkerSolix extends utils.Adapter {
       applyControl: (deviceId, control, value, deviceContext) => this.applyAdapterControl(deviceId, control, value, deviceContext)
     };
   }
-  scheduleCurtailmentOnPvChange(deviceId) {
-    const existing = this.curtailmentPvDebounce.get(deviceId);
-    if (existing) {
-      clearTimeout(existing);
+  refreshCurtailmentDeviceIds() {
+    this.curtailmentDeviceIds.clear();
+    if (!this.config.enableCurtailmentAvoidance) {
+      return;
     }
-    this.curtailmentPvDebounce.set(
-      deviceId,
-      setTimeout(() => {
-        this.curtailmentPvDebounce.delete(deviceId);
-        void this.runCurtailmentExportOnPvChange(deviceId);
-      }, 400)
-    );
+    for (const d of (0, import_curtailmentConfig.resolveCurtailmentDevices)(this.getCurtailmentConfig())) {
+      if (d.enabled) {
+        this.curtailmentDeviceIds.add(d.deviceId);
+      }
+    }
   }
-  async runCurtailmentExportOnPvChange(deviceId) {
+  handleCurtailmentPvUpdated(deviceId, livePvW) {
+    if (!this.config.enableCurtailmentAvoidance || !this.curtailmentDeviceIds.has(deviceId)) {
+      return;
+    }
+    const rounded = Math.round(livePvW);
+    if (this.lastNotifiedPvW.get(deviceId) === rounded) {
+      return;
+    }
+    this.lastNotifiedPvW.set(deviceId, rounded);
+    void this.runCurtailmentExportOnPvChange(deviceId, rounded);
+  }
+  async runCurtailmentExportOnPvChange(deviceId, livePvW) {
     if (!this.config.enableCurtailmentAvoidance) {
       return;
     }
     try {
-      await (0, import_curtailmentRunner.runCurtailmentOnPvChange)(this.getCurtailmentHost(), this.getCurtailmentConfig(), deviceId);
+      await (0, import_curtailmentRunner.runCurtailmentOnPvChange)(this.getCurtailmentHost(), this.getCurtailmentConfig(), deviceId, livePvW);
     } catch (err) {
       this.log.debug(`Curtailment PV follow: ${err.message}`);
     }
@@ -369,6 +383,7 @@ class AnkerSolix extends utils.Adapter {
     if (!this.config.enableCurtailmentAvoidance) {
       return;
     }
+    this.refreshCurtailmentDeviceIds();
     try {
       await (0, import_curtailmentRunner.runCurtailmentAvoidance)(this.getCurtailmentHost(), this.getCurtailmentConfig());
     } catch (err) {
@@ -390,8 +405,9 @@ class AnkerSolix extends utils.Adapter {
     }
     if (this.config.enableCurtailmentAvoidance) {
       const pv = (0, import_curtailmentPower.parsePvSensorStateId)(this.namespace, id);
-      if (pv && state.val !== null && state.val !== void 0) {
-        this.scheduleCurtailmentOnPvChange(pv.deviceId);
+      const n = Number(state.val);
+      if (pv && Number.isFinite(n) && n >= 0) {
+        this.handleCurtailmentPvUpdated(pv.deviceId, n);
       }
     }
     if (state.ack) {
@@ -536,6 +552,8 @@ class AnkerSolix extends utils.Adapter {
     });
     await (0, import_services.setupServiceStates)(this);
     await (0, import_curtailmentStates.setupCurtailmentStates)(this);
+    this.onCurtailmentPvUpdated = (deviceId, livePvW) => this.handleCurtailmentPvUpdated(deviceId, livePvW);
+    this.refreshCurtailmentDeviceIds();
     await this.setState("info.connection", false, true);
     const intervalSec = Math.max(30, Number(this.config.scanInterval) || 60);
     this.log.info(
@@ -561,10 +579,8 @@ class AnkerSolix extends utils.Adapter {
       clearTimeout(this.pollAfterControlTimer);
       this.pollAfterControlTimer = void 0;
     }
-    for (const timer of this.curtailmentPvDebounce.values()) {
-      clearTimeout(timer);
-    }
-    this.curtailmentPvDebounce.clear();
+    this.lastNotifiedPvW.clear();
+    this.onCurtailmentPvUpdated = void 0;
     void (0, import_pythonBridge.stopBridgeDaemon)().finally(() => callback());
   }
 }

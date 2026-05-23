@@ -24,6 +24,7 @@ __export(stateSync_exports, {
 module.exports = __toCommonJS(stateSync_exports);
 var import_entities = require("./entities");
 var import_entityGroups = require("./entityGroups");
+var import_curtailmentPower = require("./curtailmentPower");
 function resolveStateType(meta, value) {
   if ((meta == null ? void 0 : meta.kind) === "number") {
     return "number";
@@ -83,6 +84,7 @@ function channelForDevice(info) {
 }
 async function syncDevices(adapter, devices) {
   var _a, _b, _c, _d;
+  const curtailmentHost = adapter;
   for (const device of devices) {
     const base = channelForDevice(device.info);
     const channelPath = `${adapter.namespace}.${base}`;
@@ -186,6 +188,13 @@ async function syncDevices(adapter, devices) {
       }
       if (hasValue || writable) {
         await adapter.setState(stateId, stateVal, true);
+        if ((0, import_curtailmentPower.isPvSensorEntity)(entityId) && typeof stateVal === "number" && curtailmentHost.onCurtailmentPvUpdated) {
+          device.entities[entityId] = stateVal;
+          const livePvW = (0, import_curtailmentPower.readPvFromEntities)(device.entities);
+          if (livePvW > 0) {
+            curtailmentHost.onCurtailmentPvUpdated(device.info.id, livePvW);
+          }
+        }
       } else if ((meta == null ? void 0 : meta.kind) === "statistics") {
       }
     }

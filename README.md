@@ -288,7 +288,7 @@ German guides/videos linked from the [HA README](https://github.com/thomluther/h
 
 ## Curtailment avoidance (optional)
 
-Tab **Abregelungsvermeidung** / **Curtailment avoidance**: [solarprognose](https://github.com/ioBroker/ioBroker.solarprognose) hourly forecast detects overproduction days. On those days (**including before** the window): **manual** mode, **AC charge limit 0 W**. **AC output limit** (and **grid export limit** on combiner) follow **live PV** (`total_pv_power` / `input_power`) and are re-applied when generation changes (each poll and on MQTT sensor updates, min. 25 W delta); if live PV is unavailable, the current hour’s forecast is used. **After** the window, **self-consumption** or **smart** mode (configurable). Status: `anker-solix.0.curtailment.*` (`max_charge_w` = export target in W).
+Tab **Abregelungsvermeidung** / **Curtailment avoidance**: [solarprognose](https://github.com/ioBroker/ioBroker.solarprognose) detects overproduction days. **Before** the window: **manual**, **charge 0 W**, **export limit = live PV** (`total_pv_power`, updated **immediately** on every change when states are written). **Active** window: **manual**, **AC charge limit** = calculated slow charge to fill the battery by end of curtailment (`missing_Wh / remaining_hours`), **export limit** = `live PV − charge limit`. **After** the window: restore selected mode. Status: `curtailment.live_pv_w`, `export_w`, `max_charge_w`.
 
 **Admin:** checkbox *Combiner box present* — without combiner: device ID + solarbank type + battery Wh; with combiner: combiner ID + up to **4** solarbank slots (each slot can be *none*). **Combiner:** total AC limit = **sum** of per-unit limits (SB2 **1000** W, SB3 Pro **1200** W, SB4 Pro **2500** W). **Standalone:** always **800** W.
 
@@ -298,6 +298,7 @@ Tab **Abregelungsvermeidung** / **Curtailment avoidance**: [solarprognose](https
 
 ### 0.10.5
 
+- Curtailment: before = export equals live PV (instant on sensor update); active = slow charge + export surplus
 - Curtailment: export limit tracks live PV power (updates on generation change); forecast fallback
 - Curtailment: manual + zero charge + export limit from forecast (before/active); no battery pre-charge strategy
 - Curtailment: fix solarprognose forecast (kW → W, state path `11h.power`)

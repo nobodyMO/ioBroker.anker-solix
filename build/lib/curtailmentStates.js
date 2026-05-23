@@ -29,6 +29,8 @@ const CURTAILMENT_STATE_IDS = {
   start: `${CURTAILMENT_CHANNEL}.curtailment_start`,
   end: `${CURTAILMENT_CHANNEL}.curtailment_end`,
   maxChargeW: `${CURTAILMENT_CHANNEL}.max_charge_w`,
+  exportW: `${CURTAILMENT_CHANNEL}.export_w`,
+  livePvW: `${CURTAILMENT_CHANNEL}.live_pv_w`,
   remainingHours: `${CURTAILMENT_CHANNEL}.remaining_hours`,
   phase: `${CURTAILMENT_CHANNEL}.phase`,
   acLimitW: `${CURTAILMENT_CHANNEL}.ac_limit_w`
@@ -76,7 +78,31 @@ async function setupCurtailmentStates(adapter) {
     {
       id: CURTAILMENT_STATE_IDS.maxChargeW,
       common: {
-        name: "Export target power (live PV or forecast, W)",
+        name: "Max AC charge power (active phase, W)",
+        type: "number",
+        role: "value.power",
+        unit: "W",
+        read: true,
+        write: false,
+        def: 0
+      }
+    },
+    {
+      id: CURTAILMENT_STATE_IDS.exportW,
+      common: {
+        name: "AC/grid export target (W)",
+        type: "number",
+        role: "value.power",
+        unit: "W",
+        read: true,
+        write: false,
+        def: 0
+      }
+    },
+    {
+      id: CURTAILMENT_STATE_IDS.livePvW,
+      common: {
+        name: "Live PV generation (W)",
         type: "number",
         role: "value.power",
         unit: "W",
