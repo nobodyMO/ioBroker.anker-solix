@@ -276,10 +276,7 @@ export const STATISTICS_LABELS: Record<string, string> = {
 		(["week", "month", "year"] as const).flatMap(period => {
 			const rows: [string, string][] = [[`${period}_energy_period`, PERIOD_NAMES_DE[period]]];
 			for (const suffix of PERIOD_METRIC_SUFFIXES) {
-				rows.push([
-					`${period}_${suffix}`,
-					`${PERIOD_SUFFIX_LABELS_DE[suffix]} (${PERIOD_NAMES_DE[period]})`,
-				]);
+				rows.push([`${period}_${suffix}`, `${PERIOD_SUFFIX_LABELS_DE[suffix]} (${PERIOD_NAMES_DE[period]})`]);
 			}
 			return rows;
 		}),

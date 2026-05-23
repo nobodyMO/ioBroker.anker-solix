@@ -279,10 +279,7 @@ const STATISTICS_LABELS = {
     ["week", "month", "year"].flatMap((period) => {
       const rows = [[`${period}_energy_period`, PERIOD_NAMES_DE[period]]];
       for (const suffix of PERIOD_METRIC_SUFFIXES) {
-        rows.push([
-          `${period}_${suffix}`,
-          `${PERIOD_SUFFIX_LABELS_DE[suffix]} (${PERIOD_NAMES_DE[period]})`
-        ]);
+        rows.push([`${period}_${suffix}`, `${PERIOD_SUFFIX_LABELS_DE[suffix]} (${PERIOD_NAMES_DE[period]})`]);
       }
       return rows;
     })
