@@ -106,8 +106,7 @@ class IoBrokerAnkerApiClient:
                 json.dumps(
                     {
                         "intervalcount": self._intervalcount,
-                        "period_rotate": self._period_rotate,
-                        "period_detail_count": self._period_detail_count,
+                        "period_last_fetch": self._period_last_fetch,
                         "period_backoff_until": self._period_backoff_until,
                         "startup": self._startup,
                         "deferred_data": self.deferred_data,

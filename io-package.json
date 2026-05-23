@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.31",
+		"version": "0.10.32",
 		"messagebox": true,
 		"news": {
+			"0.10.32": {
+				"en": "Fix: poll crash (_period_rotate removed in 0.10.31 save_state)",
+				"de": "Fix: Poll-Absturz (_period_rotate in save_state von 0.10.31)",
+				"ru": "Fix poll crash",
+				"pt": "Fix poll crash",
+				"nl": "Fix poll crash",
+				"fr": "Fix poll crash",
+				"it": "Fix poll crash",
+				"es": "Fix poll crash",
+				"pl": "Fix poll crash",
+				"uk": "Fix poll crash",
+				"zh-cn": "修复轮询崩溃"
+			},
 			"0.10.31": {
 				"en": "Period stats: once daily after 23:00 / 23:15 / 23:30 Europe/Berlin",
 				"de": "Perioden-Statistik: je 1× täglich nach 23:00 / 23:15 / 23:30 (Europe/Berlin)",
@@ -146,19 +159,6 @@
 				"pl": "Period stats in subfolders",
 				"uk": "Period stats in subfolders",
 				"zh-cn": "周期统计在 statistics.week|month|year 子目录"
-			},
-			"0.10.15": {
-				"en": "Curtailment: API-only ac_output_limit; fix SOC/missing_charge_wh; no station feed-in changes",
-				"de": "Abregelung: ac_output_limit nur API; SOC/missing_charge_wh korrigiert; kein Einspeise-Limit",
-				"ru": "Abregelung: API ac_output_limit",
-				"pt": "Abregelung: API ac_output_limit",
-				"nl": "Abregelung: API ac_output_limit",
-				"fr": "Abregelung: API ac_output_limit",
-				"it": "Abregelung: API ac_output_limit",
-				"es": "Abregelung: API ac_output_limit",
-				"pl": "Abregelung: API ac_output_limit",
-				"uk": "Abregelung: API ac_output_limit",
-				"zh-cn": "限电 API ac_output_limit"
 			},
 			"0.10.14": {
 				"en": "Curtailment: manual + ac_output_limit only; missing_charge_wh; active export = PV − charge",
