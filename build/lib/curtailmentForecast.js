@@ -20,28 +20,55 @@ var curtailmentForecast_exports = {};
 __export(curtailmentForecast_exports, {
   currentPhase: () => currentPhase,
   detectCurtailmentWindow: () => detectCurtailmentWindow,
+  normalizeForecastPowerW: () => normalizeForecastPowerW,
   readHourlyForecast: () => readHourlyForecast,
   remainingCurtailmentHours: () => remainingCurtailmentHours
 });
 module.exports = __toCommonJS(curtailmentForecast_exports);
 const FORECAST_HOURS = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
-async function readHourlyForecast(basePath, getState) {
+function normalizeForecastPowerW(raw, unit) {
+  if (!Number.isFinite(raw) || raw <= 0) {
+    return 0;
+  }
+  const u = (unit || "").trim().toLowerCase();
+  if (u === "kw" || u === "kilowatt" || u === "kilowatts") {
+    return Math.round(raw * 1e3);
+  }
+  if (u === "w" || u === "watt" || u === "watts") {
+    return Math.round(raw);
+  }
+  if (raw < 200) {
+    return Math.round(raw * 1e3);
+  }
+  return Math.round(raw);
+}
+function hourStateCandidates(base, hour) {
+  const hourKey = hour.toString().padStart(2, "0");
+  return [
+    // ioBroker.solarprognose 2.x: forecast.00.hourly.11h.power (kW)
+    `${base}.${hourKey}h.power`,
+    `${base}.${hourKey}.power`,
+    `${base}.${hour}.power`,
+    `${base}.${hourKey}-hour.power`,
+    `${base}.hour_${hourKey}.power`
+  ];
+}
+async function readHourlyForecast(basePath, getState, getObject) {
   const base = basePath.replace(/\.$/, "");
   const hours = /* @__PURE__ */ new Map();
   for (const h of FORECAST_HOURS) {
-    const hourKey = h.toString().padStart(2, "0");
-    const candidates = [
-      `${base}.${hourKey}.power`,
-      `${base}.${h}.power`,
-      `${base}.${hourKey}-hour.power`,
-      `${base}.hour_${hourKey}.power`
-    ];
-    for (const id of candidates) {
+    for (const id of hourStateCandidates(base, h)) {
       const st = await getState(id);
       if ((st == null ? void 0 : st.val) !== null && (st == null ? void 0 : st.val) !== void 0 && st.val !== "") {
-        const w = Number(st.val);
-        if (!Number.isNaN(w)) {
-          hours.set(h, w);
+        const raw = Number(st.val);
+        if (!Number.isNaN(raw)) {
+          let unit;
+          if (getObject) {
+            const obj = await getObject(id);
+            const common = obj == null ? void 0 : obj.common;
+            unit = common == null ? void 0 : common.unit;
+          }
+          hours.set(h, normalizeForecastPowerW(raw, unit));
           break;
         }
       }
@@ -100,6 +127,7 @@ function remainingCurtailmentHours(window, nowHour) {
 0 && (module.exports = {
   currentPhase,
   detectCurtailmentWindow,
+  normalizeForecastPowerW,
   readHourlyForecast,
   remainingCurtailmentHours
 });

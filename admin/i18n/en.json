@@ -76,7 +76,7 @@
 	"CurtailmentAvoidance": "Curtailment avoidance",
 	"curtailment_hint": "Uses hourly PV forecast from the solarprognose adapter. On overproduction days: during curtailment, manual mode with calculated AC charge limit; after the window, restore selected mode. Before the window the current usage mode is left unchanged. Requires MQTT. Status states under curtailment.*",
 	"enableCurtailmentAvoidance": "Enable curtailment avoidance",
-	"curtailmentForecastPath": "Forecast object path (hourly, without .power)",
+	"curtailmentForecastPath": "Forecast base path (hourly, e.g. solarprognose.0.forecast.00.hourly)",
 	"curtailmentModeAfter": "Usage mode after curtailment window",
 	"mode_smartmeter": "Self-consumption (Eigenverbrauch)",
 	"mode_smart": "Smart mode",

@@ -25,6 +25,7 @@ export interface CurtailmentRunnerHost {
 		warn: (msg: string) => void;
 	};
 	getForeignStateAsync: (id: string) => Promise<ioBroker.State | null | undefined>;
+	getForeignObjectAsync?: (id: string) => Promise<ioBroker.Object | null | undefined>;
 	getStateAsync: (id: string) => Promise<ioBroker.State | null | undefined>;
 	setState: (id: string, val: unknown, ack?: boolean) => Promise<void>;
 	getDeviceContext: (deviceId: string) => DeviceControlContext | undefined;
@@ -115,7 +116,11 @@ export async function runCurtailmentAvoidance(
 	}
 
 	const basePath = (config.forecastBasePath || "solarprognose.0.forecast.00.hourly").trim();
-	const forecast = await readHourlyForecast(basePath, id => host.getForeignStateAsync(id));
+	const forecast = await readHourlyForecast(
+		basePath,
+		id => host.getForeignStateAsync(id),
+		host.getForeignObjectAsync ? id => host.getForeignObjectAsync!(id) : undefined,
+	);
 	const nowHour = berlinHour();
 
 	// Use strictest (lowest) limit among enabled devices for shared forecast, or per-device loop

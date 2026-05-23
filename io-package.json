@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.4",
+		"version": "0.10.5",
 		"messagebox": true,
 		"news": {
+			"0.10.5": {
+				"en": "Curtailment: read solarprognose kW (11h.power), convert to W",
+				"de": "Abregelung: solarprognose kW (11h.power) lesen, in W umrechnen",
+				"ru": "Прогноз kW → W",
+				"pt": "Previsão kW → W",
+				"nl": "Prognose kW → W",
+				"fr": "Prévision kW → W",
+				"it": "Previsione kW → W",
+				"es": "Pronóstico kW → W",
+				"pl": "Prognoza kW → W",
+				"uk": "Прогноз kW → W",
+				"zh-cn": "预测 kW 转 W"
+			},
 			"0.10.4": {
 				"en": "Curtailment Admin: combiner checkbox, 4 solarbank slots; no mode change before window",
 				"de": "Abregelung Admin: Combiner-Checkbox, 4 Solarbank-Plätze; vor Fenster kein Moduswechsel",

@@ -89,7 +89,11 @@ async function runCurtailmentAvoidance(host, config) {
     return;
   }
   const basePath = (config.forecastBasePath || "solarprognose.0.forecast.00.hourly").trim();
-  const forecast = await (0, import_curtailmentForecast.readHourlyForecast)(basePath, (id) => host.getForeignStateAsync(id));
+  const forecast = await (0, import_curtailmentForecast.readHourlyForecast)(
+    basePath,
+    (id) => host.getForeignStateAsync(id),
+    host.getForeignObjectAsync ? (id) => host.getForeignObjectAsync(id) : void 0
+  );
   const nowHour = berlinHour();
   for (const device of devices) {
     const limit = (0, import_curtailmentProfiles.acExportLimitW)(device);

@@ -294,6 +294,7 @@ class AnkerSolix extends utils.Adapter {
       namespace: this.namespace,
       log: this.log,
       getForeignStateAsync: (id) => this.getForeignStateAsync(id),
+      getForeignObjectAsync: (id) => this.getForeignObjectAsync(id),
       getStateAsync: (id) => this.getStateAsync(id),
       setState: async (id, val, ack) => {
         await this.setState(id, val, ack != null ? ack : true);
