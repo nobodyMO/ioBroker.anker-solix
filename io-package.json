@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.30",
+		"version": "0.10.31",
 		"messagebox": true,
 		"news": {
+			"0.10.31": {
+				"en": "Period stats: once daily after 23:00 / 23:15 / 23:30 Europe/Berlin",
+				"de": "Perioden-Statistik: je 1× täglich nach 23:00 / 23:15 / 23:30 (Europe/Berlin)",
+				"ru": "Period stats daily schedule",
+				"pt": "Period stats daily schedule",
+				"nl": "Period stats daily schedule",
+				"fr": "Period stats daily schedule",
+				"it": "Period stats daily schedule",
+				"es": "Period stats daily schedule",
+				"pl": "Period stats daily schedule",
+				"uk": "Period stats daily schedule",
+				"zh-cn": "周期统计每日定时拉取"
+			},
 			"0.10.30": {
 				"en": "Week/month stats: energy_daily + empty device_sn (HA style); fixes energy_analysis 10003",
 				"de": "Wochen/Monats-Statistik: energy_daily + leere device_sn (wie HA); Fix energy_analysis 10003",
@@ -133,32 +146,6 @@
 				"pl": "Period stats in subfolders",
 				"uk": "Period stats in subfolders",
 				"zh-cn": "周期统计在 statistics.week|month|year 子目录"
-			},
-			"0.10.17": {
-				"en": "Fix: rebuilt curtailment (stale build still set grid export limit to 4800 W)",
-				"de": "Fix: Build neu – alte Abregelung setzte Netzeinspeise-Limit fälschlich auf 4800 W",
-				"ru": "Fix: curtailment build",
-				"pt": "Fix: curtailment build",
-				"nl": "Fix: curtailment build",
-				"fr": "Fix: curtailment build",
-				"it": "Fix: curtailment build",
-				"es": "Fix: curtailment build",
-				"pl": "Fix: curtailment build",
-				"uk": "Fix: curtailment build",
-				"zh-cn": "修复：限电未再改并网功率上限"
-			},
-			"0.10.16": {
-				"en": "Combiner total_state_of_charge (cloud or weighted solarbank SOC); curtailment uses it",
-				"de": "Combiner: Gesamt-Ladestand total_state_of_charge (Cloud oder gewichteter Solarbank-SOC)",
-				"ru": "Combiner total SOC",
-				"pt": "Combiner total SOC",
-				"nl": "Combiner total SOC",
-				"fr": "Combiner total SOC",
-				"it": "Combiner total SOC",
-				"es": "Combiner total SOC",
-				"pl": "Combiner total SOC",
-				"uk": "Combiner total SOC",
-				"zh-cn": "Combiner 总 SOC"
 			},
 			"0.10.15": {
 				"en": "Curtailment: API-only ac_output_limit; fix SOC/missing_charge_wh; no station feed-in changes",

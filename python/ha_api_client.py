@@ -26,10 +26,10 @@ DEFAULT_TIMEOUT: int = SolixDefaults.REQUEST_TIMEOUT_DEF
 from auth_helpers import purge_invalid_auth_cache, safe_authenticate  # noqa: E402
 from entity_groups import build_exclude_categories, needs_daily_energy_poll  # noqa: E402
 from energy_period import (  # noqa: E402
-    PERIOD_MONTH,
-    PERIOD_WEEK,
-    PERIOD_YEAR,
+    berlin_today_str,
     enabled_periods,
+    period_schedule_label,
+    periods_due_for_fetch,
     update_site_energy_periods,
 )
 
@@ -72,8 +72,7 @@ class IoBrokerAnkerApiClient:
             1, int(config.get("deviceDetailMultiplier", DEFAULT_DEVICE_MULTIPLIER))
         )
         self._intervalcount = 0
-        self._period_rotate = 0
-        self._period_detail_count = 0
+        self._period_last_fetch: dict[str, str] = {}
         self._period_backoff_until = 0.0
         self._last_period_energy_updated: list[str] = []
         self._mqtt_usage = bool(config.get("mqttUsage", True))
@@ -91,8 +90,10 @@ class IoBrokerAnkerApiClient:
         try:
             data = json.loads(self._state_path.read_text(encoding="utf-8"))
             self._intervalcount = int(data.get("intervalcount", 0))
-            self._period_rotate = int(data.get("period_rotate", 0))
-            self._period_detail_count = int(data.get("period_detail_count", 0))
+            raw_last = data.get("period_last_fetch")
+            self._period_last_fetch = (
+                dict(raw_last) if isinstance(raw_last, dict) else {}
+            )
             self._period_backoff_until = float(data.get("period_backoff_until", 0))
             self._startup = bool(data.get("startup", True))
             self.deferred_data = bool(data.get("deferred_data", False))
@@ -238,56 +239,16 @@ class IoBrokerAnkerApiClient:
     def get_mqtt_device(self, sn: str) -> SolixMqttDevice | None:
         return self.mqtt_devices.get(sn) if sn else None
 
-    def _period_detail_interval(self) -> int:
-        """Detail refreshes between period energy_analysis batches (year = slowest)."""
-        periods = set(enabled_periods(self.config))
-        if not periods:
-            return 99
-        if periods == {PERIOD_YEAR}:
-            return 6
-        if PERIOD_YEAR in periods and PERIOD_MONTH not in periods and PERIOD_WEEK not in periods:
-            return 6
-        if periods == {PERIOD_WEEK}:
-            return 1
-        if PERIOD_WEEK in periods and PERIOD_MONTH not in periods:
-            return 1
-        if PERIOD_MONTH in periods and PERIOD_WEEK not in periods:
-            return 2
-        if PERIOD_YEAR in periods:
-            return 4
-        if PERIOD_MONTH in periods:
-            return 2
-        if PERIOD_WEEK in periods:
-            return 1
-        return 2
-
-    def _periods_for_this_refresh(self) -> list[str]:
-        """At most one enabled period per detail refresh."""
-        periods = enabled_periods(self.config)
-        if not periods:
-            return []
-        if len(periods) == 1:
-            return periods
-        idx = self._period_rotate % len(periods)
-        self._period_rotate += 1
-        return [periods[idx]]
-
-    def _periods_due(self) -> bool:
+    def _periods_due_list(self) -> list[str]:
         if time.time() < self._period_backoff_until:
-            return False
-        if not enabled_periods(self.config):
-            return False
-        self._period_detail_count += 1
-        if self._period_detail_count < self._period_detail_interval():
-            return False
-        self._period_detail_count = 0
-        return True
+            return []
+        enabled = enabled_periods(self.config)
+        if not enabled:
+            return []
+        return periods_due_for_fetch(enabled, self._period_last_fetch)
 
     async def _update_energy_periods(self) -> bool:
-        if not self._periods_due():
-            self._last_period_energy_updated = []
-            return False
-        periods = self._periods_for_this_refresh()
+        periods = self._periods_due_list()
         if not periods:
             self._last_period_energy_updated = []
             return False
@@ -297,18 +258,25 @@ class IoBrokerAnkerApiClient:
             updated = await update_site_energy_periods(
                 self.api, self.config, periods=periods
             )
+            today = berlin_today_str()
             if not updated:
                 self._last_period_energy_updated = []
                 self._logger.warning(
-                    "Period energy %s: no kWh values from cloud (see energy_analysis warnings)",
+                    "Period energy %s: no kWh values from cloud (see energy_analysis warnings); "
+                    "will retry on next detail poll after scheduled time",
                     ", ".join(periods),
                 )
                 return False
+            for period in updated:
+                self._period_last_fetch[period] = today
             self._last_period_energy_updated = updated
+            schedule_hint = ", ".join(
+                f"{p} {period_schedule_label(p)}" for p in updated
+            )
             self._logger.info(
-                "Period energy updated for %s (next in ~%s detail refresh cycles)",
+                "Period energy updated for %s (daily schedule Europe/Berlin: %s)",
                 ", ".join(updated),
-                self._period_detail_interval(),
+                schedule_hint,
             )
             return True
         except errors.RequestLimitError as exc:

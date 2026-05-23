@@ -6,6 +6,7 @@ import asyncio
 import logging
 from datetime import datetime, timedelta
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from entity_groups import (
     GROUP_ENERGY_STATISTICS_MONTH,
@@ -24,6 +25,15 @@ if True:  # TYPE_CHECKING block without import cycle
 PERIOD_WEEK = "week"
 PERIOD_MONTH = "month"
 PERIOD_YEAR = "year"
+
+BERLIN_TZ = ZoneInfo("Europe/Berlin")
+
+# Europe/Berlin: at most one cloud fetch per period per calendar day (first detail poll after this time).
+PERIOD_SCHEDULE_LOCAL: dict[str, tuple[int, int]] = {
+    PERIOD_WEEK: (23, 0),
+    PERIOD_MONTH: (23, 15),
+    PERIOD_YEAR: (23, 30),
+}
 
 # Pause between energy_analysis calls (HA poll_device_energy uses request_delay; bursts → 10003).
 PERIOD_ANALYSIS_DELAY_SEC = 2.5
@@ -560,6 +570,41 @@ async def fetch_energy_period_block(
     if block or period == PERIOD_YEAR:
         return block
     return await fetch_energy_period_block_from_daily(api, site_id, query_types, period)
+
+
+def berlin_now() -> datetime:
+    return datetime.now(BERLIN_TZ)
+
+
+def berlin_today_str(now: datetime | None = None) -> str:
+    return (now or berlin_now()).strftime("%Y-%m-%d")
+
+
+def period_schedule_label(period: str) -> str:
+    hour, minute = PERIOD_SCHEDULE_LOCAL.get(period, (0, 0))
+    return f"{hour:02d}:{minute:02d}"
+
+
+def periods_due_for_fetch(
+    enabled: list[str],
+    last_fetched: dict[str, str],
+    now: datetime | None = None,
+) -> list[str]:
+    """Periods to fetch on this detail refresh (scheduled local time, once per day)."""
+    now = now or berlin_now()
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=BERLIN_TZ)
+    today = now.strftime("%Y-%m-%d")
+    due: list[str] = []
+    for period in enabled:
+        sched = PERIOD_SCHEDULE_LOCAL.get(period)
+        if not sched:
+            continue
+        hour, minute = sched
+        scheduled_today = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+        if now >= scheduled_today and last_fetched.get(period) != today:
+            due.append(period)
+    return due
 
 
 def enabled_periods(config: dict) -> list[str]:
