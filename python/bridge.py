@@ -379,6 +379,18 @@ async def _set_ac_charge_limit(
     ha_client: IoBrokerAnkerApiClient | None = None,
 ) -> Any:
     """HA preset_ac_input_limit: sb_ac_input_limit (SB2/3) or ac_charge_limit MQTT, then API."""
+    device = api.devices.get(device_id) or {}
+    if str(device.get("type") or "").lower() == COMBINER:
+        try:
+            resp = await api.set_power_limit(
+                siteId=site_id,
+                deviceSn=device_id,
+                ac_input=limit,
+            )
+            if resp is not False:
+                return resp
+        except errors.ItemNotFoundError:
+            pass
     mqtt_cmds = (
         (SolixMqttCommands.sb_ac_input_limit, "set_ac_input_limit"),
         (SolixMqttCommands.ac_charge_limit, "set_ac_input_limit"),

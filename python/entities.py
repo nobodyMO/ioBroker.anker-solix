@@ -559,7 +559,10 @@ def extract_entities(data: dict, config: dict | None = None) -> dict[str, Any]:
         req_types = spec.get("require_types") or []
         req_keys = spec.get("require_any_keys") or []
         if req_types and dev_type in req_types and req_keys:
-            if not any(
+            skip_key_gate = (
+                dev_type == COMBINER and spec["id"] == "ac_output_limit"
+            )
+            if not skip_key_gate and not any(
                 pick_value(data, [key]) is not None for key in req_keys
             ):
                 continue

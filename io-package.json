@@ -1,9 +1,35 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.11",
+		"version": "0.10.13",
 		"messagebox": true,
 		"news": {
+			"0.10.13": {
+				"en": "Curtailment: no longer sets grid_export_limit (app feed-in cap); combiner ac_output_limit only",
+				"de": "Abregelung: setzt grid_export_limit (App Einspeise-Limit) nicht mehr; nur ac_output_limit",
+				"ru": "Abregelung: без grid_export_limit",
+				"pt": "Abregelung: sem grid_export_limit",
+				"nl": "Abregelung: geen grid_export_limit",
+				"fr": "Abregelung: sans grid_export_limit",
+				"it": "Abregelung: senza grid_export_limit",
+				"es": "Abregelung: sin grid_export_limit",
+				"pl": "Abregelung: bez grid_export_limit",
+				"uk": "Abregelung: без grid_export_limit",
+				"zh-cn": "限电不再修改 grid_export_limit"
+			},
+			"0.10.12": {
+				"en": "Curtailment combiner: ac_output_limit (max_load) for export; home load preset 0 W",
+				"de": "Abregelung Combiner: Einspeisung über ac_output_limit (max_load); Hauslast-Preset 0 W",
+				"ru": "Combiner: ac_output_limit для экспорта",
+				"pt": "Combiner: ac_output_limit para exportação",
+				"nl": "Combiner: ac_output_limit voor export",
+				"fr": "Combiner: ac_output_limit pour export",
+				"it": "Combiner: ac_output_limit per export",
+				"es": "Combiner: ac_output_limit para exportación",
+				"pl": "Combiner: ac_output_limit do eksportu",
+				"uk": "Combiner: ac_output_limit для експорту",
+				"zh-cn": "Combiner 通过 ac_output_limit 馈网"
+			},
 			"0.10.11": {
 				"en": "Curtailment: live PV from system.{siteId}.sensors.total_pv_power (priority)",
 				"de": "Abregelung: live PV aus system.{siteId}.sensors.total_pv_power (Priorität)",

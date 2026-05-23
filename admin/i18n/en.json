@@ -74,7 +74,7 @@
 	"cloud_state": "Cloud state",
 	"wifi_state": "WiFi state",
 	"CurtailmentAvoidance": "Curtailment avoidance",
-	"curtailment_hint": "Forecast (solarprognose) detects overproduction days. Before window: manual, charge 0 W, AC output = live PV. Active window: AC output = live PV (combiner max 4800 W), AC charge = calculated slow-charge limit. Status: curtailment.live_pv_w, export_w, max_charge_w. Requires MQTT.",
+	"curtailment_hint": "Forecast (solarprognose) detects overproduction days. Combiner: ac_output_limit (max_load), home load preset 0 W — does NOT change the app grid export cap (grid_export_limit). Before: charge 0 W. Active: AC output = live PV (max 4800 W), slow charge via ac_charge_limit. Status: live_pv_w, export_w, max_charge_w. Requires MQTT.",
 	"enableCurtailmentAvoidance": "Enable curtailment avoidance",
 	"curtailmentForecastPath": "Forecast base path (hourly, e.g. solarprognose.0.forecast.00.hourly)",
 	"curtailmentModeAfter": "Usage mode after curtailment window",

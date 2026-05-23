@@ -43,7 +43,11 @@ export interface CurtailmentRunnerHost extends CurtailmentPowerHost {
 	) => Promise<void>;
 }
 
+/** Combiner manual schedule: home load preset (W), not grid export — keep minimal so surplus goes to grid. */
+export const COMBINER_MIN_HOME_LOAD_W = 0;
+
 const lastAppliedExportW = new Map<string, number>();
+const lastAppliedHomeLoadW = new Map<string, number>();
 const lastAppliedChargeW = new Map<string, number>();
 const lastAppliedPhase = new Map<string, CurtailmentPhase>();
 
@@ -130,6 +134,28 @@ function deviceHasControl(host: CurtailmentRunnerHost, deviceId: string, control
 	return writable.includes(control);
 }
 
+async function applyCombinerExportLimit(
+	host: CurtailmentRunnerHost,
+	deviceId: string,
+	exportW: number,
+	ctx: DeviceControlContext | undefined,
+): Promise<void> {
+	const lastAc = lastAppliedExportW.get(deviceId);
+	if (lastAc !== exportW) {
+		// max_load_parallel (MQTT) — AC output cap only; station feed-in cap stays user/app controlled.
+		await host.applyControl(deviceId, "ac_output_limit", exportW, ctx);
+		lastAppliedExportW.set(deviceId, exportW);
+	}
+
+	const homeW = COMBINER_MIN_HOME_LOAD_W;
+	const lastHome = lastAppliedHomeLoadW.get(deviceId);
+	if (lastHome !== homeW) {
+		// set_output_power = manual home load preset, not export.
+		await applyOptionalControl(host, deviceId, "set_output_power", homeW, ctx);
+		lastAppliedHomeLoadW.set(deviceId, homeW);
+	}
+}
+
 async function applyExportLimit(
 	host: CurtailmentRunnerHost,
 	device: CurtailmentDeviceConfig,
@@ -139,24 +165,25 @@ async function applyExportLimit(
 	if (exportW <= 0) {
 		return;
 	}
-	const last = lastAppliedExportW.get(device.deviceId);
-	if (last === exportW) {
-		return;
-	}
 	const ctx = host.getDeviceContext(device.deviceId);
 	const id = device.deviceId;
 
-	// Combiner / SB2+: manual export target is set_output_power (home load preset), not only max_load.
-	if (device.role === "combiner" && deviceHasControl(host, id, "set_output_power")) {
-		await host.applyControl(id, "set_output_power", exportW, ctx);
+	if (device.role === "combiner") {
+		await applyCombinerExportLimit(host, id, exportW, ctx);
+		return;
+	}
+
+	const last = lastAppliedExportW.get(id);
+	if (last === exportW) {
+		return;
 	}
 	if (deviceHasControl(host, id, "ac_output_limit")) {
 		await host.applyControl(id, "ac_output_limit", exportW, ctx);
 	}
-	if (device.role === "combiner" && deviceHasControl(host, id, "grid_export_limit")) {
-		await host.applyControl(id, "grid_export_limit", exportW, ctx);
+	if (deviceHasControl(host, id, "set_output_power")) {
+		await host.applyControl(id, "set_output_power", exportW, ctx);
 	}
-	lastAppliedExportW.set(device.deviceId, exportW);
+	lastAppliedExportW.set(id, exportW);
 }
 
 async function applyAfterPhase(
@@ -165,6 +192,7 @@ async function applyAfterPhase(
 	modeAfter: "smartmeter" | "smart",
 ): Promise<void> {
 	lastAppliedExportW.delete(device.deviceId);
+	lastAppliedHomeLoadW.delete(device.deviceId);
 	lastAppliedChargeW.delete(device.deviceId);
 	lastAppliedPhase.delete(device.deviceId);
 	const ctx = host.getDeviceContext(device.deviceId);
