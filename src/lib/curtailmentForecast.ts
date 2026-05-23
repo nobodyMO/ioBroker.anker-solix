@@ -114,3 +114,37 @@ export function remainingCurtailmentHours(window: CurtailmentWindow, nowHour: nu
 	}
 	return Math.max(0, window.endHour - nowHour + 1);
 }
+
+/** Forecast PV power (W) for a given hour, or 0 if missing. */
+export function forecastPowerAtHour(forecast: HourlyForecast, hour: number): number {
+	return forecast.hours.get(hour) ?? 0;
+}
+
+/**
+ * Target AC/grid export (W) to feed full forecast generation into the grid (no battery charging).
+ * Uses current hour; before the window starts, falls back to window start hour or peak in window.
+ */
+export function forecastExportTargetW(
+	forecast: HourlyForecast,
+	nowHour: number,
+	window: CurtailmentWindow,
+): number {
+	if (!window.today) {
+		return 0;
+	}
+	const current = forecastPowerAtHour(forecast, nowHour);
+	if (current > 0) {
+		return current;
+	}
+	if (nowHour < window.startHour) {
+		const atStart = forecastPowerAtHour(forecast, window.startHour);
+		if (atStart > 0) {
+			return atStart;
+		}
+	}
+	let peak = 0;
+	for (let h = window.startHour; h <= window.endHour; h++) {
+		peak = Math.max(peak, forecastPowerAtHour(forecast, h));
+	}
+	return peak;
+}

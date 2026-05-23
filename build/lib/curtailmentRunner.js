@@ -35,45 +35,38 @@ function berlinHour() {
   const h = (_a = parts.find((p) => p.type === "hour")) == null ? void 0 : _a.value;
   return Math.min(23, Math.max(0, Number(h) || 0));
 }
-async function readSocPercent(host, deviceId) {
-  const candidates = [
-    `${host.namespace}.solarbank.${deviceId}.sensors.state_of_charge`,
-    `${host.namespace}.combiner_box.${deviceId}.sensors.state_of_charge`,
-    `${host.namespace}.combiner_box.${deviceId}.sensors.battery_soc`
-  ];
-  for (const id of candidates) {
-    const st = await host.getStateAsync(id);
-    if ((st == null ? void 0 : st.val) !== null && (st == null ? void 0 : st.val) !== void 0) {
-      const n = Number(st.val);
-      if (!Number.isNaN(n)) {
-        return Math.min(100, Math.max(0, n));
-      }
-    }
-  }
-  return 0;
-}
-function calcMaxChargeW(batteryCapacityWh, socPercent, chargeDivisorHours) {
-  if (chargeDivisorHours <= 0 || batteryCapacityWh <= 0) {
+function clampExportW(powerW) {
+  if (powerW <= 0) {
     return 0;
   }
-  const missingWh = (100 - socPercent) / 100 * batteryCapacityWh;
-  return Math.max(0, Math.round(missingWh / chargeDivisorHours));
+  return Math.min(1e5, Math.max(100, Math.round(powerW)));
 }
-async function applyPhaseControls(host, device, phase, maxChargeW, modeAfter) {
+async function applyOptionalControl(host, deviceId, control, value, ctx) {
+  try {
+    await host.applyControl(deviceId, control, value, ctx);
+  } catch (err) {
+    host.log.debug(`Curtailment optional control ${control} skipped: ${err.message}`);
+  }
+}
+async function applyPhaseControls(host, device, phase, exportTargetW, modeAfter) {
   const ctx = host.getDeviceContext(device.deviceId);
   const controlDeviceId = device.deviceId;
-  if (phase === "before") {
-    return;
-  }
-  if (phase === "active") {
-    await host.applyControl(controlDeviceId, "preset_usage_mode", "manual", ctx);
-    if (maxChargeW > 0) {
-      await host.applyControl(controlDeviceId, "ac_charge_limit", maxChargeW, ctx);
-    }
-    return;
-  }
   if (phase === "after" || phase === "idle") {
     await host.applyControl(controlDeviceId, "preset_usage_mode", modeAfter, ctx);
+    return;
+  }
+  if (phase === "before" || phase === "active") {
+    await host.applyControl(controlDeviceId, "preset_usage_mode", "manual", ctx);
+    await applyOptionalControl(host, controlDeviceId, "preset_allow_export", true, ctx);
+    await applyOptionalControl(host, controlDeviceId, "allow_grid_export", true, ctx);
+    await host.applyControl(controlDeviceId, "ac_charge_limit", 0, ctx);
+    const exportW = clampExportW(exportTargetW);
+    if (exportW > 0) {
+      await host.applyControl(controlDeviceId, "ac_output_limit", exportW, ctx);
+      if (device.role === "combiner") {
+        await host.applyControl(controlDeviceId, "grid_export_limit", exportW, ctx);
+      }
+    }
   }
 }
 async function runCurtailmentAvoidance(host, config) {
@@ -99,8 +92,7 @@ async function runCurtailmentAvoidance(host, config) {
     const limit = (0, import_curtailmentProfiles.acExportLimitW)(device);
     const window = (0, import_curtailmentForecast.detectCurtailmentWindow)(forecast, limit);
     const phase = (0, import_curtailmentForecast.currentPhase)(window, nowHour);
-    const soc = await readSocPercent(host, device.deviceId);
-    const maxChargeW = window.today ? calcMaxChargeW(device.batteryCapacityWh, soc, window.chargeDivisorHours) : 0;
+    const exportTargetW = window.today ? (0, import_curtailmentForecast.forecastExportTargetW)(forecast, nowHour, window) : 0;
     const remaining = (0, import_curtailmentForecast.remainingCurtailmentHours)(window, nowHour);
     await host.setState(import_curtailmentStates.CURTAILMENT_STATE_IDS.today, window.today, true);
     await host.setState(
@@ -113,7 +105,7 @@ async function runCurtailmentAvoidance(host, config) {
       window.today ? `${window.endHour.toString().padStart(2, "0")}:00` : "",
       true
     );
-    await host.setState(import_curtailmentStates.CURTAILMENT_STATE_IDS.maxChargeW, maxChargeW, true);
+    await host.setState(import_curtailmentStates.CURTAILMENT_STATE_IDS.maxChargeW, exportTargetW, true);
     await host.setState(import_curtailmentStates.CURTAILMENT_STATE_IDS.remainingHours, remaining, true);
     await host.setState(import_curtailmentStates.CURTAILMENT_STATE_IDS.phase, phase, true);
     await host.setState(import_curtailmentStates.CURTAILMENT_STATE_IDS.acLimitW, limit, true);
@@ -122,10 +114,10 @@ async function runCurtailmentAvoidance(host, config) {
     }
     const unitsHint = device.role === "combiner" && ((_a = device.units) == null ? void 0 : _a.length) ? `, units=${device.units.join("+")} (${device.units.length} banks)` : "";
     host.log.info(
-      `Curtailment [${device.deviceId}]: phase=${phase}, limit=${limit}W${unitsHint}, window ${window.startHour}-${window.endHour}h, maxCharge=${maxChargeW}W, SOC=${soc}%`
+      `Curtailment [${device.deviceId}]: phase=${phase}, limit=${limit}W${unitsHint}, window ${window.startHour}-${window.endHour}h, exportTarget=${exportTargetW}W`
     );
     try {
-      await applyPhaseControls(host, device, phase, maxChargeW, config.modeAfter);
+      await applyPhaseControls(host, device, phase, exportTargetW, config.modeAfter);
     } catch (err) {
       host.log.warn(`Curtailment control failed for ${device.deviceId}: ${err.message}`);
     }

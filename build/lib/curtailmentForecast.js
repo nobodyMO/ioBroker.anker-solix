@@ -20,6 +20,8 @@ var curtailmentForecast_exports = {};
 __export(curtailmentForecast_exports, {
   currentPhase: () => currentPhase,
   detectCurtailmentWindow: () => detectCurtailmentWindow,
+  forecastExportTargetW: () => forecastExportTargetW,
+  forecastPowerAtHour: () => forecastPowerAtHour,
   normalizeForecastPowerW: () => normalizeForecastPowerW,
   readHourlyForecast: () => readHourlyForecast,
   remainingCurtailmentHours: () => remainingCurtailmentHours
@@ -123,10 +125,36 @@ function remainingCurtailmentHours(window, nowHour) {
   }
   return Math.max(0, window.endHour - nowHour + 1);
 }
+function forecastPowerAtHour(forecast, hour) {
+  var _a;
+  return (_a = forecast.hours.get(hour)) != null ? _a : 0;
+}
+function forecastExportTargetW(forecast, nowHour, window) {
+  if (!window.today) {
+    return 0;
+  }
+  const current = forecastPowerAtHour(forecast, nowHour);
+  if (current > 0) {
+    return current;
+  }
+  if (nowHour < window.startHour) {
+    const atStart = forecastPowerAtHour(forecast, window.startHour);
+    if (atStart > 0) {
+      return atStart;
+    }
+  }
+  let peak = 0;
+  for (let h = window.startHour; h <= window.endHour; h++) {
+    peak = Math.max(peak, forecastPowerAtHour(forecast, h));
+  }
+  return peak;
+}
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   currentPhase,
   detectCurtailmentWindow,
+  forecastExportTargetW,
+  forecastPowerAtHour,
   normalizeForecastPowerW,
   readHourlyForecast,
   remainingCurtailmentHours

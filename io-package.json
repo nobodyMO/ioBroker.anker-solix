@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.5",
+		"version": "0.10.6",
 		"messagebox": true,
 		"news": {
+			"0.10.6": {
+				"en": "Curtailment: manual mode, no charge, export limit = hourly forecast (also before window)",
+				"de": "Abregelung: Benutzerdefiniert, kein Laden, Einspeise-Limit = Stundenprognose (auch vor Fenster)",
+				"ru": "Ограничение: ручной режим, без зарядки, экспорт по прогнозу",
+				"pt": "Curtailment: manual, sem carga, exportação conforme previsão",
+				"nl": "Curtailment: handmatig, geen laden, export volgens prognose",
+				"fr": "Curtailment: manuel, pas de charge, export selon prévision",
+				"it": "Curtailment: manuale, niente carica, export da previsione",
+				"es": "Curtailment: manual, sin carga, exportación según pronóstico",
+				"pl": "Curtailment: ręczny, bez ładowania, eksport z prognozy",
+				"uk": "Обмеження: ручний режим, без зарядки, експорт за прогнозом",
+				"zh-cn": "限电：手动模式、不充电、按小时预测并网"
+			},
 			"0.10.5": {
 				"en": "Curtailment: read solarprognose kW (11h.power), convert to W",
 				"de": "Abregelung: solarprognose kW (11h.power) lesen, in W umrechnen",

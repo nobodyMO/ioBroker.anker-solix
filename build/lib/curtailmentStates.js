@@ -76,7 +76,7 @@ async function setupCurtailmentStates(adapter) {
     {
       id: CURTAILMENT_STATE_IDS.maxChargeW,
       common: {
-        name: "Max charge power (calculated)",
+        name: "Export target power (forecast, W)",
         type: "number",
         role: "value.power",
         unit: "W",

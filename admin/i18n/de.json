@@ -74,7 +74,7 @@
 	"cloud_state": "Cloud-Status",
 	"wifi_state": "WLAN-Status",
 	"CurtailmentAvoidance": "Abregelungsvermeidung",
-	"curtailment_hint": "Liest die stündliche PV-Prognose vom Adapter solarprognose. An Überproduktions-Tagen: während der Abregelung Modus Benutzerdefiniert mit berechnetem AC-Ladelimit; danach gewählter Modus. Vor dem Fenster bleibt der aktuelle Nutzungsmodus unverändert. MQTT erforderlich. Status unter curtailment.*",
+	"curtailment_hint": "Liest die stündliche PV-Prognose vom Adapter solarprognose. An Überproduktions-Tagen: ab Erkennung (auch vor dem Fenster) Modus Benutzerdefiniert, AC-Laden 0 W, AC-/Einspeise-Limit an die Prognose der aktuellen Stunde (volle Erzeugung ins Netz, keine Ladung). Nach dem Fenster gewählter Modus. MQTT erforderlich. Status unter curtailment.* (max_charge_w = Einspeiseziel in W).",
 	"enableCurtailmentAvoidance": "Abregelungsvermeidung aktivieren",
 	"curtailmentForecastPath": "Objektpfad Prognose (Basis hourly, z. B. solarprognose.0.forecast.00.hourly)",
 	"curtailmentModeAfter": "Nutzungsmodus nach Abregelungsfenster",

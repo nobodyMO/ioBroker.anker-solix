@@ -3,6 +3,7 @@ import { resolveCurtailmentDevices, type CurtailmentStructuredNative } from "./c
 import {
 	currentPhase,
 	detectCurtailmentWindow,
+	forecastExportTargetW,
 	readHourlyForecast,
 	remainingCurtailmentHours,
 } from "./curtailmentForecast";
@@ -13,7 +14,7 @@ import type { DeviceControlContext } from "./types";
 export interface CurtailmentRunnerConfig extends CurtailmentStructuredNative {
 	enabled: boolean;
 	forecastBasePath: string;
-	/** Usage mode after curtailment window (before window: no mode change). */
+	/** Usage mode after curtailment window. */
 	modeAfter: "smartmeter" | "smart";
 }
 
@@ -47,55 +48,57 @@ function berlinHour(): number {
 	return Math.min(23, Math.max(0, Number(h) || 0));
 }
 
-async function readSocPercent(host: CurtailmentRunnerHost, deviceId: string): Promise<number> {
-	const candidates = [
-		`${host.namespace}.solarbank.${deviceId}.sensors.state_of_charge`,
-		`${host.namespace}.combiner_box.${deviceId}.sensors.state_of_charge`,
-		`${host.namespace}.combiner_box.${deviceId}.sensors.battery_soc`,
-	];
-	for (const id of candidates) {
-		const st = await host.getStateAsync(id);
-		if (st?.val !== null && st?.val !== undefined) {
-			const n = Number(st.val);
-			if (!Number.isNaN(n)) {
-				return Math.min(100, Math.max(0, n));
-			}
-		}
-	}
-	return 0;
-}
-
-function calcMaxChargeW(batteryCapacityWh: number, socPercent: number, chargeDivisorHours: number): number {
-	if (chargeDivisorHours <= 0 || batteryCapacityWh <= 0) {
+/** Clamp export setpoint to API limits (grid_export_limit min 100 W). */
+function clampExportW(powerW: number): number {
+	if (powerW <= 0) {
 		return 0;
 	}
-	const missingWh = ((100 - socPercent) / 100) * batteryCapacityWh;
-	return Math.max(0, Math.round(missingWh / chargeDivisorHours));
+	return Math.min(100_000, Math.max(100, Math.round(powerW)));
+}
+
+async function applyOptionalControl(
+	host: CurtailmentRunnerHost,
+	deviceId: string,
+	control: string,
+	value: string | number | boolean,
+	ctx: DeviceControlContext | undefined,
+): Promise<void> {
+	try {
+		await host.applyControl(deviceId, control, value, ctx);
+	} catch (err) {
+		host.log.debug(`Curtailment optional control ${control} skipped: ${(err as Error).message}`);
+	}
 }
 
 async function applyPhaseControls(
 	host: CurtailmentRunnerHost,
 	device: CurtailmentDeviceConfig,
 	phase: CurtailmentPhase,
-	maxChargeW: number,
+	exportTargetW: number,
 	modeAfter: "smartmeter" | "smart",
 ): Promise<void> {
 	const ctx = host.getDeviceContext(device.deviceId);
 	const controlDeviceId = device.deviceId;
 
-	// Before window: leave current usage mode unchanged
-	if (phase === "before") {
-		return;
-	}
-	if (phase === "active") {
-		await host.applyControl(controlDeviceId, "preset_usage_mode", "manual", ctx);
-		if (maxChargeW > 0) {
-			await host.applyControl(controlDeviceId, "ac_charge_limit", maxChargeW, ctx);
-		}
-		return;
-	}
 	if (phase === "after" || phase === "idle") {
 		await host.applyControl(controlDeviceId, "preset_usage_mode", modeAfter, ctx);
+		return;
+	}
+
+	// before + active on curtailment days: manual, no charging, export ≈ forecast PV
+	if (phase === "before" || phase === "active") {
+		await host.applyControl(controlDeviceId, "preset_usage_mode", "manual", ctx);
+		await applyOptionalControl(host, controlDeviceId, "preset_allow_export", true, ctx);
+		await applyOptionalControl(host, controlDeviceId, "allow_grid_export", true, ctx);
+		await host.applyControl(controlDeviceId, "ac_charge_limit", 0, ctx);
+
+		const exportW = clampExportW(exportTargetW);
+		if (exportW > 0) {
+			await host.applyControl(controlDeviceId, "ac_output_limit", exportW, ctx);
+			if (device.role === "combiner") {
+				await host.applyControl(controlDeviceId, "grid_export_limit", exportW, ctx);
+			}
+		}
 	}
 }
 
@@ -123,13 +126,11 @@ export async function runCurtailmentAvoidance(
 	);
 	const nowHour = berlinHour();
 
-	// Use strictest (lowest) limit among enabled devices for shared forecast, or per-device loop
 	for (const device of devices) {
 		const limit = acExportLimitW(device);
 		const window = detectCurtailmentWindow(forecast, limit);
 		const phase = currentPhase(window, nowHour);
-		const soc = await readSocPercent(host, device.deviceId);
-		const maxChargeW = window.today ? calcMaxChargeW(device.batteryCapacityWh, soc, window.chargeDivisorHours) : 0;
+		const exportTargetW = window.today ? forecastExportTargetW(forecast, nowHour, window) : 0;
 		const remaining = remainingCurtailmentHours(window, nowHour);
 
 		await host.setState(CURTAILMENT_STATE_IDS.today, window.today, true);
@@ -143,7 +144,7 @@ export async function runCurtailmentAvoidance(
 			window.today ? `${window.endHour.toString().padStart(2, "0")}:00` : "",
 			true,
 		);
-		await host.setState(CURTAILMENT_STATE_IDS.maxChargeW, maxChargeW, true);
+		await host.setState(CURTAILMENT_STATE_IDS.maxChargeW, exportTargetW, true);
 		await host.setState(CURTAILMENT_STATE_IDS.remainingHours, remaining, true);
 		await host.setState(CURTAILMENT_STATE_IDS.phase, phase, true);
 		await host.setState(CURTAILMENT_STATE_IDS.acLimitW, limit, true);
@@ -158,11 +159,11 @@ export async function runCurtailmentAvoidance(
 				: "";
 		host.log.info(
 			`Curtailment [${device.deviceId}]: phase=${phase}, limit=${limit}W${unitsHint}, ` +
-				`window ${window.startHour}-${window.endHour}h, maxCharge=${maxChargeW}W, SOC=${soc}%`,
+				`window ${window.startHour}-${window.endHour}h, exportTarget=${exportTargetW}W`,
 		);
 
 		try {
-			await applyPhaseControls(host, device, phase, maxChargeW, config.modeAfter);
+			await applyPhaseControls(host, device, phase, exportTargetW, config.modeAfter);
 		} catch (err) {
 			host.log.warn(`Curtailment control failed for ${device.deviceId}: ${(err as Error).message}`);
 		}
