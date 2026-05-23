@@ -40,7 +40,12 @@ describe("curtailmentForecast", () => {
 	});
 
 	it("uses current hour forecast as export target", () => {
-		const forecast = { hours: new Map<number, number>([[10, 2000], [11, 5473]]) };
+		const forecast = {
+			hours: new Map<number, number>([
+				[10, 2000],
+				[11, 5473],
+			]),
+		};
 		const window = detectCurtailmentWindow(forecast, 800);
 		expect(forecastExportTargetW(forecast, 11, window)).to.equal(5473);
 		expect(forecastExportTargetW(forecast, 10, window)).to.equal(2000);

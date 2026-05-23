@@ -124,11 +124,7 @@ export function forecastPowerAtHour(forecast: HourlyForecast, hour: number): num
  * Target AC/grid export (W) to feed full forecast generation into the grid (no battery charging).
  * Uses current hour; before the window starts, falls back to window start hour or peak in window.
  */
-export function forecastExportTargetW(
-	forecast: HourlyForecast,
-	nowHour: number,
-	window: CurtailmentWindow,
-): number {
+export function forecastExportTargetW(forecast: HourlyForecast, nowHour: number, window: CurtailmentWindow): number {
 	if (!window.today) {
 		return 0;
 	}
