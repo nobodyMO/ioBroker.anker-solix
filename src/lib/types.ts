@@ -67,6 +67,9 @@ export interface BridgeConfig {
 	endpointLimit?: number;
 	enableCoreEntities?: boolean;
 	enableEnergyStatistics?: boolean;
+	enableEnergyStatisticsWeek?: boolean;
+	enableEnergyStatisticsMonth?: boolean;
+	enableEnergyStatisticsYear?: boolean;
 	enableEnergyDetail?: boolean;
 	enablePowerFlows?: boolean;
 	enableDiagnostics?: boolean;

@@ -158,6 +158,61 @@ const CONTROL_ENTITIES = [
   { id: "ac_output_power_switch", kind: "switch", role: "switch" },
   { id: "ac_fast_charge_switch_pps", kind: "switch", role: "switch" }
 ];
+const PERIOD_METRIC_SUFFIXES = [
+  "solar_production",
+  "charge_energy",
+  "discharge_energy",
+  "home_usage",
+  "solar_to_home",
+  "solar_to_battery",
+  "battery_to_home",
+  "grid_to_home",
+  "grid_to_battery",
+  "3rd_party_pv_to_bat",
+  "ev_charge",
+  "grid_import",
+  "grid_export"
+];
+const PERIOD_SUFFIX_LABELS_DE = {
+  solar_production: "Solarertrag",
+  charge_energy: "Batterieladung",
+  discharge_energy: "Batterieentladung",
+  home_usage: "Hausverbrauch",
+  solar_to_home: "Solar \u2192 Haus",
+  solar_to_battery: "Solar \u2192 Batterie",
+  battery_to_home: "Batterie \u2192 Haus",
+  grid_to_home: "Netz \u2192 Haus",
+  grid_to_battery: "Netz \u2192 Batterie",
+  "3rd_party_pv_to_bat": "3rd-Party PV \u2192 Batterie",
+  ev_charge: "EV-Ladung",
+  grid_import: "Netzbezug",
+  grid_export: "Netzeinspeisung"
+};
+const PERIOD_NAMES_DE = {
+  week: "Woche",
+  month: "Monat",
+  year: "Jahr"
+};
+function buildPeriodStatisticsEntities() {
+  const entities = [];
+  for (const period of ["week", "month", "year"]) {
+    entities.push({
+      id: `${period}_energy_period`,
+      kind: "statistics",
+      role: "value.date"
+    });
+    for (const suffix of PERIOD_METRIC_SUFFIXES) {
+      entities.push({
+        id: `${period}_${suffix}`,
+        kind: "statistics",
+        role: "value.energy",
+        unit: "kWh"
+      });
+    }
+  }
+  return entities;
+}
+const PERIOD_STATISTICS_ENTITIES = buildPeriodStatisticsEntities();
 const STATISTICS_ENTITIES = [
   { id: "energy_statistics_date", kind: "statistics", role: "value.date" },
   { id: "daily_solar_production", kind: "statistics", role: "value.energy", unit: "kWh" },
@@ -177,6 +232,7 @@ const STATISTICS_ENTITIES = [
   { id: "yesterday_charge_energy", kind: "statistics", role: "value.energy", unit: "kWh" },
   { id: "yesterday_discharge_energy", kind: "statistics", role: "value.energy", unit: "kWh" },
   { id: "yesterday_home_usage", kind: "statistics", role: "value.energy", unit: "kWh" },
+  ...PERIOD_STATISTICS_ENTITIES,
   { id: "daily_solar_to_grid", kind: "statistics", role: "value.energy", unit: "kWh" },
   { id: "daily_solar_production_pv1", kind: "statistics", role: "value.energy", unit: "kWh" },
   { id: "daily_solar_production_pv2", kind: "statistics", role: "value.energy", unit: "kWh" },
@@ -218,7 +274,19 @@ const STATISTICS_LABELS = {
   daily_battery_share: "Batterie-Anteil (heute)",
   daily_grid_share: "Netz-Anteil (heute)",
   daily_ac_socket: "AC-Steckdose (heute)",
-  daily_smartplugs_total: "Steckdosen gesamt (heute)"
+  daily_smartplugs_total: "Steckdosen gesamt (heute)",
+  ...Object.fromEntries(
+    ["week", "month", "year"].flatMap((period) => {
+      const rows = [[`${period}_energy_period`, PERIOD_NAMES_DE[period]]];
+      for (const suffix of PERIOD_METRIC_SUFFIXES) {
+        rows.push([
+          `${period}_${suffix}`,
+          `${PERIOD_SUFFIX_LABELS_DE[suffix]} (${PERIOD_NAMES_DE[period]})`
+        ]);
+      }
+      return rows;
+    })
+  )
 };
 const STATISTICS_ENTITY_IDS = STATISTICS_ENTITIES.map((e) => e.id);
 const ENTITY_MAP = new Map(

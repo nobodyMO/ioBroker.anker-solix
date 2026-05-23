@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.17",
+		"version": "0.10.19",
 		"messagebox": true,
 		"news": {
+			"0.10.18": {
+				"en": "Entity groups: weekly, monthly, yearly energy statistics (kWh) from cloud",
+				"de": "Entitätsgruppen: Wochen-, Monats- und Jahresstatistik (kWh) aus der Cloud",
+				"ru": "Week/month/year energy stats",
+				"pt": "Week/month/year energy stats",
+				"nl": "Week/month/year energy stats",
+				"fr": "Week/month/year energy stats",
+				"it": "Week/month/year energy stats",
+				"es": "Week/month/year energy stats",
+				"pl": "Week/month/year energy stats",
+				"uk": "Week/month/year energy stats",
+				"zh-cn": "周/月/年电量统计"
+			},
 			"0.10.17": {
 				"en": "Fix: rebuilt curtailment (stale build still set grid export limit to 4800 W)",
 				"de": "Fix: Build neu – alte Abregelung setzte Netzeinspeise-Limit fälschlich auf 4800 W",
@@ -237,32 +250,6 @@
 				"pl": "Słowo kluczowe ioBroker; nagłówki z size",
 				"uk": "Ключове слово ioBroker",
 				"zh-cn": "ioBroker 关键词与 header size"
-			},
-			"0.9.8": {
-				"en": "Complete admin responsive layout (lg/xl); green CI release",
-				"de": "Admin-Layout lg/xl vervollständigt; grüner CI-Release",
-				"ru": "Полная адаптивная вёрстка Admin",
-				"pt": "Layout responsivo Admin completo",
-				"nl": "Volledig responsief Admin-layout",
-				"fr": "Mise en page Admin responsive complète",
-				"it": "Layout Admin responsive completo",
-				"es": "Diseño Admin responsive completo",
-				"pl": "Pełny responsywny layout Admin",
-				"uk": "Повна адаптивна вёрстка Admin",
-				"zh-cn": "完善 Admin 响应式布局"
-			},
-			"0.9.7": {
-				"en": "Adapter-check: news/npm sync, admin layout, README copyright, exclude Python cache from npm package",
-				"de": "Adapter-Check: News/npm abgeglichen, Admin-Layout, README Copyright, Python-Cache nicht im npm-Paket",
-				"ru": "Синхронизация news/npm, правки adapter-check",
-				"pt": "Sincronização news/npm, correções adapter-check",
-				"nl": "News/npm sync, adapter-check fixes",
-				"fr": "Sync news/npm, corrections adapter-check",
-				"it": "Sync news/npm, correzioni adapter-check",
-				"es": "Sync news/npm, correcciones adapter-check",
-				"pl": "Sync news/npm, poprawki adapter-check",
-				"uk": "Синхронізація news/npm",
-				"zh-cn": "news/npm 同步与 adapter-check 修复"
 			}
 		},
 		"titleLang": {
@@ -337,6 +324,9 @@
 		"mqttUsage": true,
 		"enableCoreEntities": true,
 		"enableEnergyStatistics": false,
+		"enableEnergyStatisticsWeek": false,
+		"enableEnergyStatisticsMonth": false,
+		"enableEnergyStatisticsYear": false,
 		"enableEnergyDetail": false,
 		"enablePowerFlows": false,
 		"enableDiagnostics": false,

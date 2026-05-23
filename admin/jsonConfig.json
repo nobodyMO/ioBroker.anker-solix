@@ -266,6 +266,36 @@
 					"lg": 4,
 					"xl": 4
 				},
+				"enableEnergyStatisticsWeek": {
+					"type": "checkbox",
+					"label": "enableEnergyStatisticsWeek",
+					"default": false,
+					"xs": 12,
+					"sm": 6,
+					"md": 4,
+					"lg": 4,
+					"xl": 4
+				},
+				"enableEnergyStatisticsMonth": {
+					"type": "checkbox",
+					"label": "enableEnergyStatisticsMonth",
+					"default": false,
+					"xs": 12,
+					"sm": 6,
+					"md": 4,
+					"lg": 4,
+					"xl": 4
+				},
+				"enableEnergyStatisticsYear": {
+					"type": "checkbox",
+					"label": "enableEnergyStatisticsYear",
+					"default": false,
+					"xs": 12,
+					"sm": 6,
+					"md": 4,
+					"lg": 4,
+					"xl": 4
+				},
 				"enableEnergyDetail": {
 					"type": "checkbox",
 					"label": "enableEnergyDetail",

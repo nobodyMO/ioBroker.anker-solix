@@ -24,6 +24,7 @@ DEFAULT_TIMEOUT: int = SolixDefaults.REQUEST_TIMEOUT_DEF
 # Non-energy optional excludes (HA optional list subset; no ApiCategories.device_parm).
 from auth_helpers import purge_invalid_auth_cache, safe_authenticate  # noqa: E402
 from entity_groups import build_exclude_categories  # noqa: E402
+from energy_period import enabled_periods, update_site_energy_periods  # noqa: E402
 
 # Re-export for bridge.py
 DEFAULT_EXCLUDE_CATEGORIES: list[str] = []
@@ -140,6 +141,8 @@ class IoBrokerAnkerApiClient:
                 await self.api.update_device_energy(
                     exclude=set(self.exclude_categories)
                 )
+                if enabled_periods(self.config):
+                    await update_site_energy_periods(self.api, self.config)
             self._intervalcount = self._deviceintervals
             self.active_device_refresh = False
             await self.check_mqtt_session()
@@ -149,6 +152,8 @@ class IoBrokerAnkerApiClient:
             self.active_device_refresh = True
             self._logger.info("Updating deferred energy data")
             await self.api.update_device_energy(exclude=set(self.exclude_categories))
+            if enabled_periods(self.config):
+                await update_site_energy_periods(self.api, self.config)
             self.deferred_data = True
             self._startup = False
             self.active_device_refresh = False

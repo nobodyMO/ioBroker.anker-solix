@@ -7,6 +7,9 @@ from solixapi.apitypes import ApiCategories, SolixDeviceType
 # Entity groups (must match admin config keys → enabledEntityGroups in bridge config)
 GROUP_CORE = "core"
 GROUP_ENERGY_STATISTICS = "energy_statistics"
+GROUP_ENERGY_STATISTICS_WEEK = "energy_statistics_week"
+GROUP_ENERGY_STATISTICS_MONTH = "energy_statistics_month"
+GROUP_ENERGY_STATISTICS_YEAR = "energy_statistics_year"
 GROUP_ENERGY_DETAIL = "energy_detail"
 GROUP_POWER_FLOWS = "power_flows"
 GROUP_DIAGNOSTICS = "diagnostics"
@@ -49,6 +52,9 @@ CONFIG_GROUP_KEYS: tuple[str, ...] = (
 _CONFIG_TO_ENTITY_GROUP: dict[str, str] = {
     "enableCoreEntities": GROUP_CORE,
     "enableEnergyStatistics": GROUP_ENERGY_STATISTICS,
+    "enableEnergyStatisticsWeek": GROUP_ENERGY_STATISTICS_WEEK,
+    "enableEnergyStatisticsMonth": GROUP_ENERGY_STATISTICS_MONTH,
+    "enableEnergyStatisticsYear": GROUP_ENERGY_STATISTICS_YEAR,
     "enableEnergyDetail": GROUP_ENERGY_DETAIL,
     "enablePowerFlows": GROUP_POWER_FLOWS,
     "enableDiagnostics": GROUP_DIAGNOSTICS,
@@ -145,7 +151,14 @@ def build_exclude_categories(config: dict) -> list[str]:
         exclude.update(META_API_CATEGORIES)
     elif ApiCategories.device_auto_upgrade in exclude:
         exclude.discard(ApiCategories.device_auto_upgrade)
-    if GROUP_ENERGY_STATISTICS not in enabled and GROUP_ENERGY_DETAIL not in enabled:
+    _energy_poll = {
+        GROUP_ENERGY_STATISTICS,
+        GROUP_ENERGY_DETAIL,
+        GROUP_ENERGY_STATISTICS_WEEK,
+        GROUP_ENERGY_STATISTICS_MONTH,
+        GROUP_ENERGY_STATISTICS_YEAR,
+    }
+    if not (_energy_poll & enabled):
         exclude.update(ENERGY_API_CATEGORIES)
     elif GROUP_ENERGY_STATISTICS not in enabled:
         # Detail-only still needs base energy poll for some fields — keep categories, filter entities

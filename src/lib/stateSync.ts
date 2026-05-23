@@ -72,6 +72,15 @@ function sanitizeIdPart(value: string): string {
 	return value.replace(/[^a-zA-Z0-9._-]/g, "_");
 }
 
+/** `week_solar_production` → `statistics.week.solar_production`; daily stays flat under `statistics.*`. */
+export function statisticsStatePath(channelPath: string, entityId: string): string {
+	const periodMatch = /^(week|month|year)_(.+)$/.exec(entityId);
+	if (periodMatch) {
+		return `${channelPath}.statistics.${periodMatch[1]}.${periodMatch[2]}`;
+	}
+	return `${channelPath}.statistics.${entityId}`;
+}
+
 function channelForDevice(info: BridgeDevice["info"]): string {
 	const typePart = sanitizeIdPart(info.type || "device");
 	const idPart = sanitizeIdPart(info.id);
@@ -127,8 +136,10 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 			const meta = ENTITY_MAP.get(entityId);
 			const writable = meta ? isWritable(entityId, device.writable) : false;
 			const kind = meta?.kind ?? "sensor";
-			const subfolder = kind === "statistics" ? "statistics" : kind === "sensor" ? "sensors" : "control";
-			const stateId = `${channelPath}.${subfolder}.${entityId}`;
+			const stateId =
+				kind === "statistics"
+					? statisticsStatePath(channelPath, entityId)
+					: `${channelPath}.${kind === "sensor" ? "sensors" : "control"}.${entityId}`;
 			const stateType = resolveStateType(meta, value);
 			const hasValue = value !== null && value !== undefined;
 			const stateVal = hasValue

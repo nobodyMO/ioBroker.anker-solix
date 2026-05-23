@@ -513,12 +513,20 @@ def extract_statistics_entities(
     data: dict, dev_type: str, config: dict | None = None
 ) -> dict[str, Any]:
     from energy_entities import ENERGY_STATISTICS_ENTITIES, pick_energy_value  # noqa: PLC0415
+    from energy_period import ENERGY_PERIOD_ENTITIES, pick_period_value  # noqa: PLC0415
 
     enabled = enabled_entity_groups(config or {})
     entities: dict[str, Any] = {}
-    if not (data.get("energy_details") or {}).get("today"):
+    energy = data.get("energy_details") or {}
+    if not energy.get("today") and not any(
+        energy.get(p) for p in ("week", "month", "year")
+    ):
         return entities
-    all_stats = [*ENERGY_STATISTICS_ENTITIES, *EXTENDED_ENERGY_STATISTICS]
+    all_stats = [
+        *ENERGY_STATISTICS_ENTITIES,
+        *EXTENDED_ENERGY_STATISTICS,
+        *ENERGY_PERIOD_ENTITIES,
+    ]
     for spec in all_stats:
         if not entity_spec_enabled(spec, enabled):
             continue
@@ -526,7 +534,11 @@ def extract_statistics_entities(
             continue
         if spec.get("smartmeter_only") and dev_type != SMARTMETER:
             continue
-        val = pick_energy_value(data, spec)
+        period = spec.get("period")
+        if period:
+            val = pick_period_value(data, spec, period)
+        else:
+            val = pick_energy_value(data, spec)
         if val is not None:
             entities[spec["id"]] = val
     return entities

@@ -2,6 +2,9 @@
 
 export const ENTITY_GROUP_CORE = "core";
 export const ENTITY_GROUP_ENERGY_STATISTICS = "energy_statistics";
+export const ENTITY_GROUP_ENERGY_STATISTICS_WEEK = "energy_statistics_week";
+export const ENTITY_GROUP_ENERGY_STATISTICS_MONTH = "energy_statistics_month";
+export const ENTITY_GROUP_ENERGY_STATISTICS_YEAR = "energy_statistics_year";
 export const ENTITY_GROUP_ENERGY_DETAIL = "energy_detail";
 export const ENTITY_GROUP_POWER_FLOWS = "power_flows";
 export const ENTITY_GROUP_DIAGNOSTICS = "diagnostics";
@@ -22,6 +25,9 @@ export const ENTITY_GROUP_INVERTER = "inverter";
 const CONFIG_TO_GROUP: [keyof ioBroker.AdapterConfig, string][] = [
 	["enableCoreEntities", ENTITY_GROUP_CORE],
 	["enableEnergyStatistics", ENTITY_GROUP_ENERGY_STATISTICS],
+	["enableEnergyStatisticsWeek", ENTITY_GROUP_ENERGY_STATISTICS_WEEK],
+	["enableEnergyStatisticsMonth", ENTITY_GROUP_ENERGY_STATISTICS_MONTH],
+	["enableEnergyStatisticsYear", ENTITY_GROUP_ENERGY_STATISTICS_YEAR],
 	["enableEnergyDetail", ENTITY_GROUP_ENERGY_DETAIL],
 	["enablePowerFlows", ENTITY_GROUP_POWER_FLOWS],
 	["enableDiagnostics", ENTITY_GROUP_DIAGNOSTICS],
@@ -39,6 +45,39 @@ const CONFIG_TO_GROUP: [keyof ioBroker.AdapterConfig, string][] = [
 	["enablePowerPanel", ENTITY_GROUP_POWER_PANEL],
 	["enableInverter", ENTITY_GROUP_INVERTER],
 ];
+
+const PERIOD_METRIC_SUFFIXES = [
+	"solar_production",
+	"charge_energy",
+	"discharge_energy",
+	"home_usage",
+	"solar_to_home",
+	"solar_to_battery",
+	"battery_to_home",
+	"grid_to_home",
+	"grid_to_battery",
+	"3rd_party_pv_to_bat",
+	"ev_charge",
+	"grid_import",
+	"grid_export",
+] as const;
+
+function buildPeriodEntityGroups(): Record<string, string[]> {
+	const map: Record<string, string[]> = {};
+	const periodGroups: Record<"week" | "month" | "year", string> = {
+		week: ENTITY_GROUP_ENERGY_STATISTICS_WEEK,
+		month: ENTITY_GROUP_ENERGY_STATISTICS_MONTH,
+		year: ENTITY_GROUP_ENERGY_STATISTICS_YEAR,
+	};
+	for (const period of ["week", "month", "year"] as const) {
+		const group = periodGroups[period];
+		map[`${period}_energy_period`] = [group];
+		for (const suffix of PERIOD_METRIC_SUFFIXES) {
+			map[`${period}_${suffix}`] = [group];
+		}
+	}
+	return map;
+}
 
 /** Entity id → groups (for state creation filter). */
 export const ENTITY_ID_GROUPS: Record<string, string[]> = {
@@ -147,6 +186,8 @@ export const ENTITY_ID_GROUPS: Record<string, string[]> = {
 	yesterday_charge_energy: [ENTITY_GROUP_ENERGY_STATISTICS],
 	yesterday_discharge_energy: [ENTITY_GROUP_ENERGY_STATISTICS],
 	yesterday_home_usage: [ENTITY_GROUP_ENERGY_STATISTICS],
+	// week / month / year statistics (see entities.ts PERIOD_STATISTICS_ENTITIES)
+	...buildPeriodEntityGroups(),
 	// energy detail
 	daily_solar_to_grid: [ENTITY_GROUP_ENERGY_DETAIL],
 	daily_solar_production_pv1: [ENTITY_GROUP_ENERGY_DETAIL],

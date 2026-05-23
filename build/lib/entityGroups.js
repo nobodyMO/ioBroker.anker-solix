@@ -25,6 +25,9 @@ __export(entityGroups_exports, {
   ENTITY_GROUP_DIAGNOSTICS: () => ENTITY_GROUP_DIAGNOSTICS,
   ENTITY_GROUP_ENERGY_DETAIL: () => ENTITY_GROUP_ENERGY_DETAIL,
   ENTITY_GROUP_ENERGY_STATISTICS: () => ENTITY_GROUP_ENERGY_STATISTICS,
+  ENTITY_GROUP_ENERGY_STATISTICS_MONTH: () => ENTITY_GROUP_ENERGY_STATISTICS_MONTH,
+  ENTITY_GROUP_ENERGY_STATISTICS_WEEK: () => ENTITY_GROUP_ENERGY_STATISTICS_WEEK,
+  ENTITY_GROUP_ENERGY_STATISTICS_YEAR: () => ENTITY_GROUP_ENERGY_STATISTICS_YEAR,
   ENTITY_GROUP_EV_CHARGER: () => ENTITY_GROUP_EV_CHARGER,
   ENTITY_GROUP_HES: () => ENTITY_GROUP_HES,
   ENTITY_GROUP_INVERTER: () => ENTITY_GROUP_INVERTER,
@@ -43,6 +46,9 @@ __export(entityGroups_exports, {
 module.exports = __toCommonJS(entityGroups_exports);
 const ENTITY_GROUP_CORE = "core";
 const ENTITY_GROUP_ENERGY_STATISTICS = "energy_statistics";
+const ENTITY_GROUP_ENERGY_STATISTICS_WEEK = "energy_statistics_week";
+const ENTITY_GROUP_ENERGY_STATISTICS_MONTH = "energy_statistics_month";
+const ENTITY_GROUP_ENERGY_STATISTICS_YEAR = "energy_statistics_year";
 const ENTITY_GROUP_ENERGY_DETAIL = "energy_detail";
 const ENTITY_GROUP_POWER_FLOWS = "power_flows";
 const ENTITY_GROUP_DIAGNOSTICS = "diagnostics";
@@ -62,6 +68,9 @@ const ENTITY_GROUP_INVERTER = "inverter";
 const CONFIG_TO_GROUP = [
   ["enableCoreEntities", ENTITY_GROUP_CORE],
   ["enableEnergyStatistics", ENTITY_GROUP_ENERGY_STATISTICS],
+  ["enableEnergyStatisticsWeek", ENTITY_GROUP_ENERGY_STATISTICS_WEEK],
+  ["enableEnergyStatisticsMonth", ENTITY_GROUP_ENERGY_STATISTICS_MONTH],
+  ["enableEnergyStatisticsYear", ENTITY_GROUP_ENERGY_STATISTICS_YEAR],
   ["enableEnergyDetail", ENTITY_GROUP_ENERGY_DETAIL],
   ["enablePowerFlows", ENTITY_GROUP_POWER_FLOWS],
   ["enableDiagnostics", ENTITY_GROUP_DIAGNOSTICS],
@@ -79,6 +88,37 @@ const CONFIG_TO_GROUP = [
   ["enablePowerPanel", ENTITY_GROUP_POWER_PANEL],
   ["enableInverter", ENTITY_GROUP_INVERTER]
 ];
+const PERIOD_METRIC_SUFFIXES = [
+  "solar_production",
+  "charge_energy",
+  "discharge_energy",
+  "home_usage",
+  "solar_to_home",
+  "solar_to_battery",
+  "battery_to_home",
+  "grid_to_home",
+  "grid_to_battery",
+  "3rd_party_pv_to_bat",
+  "ev_charge",
+  "grid_import",
+  "grid_export"
+];
+function buildPeriodEntityGroups() {
+  const map = {};
+  const periodGroups = {
+    week: ENTITY_GROUP_ENERGY_STATISTICS_WEEK,
+    month: ENTITY_GROUP_ENERGY_STATISTICS_MONTH,
+    year: ENTITY_GROUP_ENERGY_STATISTICS_YEAR
+  };
+  for (const period of ["week", "month", "year"]) {
+    const group = periodGroups[period];
+    map[`${period}_energy_period`] = [group];
+    for (const suffix of PERIOD_METRIC_SUFFIXES) {
+      map[`${period}_${suffix}`] = [group];
+    }
+  }
+  return map;
+}
 const ENTITY_ID_GROUPS = {
   // core — default on
   input_power: [ENTITY_GROUP_CORE],
@@ -185,6 +225,8 @@ const ENTITY_ID_GROUPS = {
   yesterday_charge_energy: [ENTITY_GROUP_ENERGY_STATISTICS],
   yesterday_discharge_energy: [ENTITY_GROUP_ENERGY_STATISTICS],
   yesterday_home_usage: [ENTITY_GROUP_ENERGY_STATISTICS],
+  // week / month / year statistics (see entities.ts PERIOD_STATISTICS_ENTITIES)
+  ...buildPeriodEntityGroups(),
   // energy detail
   daily_solar_to_grid: [ENTITY_GROUP_ENERGY_DETAIL],
   daily_solar_production_pv1: [ENTITY_GROUP_ENERGY_DETAIL],
@@ -227,6 +269,9 @@ function isEntityEnabled(entityId, config) {
   ENTITY_GROUP_DIAGNOSTICS,
   ENTITY_GROUP_ENERGY_DETAIL,
   ENTITY_GROUP_ENERGY_STATISTICS,
+  ENTITY_GROUP_ENERGY_STATISTICS_MONTH,
+  ENTITY_GROUP_ENERGY_STATISTICS_WEEK,
+  ENTITY_GROUP_ENERGY_STATISTICS_YEAR,
   ENTITY_GROUP_EV_CHARGER,
   ENTITY_GROUP_HES,
   ENTITY_GROUP_INVERTER,

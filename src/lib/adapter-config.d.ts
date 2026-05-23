@@ -20,6 +20,12 @@ declare global {
 			enableCoreEntities?: boolean;
 			/** Fetch daily energy statistics (kWh) from Anker cloud. */
 			enableEnergyStatistics?: boolean;
+			/** Current calendar week totals (kWh). */
+			enableEnergyStatisticsWeek?: boolean;
+			/** Current calendar month totals (kWh). */
+			enableEnergyStatisticsMonth?: boolean;
+			/** Current calendar year totals (kWh). */
+			enableEnergyStatisticsYear?: boolean;
 			/** Extended daily stats (PV strings, shares, …). */
 			enableEnergyDetail?: boolean;
 			enablePowerFlows?: boolean;

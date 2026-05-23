@@ -19,6 +19,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var stateSync_exports = {};
 __export(stateSync_exports, {
   parseControlStateId: () => parseControlStateId,
+  statisticsStatePath: () => statisticsStatePath,
   syncDevices: () => syncDevices
 });
 module.exports = __toCommonJS(stateSync_exports);
@@ -77,6 +78,13 @@ function coerceStateValue(type, value) {
 function sanitizeIdPart(value) {
   return value.replace(/[^a-zA-Z0-9._-]/g, "_");
 }
+function statisticsStatePath(channelPath, entityId) {
+  const periodMatch = /^(week|month|year)_(.+)$/.exec(entityId);
+  if (periodMatch) {
+    return `${channelPath}.statistics.${periodMatch[1]}.${periodMatch[2]}`;
+  }
+  return `${channelPath}.statistics.${entityId}`;
+}
 function channelForDevice(info) {
   const typePart = sanitizeIdPart(info.type || "device");
   const idPart = sanitizeIdPart(info.id);
@@ -131,8 +139,7 @@ async function syncDevices(adapter, devices) {
       const meta = import_entities.ENTITY_MAP.get(entityId);
       const writable = meta ? (0, import_entities.isWritable)(entityId, device.writable) : false;
       const kind = (_a = meta == null ? void 0 : meta.kind) != null ? _a : "sensor";
-      const subfolder = kind === "statistics" ? "statistics" : kind === "sensor" ? "sensors" : "control";
-      const stateId = `${channelPath}.${subfolder}.${entityId}`;
+      const stateId = kind === "statistics" ? statisticsStatePath(channelPath, entityId) : `${channelPath}.${kind === "sensor" ? "sensors" : "control"}.${entityId}`;
       const stateType = resolveStateType(meta, value);
       const hasValue = value !== null && value !== void 0;
       const stateVal = hasValue ? coerceStateValue(stateType, value) : (meta == null ? void 0 : meta.kind) === "switch" ? false : (meta == null ? void 0 : meta.kind) === "statistics" ? null : (meta == null ? void 0 : meta.kind) === "number" ? (_b = meta.min) != null ? _b : 0 : "";
@@ -224,6 +231,7 @@ function parseControlStateId(namespace, stateId) {
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   parseControlStateId,
+  statisticsStatePath,
   syncDevices
 });
 //# sourceMappingURL=stateSync.js.map

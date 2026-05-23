@@ -155,6 +155,7 @@ Typical paths (instance `anker-solix.0`):
 - `anker-solix.0.solarbank.<deviceId>.sensors.*` — power, SOC, etc.
 - `anker-solix.0.solarbank.<deviceId>.control.*` — writable controls where supported
 - `anker-solix.0.<device>.<id>.statistics.*` — daily kWh (enable **Entities** → energy statistics)
+- `…statistics.week.*` / `statistics.month.*` / `statistics.year.*` — calendar week, month, year totals in kWh (separate entity groups; polled on detail refresh, not every cycle)
 - `anker-solix.0.smartmeter.<deviceId>.sensors.*`
 - `anker-solix.0.services.*` — export, schedule, refresh (button states)
 - `anker-solix.0.info.connection`, `anker-solix.0.info.pythonReady`
@@ -296,6 +297,10 @@ Tab **Abregelungsvermeidung** / **Curtailment avoidance**: requires the [ioBroke
 ---
 
 ## Changelog
+
+### 0.10.18
+
+- Entity groups **Weekly / monthly / yearly energy statistics** (`enableEnergyStatisticsWeek|Month|Year`): kWh totals for current calendar week, month, and year via Anker `energy_analysis` API (states under `statistics.week.*`, `statistics.month.*`, `statistics.year.*`)
 
 ### 0.10.17
 
