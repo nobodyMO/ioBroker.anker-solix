@@ -4,6 +4,8 @@ import { detectCurtailmentWindow } from "./curtailmentForecast";
 import {
 	calcMaxChargeW,
 	calcMissingChargeWh,
+	hasSolarGenerationForCurtailment,
+	normalizeMinPvForCurtailmentW,
 	parsePvSensorStateId,
 	parseSystemPvStateId,
 	readLivePvPowerW,
@@ -22,6 +24,15 @@ describe("curtailmentPower", () => {
 		const set = resolveCurtailmentSetpoints("before", 3200, 0, forecast, 10, window);
 		expect(set.exportW).to.equal(3200);
 		expect(set.chargeW).to.equal(0);
+	});
+
+	it("hasSolarGenerationForCurtailment respects configurable minimum", () => {
+		expect(hasSolarGenerationForCurtailment(49, 50)).to.equal(false);
+		expect(hasSolarGenerationForCurtailment(50, 50)).to.equal(true);
+		expect(hasSolarGenerationForCurtailment(1, 0)).to.equal(true);
+		expect(hasSolarGenerationForCurtailment(0, 0)).to.equal(false);
+		expect(normalizeMinPvForCurtailmentW(undefined)).to.equal(50);
+		expect(normalizeMinPvForCurtailmentW(-5)).to.equal(50);
 	});
 
 	it("before: no forecast export when live PV is zero (night / no generation)", () => {

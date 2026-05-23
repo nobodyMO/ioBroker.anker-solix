@@ -4,14 +4,29 @@ import type { CurtailmentPhase, CurtailmentWindow, HourlyForecast } from "./curt
 export type { SolarbankSocSample };
 export { normalizeSocPercent, aggregateSolarbankSoc };
 
-/** Minimum live PV (W) before curtailment applies manual mode and ac_output_limit. */
-export const MIN_PV_FOR_CURTAILMENT_W = 50;
+/** Default minimum live PV (W) before curtailment applies manual mode and ac_output_limit. */
+export const DEFAULT_MIN_PV_FOR_CURTAILMENT_W = 50;
 
 /** Sensors that reflect current PV generation (W). */
 export const PV_SENSOR_IDS = ["total_pv_power", "input_power", "solar_power_total"] as const;
 
-export function hasSolarGenerationForCurtailment(livePvW: number): boolean {
-	return Number.isFinite(livePvW) && livePvW >= MIN_PV_FOR_CURTAILMENT_W;
+export function normalizeMinPvForCurtailmentW(raw: unknown): number {
+	const n = Number(raw);
+	if (!Number.isFinite(n) || n < 0) {
+		return DEFAULT_MIN_PV_FOR_CURTAILMENT_W;
+	}
+	return Math.round(n);
+}
+
+export function hasSolarGenerationForCurtailment(livePvW: number, minPvW: number): boolean {
+	if (!Number.isFinite(livePvW)) {
+		return false;
+	}
+	const min = normalizeMinPvForCurtailmentW(minPvW);
+	if (min <= 0) {
+		return livePvW > 0;
+	}
+	return livePvW >= min;
 }
 
 /** Optional power-flow sensors: sum ≈ total PV when direct sensors are missing. */
@@ -228,9 +243,9 @@ export function resolveCurtailmentSetpoints(
 	phase: CurtailmentPhase,
 	livePvW: number,
 	maxChargeW: number,
-	forecast: HourlyForecast,
-	nowHour: number,
-	window: CurtailmentWindow,
+	_forecast: HourlyForecast,
+	_nowHour: number,
+	_window: CurtailmentWindow,
 ): { exportW: number; chargeW: number } {
 	if (phase === "before") {
 		return { exportW: resolveBeforeExportW(livePvW), chargeW: 0 };

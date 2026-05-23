@@ -129,11 +129,11 @@ async function runDeviceCurtailment(host, device, config, forecast, nowHour, opt
     }
     return;
   }
-  if (!(0, import_curtailmentPower.hasSolarGenerationForCurtailment)(ctx.livePvW)) {
+  if (!(0, import_curtailmentPower.hasSolarGenerationForCurtailment)(ctx.livePvW, config.minPvW)) {
     if (!(opts == null ? void 0 : opts.setpointsOnly)) {
       await applyAfterPhase(host, device, config.modeAfter);
       host.log.debug(
-        `Curtailment [${device.deviceId}]: no live PV (${ctx.livePvW}W) \u2014 controls deferred until generation returns`
+        `Curtailment [${device.deviceId}]: live PV ${ctx.livePvW}W below min ${config.minPvW}W \u2014 controls deferred`
       );
     }
     return;
@@ -179,7 +179,7 @@ async function runCurtailmentOnPvChange(host, config, deviceId, livePvW) {
       continue;
     }
     await publishDeviceStates(host, ctx);
-    if (!(0, import_curtailmentPower.hasSolarGenerationForCurtailment)(ctx.livePvW)) {
+    if (!(0, import_curtailmentPower.hasSolarGenerationForCurtailment)(ctx.livePvW, config.minPvW)) {
       try {
         await applyAfterPhase(host, device, config.modeAfter);
       } catch (err) {

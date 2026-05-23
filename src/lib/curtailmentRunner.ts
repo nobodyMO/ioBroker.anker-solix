@@ -23,6 +23,8 @@ export interface CurtailmentRunnerConfig extends CurtailmentStructuredNative {
 	enabled: boolean;
 	forecastBasePath: string;
 	modeAfter: "smartmeter" | "smart";
+	/** Minimum live PV (W) before manual mode and ac_output_limit are applied. */
+	minPvW: number;
 }
 
 export interface CurtailmentRunnerHost extends CurtailmentPowerHost {
@@ -212,11 +214,11 @@ async function runDeviceCurtailment(
 		return;
 	}
 
-	if (!hasSolarGenerationForCurtailment(ctx.livePvW)) {
+	if (!hasSolarGenerationForCurtailment(ctx.livePvW, config.minPvW)) {
 		if (!opts?.setpointsOnly) {
 			await applyAfterPhase(host, device, config.modeAfter);
 			host.log.debug(
-				`Curtailment [${device.deviceId}]: no live PV (${ctx.livePvW}W) — controls deferred until generation returns`,
+				`Curtailment [${device.deviceId}]: live PV ${ctx.livePvW}W below min ${config.minPvW}W — controls deferred`,
 			);
 		}
 		return;
@@ -276,7 +278,7 @@ export async function runCurtailmentOnPvChange(
 			continue;
 		}
 		await publishDeviceStates(host, ctx);
-		if (!hasSolarGenerationForCurtailment(ctx.livePvW)) {
+		if (!hasSolarGenerationForCurtailment(ctx.livePvW, config.minPvW)) {
 			try {
 				await applyAfterPhase(host, device, config.modeAfter);
 			} catch (err) {

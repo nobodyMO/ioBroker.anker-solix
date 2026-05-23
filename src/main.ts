@@ -11,6 +11,7 @@ import * as utils from "@iobroker/adapter-core";
 import { parseSelectedDeviceIds } from "./lib/configHelpers";
 import { ControlQueue } from "./lib/controlQueue";
 import {
+	normalizeMinPvForCurtailmentW,
 	normalizeSocPercent,
 	parsePvSensorStateId,
 	parseSystemPvStateId,
@@ -225,9 +226,7 @@ class AnkerSolix extends utils.Adapter {
 				const hasWeekValues = pollDevices?.some(
 					d =>
 						d.hasStatistics &&
-						Object.keys(d.entities).some(
-							k => k.startsWith("week_") && d.entities[k] != null,
-						),
+						Object.keys(d.entities).some(k => k.startsWith("week_") && d.entities[k] != null),
 				);
 				if (hasWeekValues) {
 					this.log.info(
@@ -416,6 +415,7 @@ class AnkerSolix extends utils.Adapter {
 			enabled: true,
 			forecastBasePath: (this.config.curtailmentForecastPath || "solarprognose.0.forecast.00.hourly").trim(),
 			modeAfter,
+			minPvW: normalizeMinPvForCurtailmentW(this.config.curtailmentMinPvW),
 			curtailmentHasCombiner: this.config.curtailmentHasCombiner,
 			curtailmentStandaloneDeviceId: this.config.curtailmentStandaloneDeviceId,
 			curtailmentStandaloneProfile: this.config.curtailmentStandaloneProfile,

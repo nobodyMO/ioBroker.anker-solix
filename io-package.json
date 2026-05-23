@@ -1,7 +1,7 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.28",
+		"version": "0.10.29",
 		"messagebox": true,
 		"news": {
 			"0.10.28": {
@@ -120,19 +120,6 @@
 				"pl": "Period stats in subfolders",
 				"uk": "Period stats in subfolders",
 				"zh-cn": "周期统计在 statistics.week|month|year 子目录"
-			},
-			"0.10.18": {
-				"en": "Entity groups: weekly, monthly, yearly energy statistics (kWh) from cloud",
-				"de": "Entitätsgruppen: Wochen-, Monats- und Jahresstatistik (kWh) aus der Cloud",
-				"ru": "Week/month/year energy stats",
-				"pt": "Week/month/year energy stats",
-				"nl": "Week/month/year energy stats",
-				"fr": "Week/month/year energy stats",
-				"it": "Week/month/year energy stats",
-				"es": "Week/month/year energy stats",
-				"pl": "Week/month/year energy stats",
-				"uk": "Week/month/year energy stats",
-				"zh-cn": "周/月/年电量统计"
 			},
 			"0.10.17": {
 				"en": "Fix: rebuilt curtailment (stale build still set grid export limit to 4800 W)",
@@ -364,6 +351,7 @@
 		"selectedDeviceIds": "",
 		"deviceListJson": "",
 		"enableCurtailmentAvoidance": false,
+		"curtailmentMinPvW": 50,
 		"curtailmentForecastPath": "solarprognose.0.forecast.00.hourly",
 		"curtailmentModeBefore": "smartmeter",
 		"curtailmentModeAfter": "smartmeter",

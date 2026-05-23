@@ -54,6 +54,8 @@ declare global {
 			deviceListJson?: string;
 			/** Optional curtailment avoidance (solarprognose forecast). */
 			enableCurtailmentAvoidance?: boolean;
+			/** Minimum live PV (W) before curtailment controls apply (default 50). */
+			curtailmentMinPvW?: number;
 			/** Base path to hourly forecast objects (without .power). */
 			curtailmentForecastPath?: string;
 			/** @deprecated unused – mode before window is not changed */

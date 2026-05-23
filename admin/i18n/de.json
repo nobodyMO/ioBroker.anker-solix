@@ -80,6 +80,8 @@
 	"CurtailmentAvoidance": "Abregelungsvermeidung",
 	"curtailment_hint": "Nur Benutzerdefiniert + AC-Ausgangsleistung (ac_output_limit). Keine Grundeinstellungen (Einspeise-Limit, allow_grid_export, Hauslast). Active: missing_charge_wh, max_charge_w = missing_wh ÷ remaining_hours, export_w = live_pv_w − max_charge_w. Vorher: export = live_pv_w.",
 	"enableCurtailmentAvoidance": "Abregelungsvermeidung aktivieren",
+	"curtailmentMinPvW": "Mindest-Live-PV (W) für Steuerung",
+	"curtailmentMinPvW_help": "Benutzerdefiniert und AC-Ausgangsleistung nur, wenn die Live-PV mindestens diesem Wert entspricht (Standard 50). Bei 0 reicht jede PV > 0 W. Verhindert nächtliche Einspeisung aus der Prognose.",
 	"curtailmentForecastPath": "Objektpfad Prognose (Basis hourly, z. B. solarprognose.0.forecast.00.hourly)",
 	"curtailmentModeAfter": "Nutzungsmodus nach Abregelungsfenster",
 	"mode_smartmeter": "Eigenverbrauch",

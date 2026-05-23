@@ -19,7 +19,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var curtailmentPower_exports = {};
 __export(curtailmentPower_exports, {
   COMBINER_MAX_AC_OUTPUT_W: () => COMBINER_MAX_AC_OUTPUT_W,
-  MIN_PV_FOR_CURTAILMENT_W: () => MIN_PV_FOR_CURTAILMENT_W,
+  DEFAULT_MIN_PV_FOR_CURTAILMENT_W: () => DEFAULT_MIN_PV_FOR_CURTAILMENT_W,
   PV_SENSOR_IDS: () => PV_SENSOR_IDS,
   aggregateSolarbankSoc: () => import_combinerSoc.aggregateSolarbankSoc,
   calcMaxChargeW: () => calcMaxChargeW,
@@ -27,6 +27,7 @@ __export(curtailmentPower_exports, {
   hasSolarGenerationForCurtailment: () => hasSolarGenerationForCurtailment,
   isPvGenerationSensor: () => isPvGenerationSensor,
   isPvSensorEntity: () => isPvSensorEntity,
+  normalizeMinPvForCurtailmentW: () => normalizeMinPvForCurtailmentW,
   normalizeSocPercent: () => import_combinerSoc.normalizeSocPercent,
   parsePvSensorStateId: () => parsePvSensorStateId,
   parseSystemPvStateId: () => parseSystemPvStateId,
@@ -41,10 +42,24 @@ __export(curtailmentPower_exports, {
 });
 module.exports = __toCommonJS(curtailmentPower_exports);
 var import_combinerSoc = require("./combinerSoc");
-const MIN_PV_FOR_CURTAILMENT_W = 50;
+const DEFAULT_MIN_PV_FOR_CURTAILMENT_W = 50;
 const PV_SENSOR_IDS = ["total_pv_power", "input_power", "solar_power_total"];
-function hasSolarGenerationForCurtailment(livePvW) {
-  return Number.isFinite(livePvW) && livePvW >= MIN_PV_FOR_CURTAILMENT_W;
+function normalizeMinPvForCurtailmentW(raw) {
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) {
+    return DEFAULT_MIN_PV_FOR_CURTAILMENT_W;
+  }
+  return Math.round(n);
+}
+function hasSolarGenerationForCurtailment(livePvW, minPvW) {
+  if (!Number.isFinite(livePvW)) {
+    return false;
+  }
+  const min = normalizeMinPvForCurtailmentW(minPvW);
+  if (min <= 0) {
+    return livePvW > 0;
+  }
+  return livePvW >= min;
 }
 const PV_FLOW_SUM_IDS = ["pv_to_home_power", "pv_to_battery_power", "photovoltaic_to_grid_power"];
 function systemTotalPvStatePath(namespace, siteId) {
@@ -213,7 +228,7 @@ function resolveActiveExportW(livePvW, maxChargeW) {
   }
   return Math.max(0, Math.round(livePvW - Math.max(0, maxChargeW)));
 }
-function resolveCurtailmentSetpoints(phase, livePvW, maxChargeW, forecast, nowHour, window) {
+function resolveCurtailmentSetpoints(phase, livePvW, maxChargeW, _forecast, _nowHour, _window) {
   if (phase === "before") {
     return { exportW: resolveBeforeExportW(livePvW), chargeW: 0 };
   }
@@ -225,7 +240,7 @@ function resolveCurtailmentSetpoints(phase, livePvW, maxChargeW, forecast, nowHo
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   COMBINER_MAX_AC_OUTPUT_W,
-  MIN_PV_FOR_CURTAILMENT_W,
+  DEFAULT_MIN_PV_FOR_CURTAILMENT_W,
   PV_SENSOR_IDS,
   aggregateSolarbankSoc,
   calcMaxChargeW,
@@ -233,6 +248,7 @@ function resolveCurtailmentSetpoints(phase, livePvW, maxChargeW, forecast, nowHo
   hasSolarGenerationForCurtailment,
   isPvGenerationSensor,
   isPvSensorEntity,
+  normalizeMinPvForCurtailmentW,
   normalizeSocPercent,
   parsePvSensorStateId,
   parseSystemPvStateId,

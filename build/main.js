@@ -204,9 +204,7 @@ class AnkerSolix extends utils.Adapter {
       this.log.debug(`Poll OK (${(_c = pollDevices == null ? void 0 : pollDevices.length) != null ? _c : 0} devices, ${detailHint}${intervalHint})`);
       if ((_d = result.periodEnergyUpdated) == null ? void 0 : _d.length) {
         const hasWeekValues = pollDevices == null ? void 0 : pollDevices.some(
-          (d) => d.hasStatistics && Object.keys(d.entities).some(
-            (k) => k.startsWith("week_") && d.entities[k] != null
-          )
+          (d) => d.hasStatistics && Object.keys(d.entities).some((k) => k.startsWith("week_") && d.entities[k] != null)
         );
         if (hasWeekValues) {
           this.log.info(
@@ -363,6 +361,7 @@ class AnkerSolix extends utils.Adapter {
       enabled: true,
       forecastBasePath: (this.config.curtailmentForecastPath || "solarprognose.0.forecast.00.hourly").trim(),
       modeAfter,
+      minPvW: (0, import_curtailmentPower.normalizeMinPvForCurtailmentW)(this.config.curtailmentMinPvW),
       curtailmentHasCombiner: this.config.curtailmentHasCombiner,
       curtailmentStandaloneDeviceId: this.config.curtailmentStandaloneDeviceId,
       curtailmentStandaloneProfile: this.config.curtailmentStandaloneProfile,

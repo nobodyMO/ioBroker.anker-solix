@@ -525,6 +525,20 @@
 					"lg": 12,
 					"xl": 12
 				},
+				"curtailmentMinPvW": {
+					"type": "number",
+					"label": "curtailmentMinPvW",
+					"min": 0,
+					"max": 10000,
+					"default": 50,
+					"help": "curtailmentMinPvW_help",
+					"hidden": "jq data.enableCurtailmentAvoidance != true",
+					"xs": 12,
+					"sm": 6,
+					"md": 4,
+					"lg": 4,
+					"xl": 4
+				},
 				"curtailmentForecastPath": {
 					"type": "text",
 					"label": "curtailmentForecastPath",
