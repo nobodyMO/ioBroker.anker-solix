@@ -1,6 +1,6 @@
 {
   "name": "iobroker.anker-solix",
-  "version": "0.10.16",
+  "version": "0.10.17",
   "description": "ioBroker adapter for Anker Solix (based on ha-anker-solix)",
   "author": {
     "name": "MatthiasUlrich1",
@@ -71,7 +71,8 @@
     "test:ts": "mocha --config test/mocharc.custom.json src/**/*.test.ts",
     "test:package": "mocha test/package --exit",
     "test:integration": "mocha test/integration --exit",
-    "test": "npm run test:ts && npm run test:package",
+    "test": "npm run build && npm run test:ts && npm run test:package",
+    "verify:build": "npm run build && git diff --exit-code build/",
     "check": "tsc --noEmit",
     "lint": "eslint -c eslint.config.mjs .",
     "format": "prettier --write \"src/**/*.ts\" \"tools/*.js\"",

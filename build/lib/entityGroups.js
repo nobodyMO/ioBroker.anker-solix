@@ -90,6 +90,7 @@ const ENTITY_ID_GROUPS = {
   grid_power: [ENTITY_GROUP_CORE],
   home_power: [ENTITY_GROUP_CORE],
   state_of_charge: [ENTITY_GROUP_CORE],
+  total_state_of_charge: [ENTITY_GROUP_CORE],
   set_output_power: [ENTITY_GROUP_CORE],
   pv_input_limit: [ENTITY_GROUP_CORE],
   ac_charge_limit: [ENTITY_GROUP_CORE],

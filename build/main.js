@@ -272,6 +272,26 @@ class AnkerSolix extends utils.Adapter {
       await this.setState(stateId, false, true);
     }
   }
+  collectSiteSolarbankSocs(siteId) {
+    var _a;
+    const banks = [];
+    for (const [deviceId, ctx] of this.deviceContexts) {
+      if (ctx.site_id !== siteId || ctx.type !== "solarbank") {
+        continue;
+      }
+      const entities = this.deviceEntities.get(deviceId);
+      const soc = (0, import_curtailmentPower.normalizeSocPercent)((_a = entities == null ? void 0 : entities.state_of_charge) != null ? _a : entities == null ? void 0 : entities.battery_soc);
+      if (soc === void 0) {
+        continue;
+      }
+      const capRaw = Number(entities == null ? void 0 : entities.battery_capacity);
+      banks.push({
+        socPercent: soc,
+        capacityWh: Number.isFinite(capRaw) && capRaw > 0 ? Math.round(capRaw) : void 0
+      });
+    }
+    return banks;
+  }
   rememberDeviceContexts(devices) {
     var _a;
     for (const device of devices) {
@@ -285,7 +305,7 @@ class AnkerSolix extends utils.Adapter {
       });
     }
   }
-  async applyAdapterControl(deviceId, control, value, deviceContext) {
+  async applyAdapterControl(deviceId, control, value, deviceContext, opts) {
     await (0, import_pythonBridge.runBridge)(
       "set",
       {
@@ -293,7 +313,8 @@ class AnkerSolix extends utils.Adapter {
         deviceId,
         control,
         value,
-        deviceContext
+        deviceContext,
+        acOutputApiOnly: opts == null ? void 0 : opts.acOutputApiOnly
       },
       this.config.pythonPath || "",
       this.log
@@ -335,12 +356,13 @@ class AnkerSolix extends utils.Adapter {
         var _a;
         return (_a = this.deviceContexts.get(deviceId)) == null ? void 0 : _a.site_id;
       },
+      getSiteSolarbankSocs: (siteId) => this.collectSiteSolarbankSocs(siteId),
       getDeviceWritable: (deviceId) => this.deviceWritable.get(deviceId),
       setState: async (id, val, ack) => {
         await this.setState(id, val, ack != null ? ack : true);
       },
       getDeviceContext: (deviceId) => this.deviceContexts.get(deviceId),
-      applyControl: (deviceId, control, value, deviceContext) => this.applyAdapterControl(deviceId, control, value, deviceContext)
+      applyControl: (deviceId, control, value, deviceContext, opts) => this.applyAdapterControl(deviceId, control, value, deviceContext, opts)
     };
   }
   refreshCurtailmentDeviceIds() {

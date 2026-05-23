@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.16",
+		"version": "0.10.17",
 		"messagebox": true,
 		"news": {
+			"0.10.17": {
+				"en": "Fix: rebuilt curtailment (stale build still set grid export limit to 4800 W)",
+				"de": "Fix: Build neu – alte Abregelung setzte Netzeinspeise-Limit fälschlich auf 4800 W",
+				"ru": "Fix: curtailment build",
+				"pt": "Fix: curtailment build",
+				"nl": "Fix: curtailment build",
+				"fr": "Fix: curtailment build",
+				"it": "Fix: curtailment build",
+				"es": "Fix: curtailment build",
+				"pl": "Fix: curtailment build",
+				"uk": "Fix: curtailment build",
+				"zh-cn": "修复：限电未再改并网功率上限"
+			},
 			"0.10.16": {
 				"en": "Combiner total_state_of_charge (cloud or weighted solarbank SOC); curtailment uses it",
 				"de": "Combiner: Gesamt-Ladestand total_state_of_charge (Cloud oder gewichteter Solarbank-SOC)",
@@ -250,19 +263,6 @@
 				"pl": "Sync news/npm, poprawki adapter-check",
 				"uk": "Синхронізація news/npm",
 				"zh-cn": "news/npm 同步与 adapter-check 修复"
-			},
-			"0.9.6": {
-				"en": "Adapter-check fixes: Node 22+, admin UI, compact-mode Python install, dependabot",
-				"de": "Adapter-Check-Fixes: Node 22+, Admin-UI, Compact-Mode Python-Install, Dependabot",
-				"ru": "Исправления adapter-check",
-				"pt": "Correções adapter-check",
-				"nl": "Adapter-check fixes",
-				"fr": "Corrections adapter-check",
-				"it": "Correzioni adapter-check",
-				"es": "Correcciones adapter-check",
-				"pl": "Poprawki adapter-check",
-				"uk": "Виправлення adapter-check",
-				"zh-cn": "adapter-check 修复"
 			}
 		},
 		"titleLang": {

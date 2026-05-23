@@ -20,20 +20,25 @@ var curtailmentPower_exports = {};
 __export(curtailmentPower_exports, {
   COMBINER_MAX_AC_OUTPUT_W: () => COMBINER_MAX_AC_OUTPUT_W,
   PV_SENSOR_IDS: () => PV_SENSOR_IDS,
+  aggregateSolarbankSoc: () => import_combinerSoc.aggregateSolarbankSoc,
   calcMaxChargeW: () => calcMaxChargeW,
+  calcMissingChargeWh: () => calcMissingChargeWh,
   isPvGenerationSensor: () => isPvGenerationSensor,
   isPvSensorEntity: () => isPvSensorEntity,
+  normalizeSocPercent: () => import_combinerSoc.normalizeSocPercent,
   parsePvSensorStateId: () => parsePvSensorStateId,
   parseSystemPvStateId: () => parseSystemPvStateId,
   pvSensorStatePaths: () => pvSensorStatePaths,
   readLivePvPowerW: () => readLivePvPowerW,
   readPvFromEntities: () => readPvFromEntities,
+  readSocPercentForCurtailment: () => readSocPercentForCurtailment,
   resolveActiveExportW: () => resolveActiveExportW,
   resolveBeforeExportW: () => resolveBeforeExportW,
   resolveCurtailmentSetpoints: () => resolveCurtailmentSetpoints,
   systemTotalPvStatePath: () => systemTotalPvStatePath
 });
 module.exports = __toCommonJS(curtailmentPower_exports);
+var import_combinerSoc = require("./combinerSoc");
 var import_curtailmentForecast = require("./curtailmentForecast");
 const PV_SENSOR_IDS = ["total_pv_power", "input_power", "solar_power_total"];
 const PV_FLOW_SUM_IDS = ["pv_to_home_power", "pv_to_battery_power", "photovoltaic_to_grid_power"];
@@ -142,19 +147,69 @@ function resolveBeforeExportW(livePvW, forecast, nowHour, window) {
   return (0, import_curtailmentForecast.forecastExportTargetW)(forecast, nowHour, window);
 }
 const COMBINER_MAX_AC_OUTPUT_W = 4800;
-function resolveActiveExportW(livePvW, _maxChargeW) {
-  if (livePvW <= 0) {
-    return 0;
-  }
-  return Math.round(livePvW);
-}
-function calcMaxChargeW(batteryCapacityWh, socPercent, hoursRemaining) {
-  const hours = Math.max(1, hoursRemaining);
+function calcMissingChargeWh(batteryCapacityWh, socPercent) {
   if (batteryCapacityWh <= 0) {
     return 0;
   }
-  const missingWh = (100 - socPercent) / 100 * batteryCapacityWh;
+  const soc = Math.min(100, Math.max(0, socPercent));
+  return Math.max(0, Math.round((100 - soc) / 100 * batteryCapacityWh));
+}
+function calcMaxChargeW(missingWh, hoursRemaining) {
+  const hours = Math.max(1, hoursRemaining);
+  if (missingWh <= 0) {
+    return 0;
+  }
   return Math.max(0, Math.round(missingWh / hours));
+}
+async function readSocPercentForCurtailment(host, deviceId) {
+  var _a, _b, _c, _d, _e, _f, _g;
+  const fromEntities = (_a = host.getDeviceEntities) == null ? void 0 : _a.call(host, deviceId);
+  if (fromEntities) {
+    const total = (0, import_combinerSoc.normalizeSocPercent)(
+      (_c = (_b = fromEntities.total_state_of_charge) != null ? _b : fromEntities.computed_total_soc) != null ? _c : fromEntities.total_soc
+    );
+    if (total !== void 0) {
+      return Math.round(total);
+    }
+    for (const key of ["state_of_charge", "battery_soc"]) {
+      const n = (0, import_combinerSoc.normalizeSocPercent)(fromEntities[key]);
+      if (n !== void 0) {
+        return Math.round(n);
+      }
+    }
+  }
+  const combinerPaths = [
+    `${host.namespace}.combiner_box.${deviceId}.sensors.total_state_of_charge`,
+    `${host.namespace}.combiner_box.${deviceId}.sensors.state_of_charge`,
+    `${host.namespace}.combiner_box.${deviceId}.sensors.battery_soc`
+  ];
+  for (const id of combinerPaths) {
+    const st = await host.getStateAsync(id);
+    const n = (0, import_combinerSoc.normalizeSocPercent)(st == null ? void 0 : st.val);
+    if (n !== void 0) {
+      return Math.round(n);
+    }
+  }
+  const siteId = (_e = (_d = host.getDeviceSiteId) == null ? void 0 : _d.call(host, deviceId)) == null ? void 0 : _e.trim();
+  if (siteId) {
+    const systemSoc = await host.getStateAsync(`${host.namespace}.system.${siteId}.sensors.state_of_charge`);
+    const n = (0, import_combinerSoc.normalizeSocPercent)(systemSoc == null ? void 0 : systemSoc.val);
+    if (n !== void 0) {
+      return Math.round(n);
+    }
+    const banks = (_g = (_f = host.getSiteSolarbankSocs) == null ? void 0 : _f.call(host, siteId)) != null ? _g : [];
+    const aggregated = (0, import_combinerSoc.aggregateSolarbankSoc)(banks);
+    if (aggregated !== void 0) {
+      return Math.round(aggregated);
+    }
+  }
+  return void 0;
+}
+function resolveActiveExportW(livePvW, maxChargeW) {
+  if (livePvW <= 0) {
+    return 0;
+  }
+  return Math.max(0, Math.round(livePvW - Math.max(0, maxChargeW)));
 }
 function resolveCurtailmentSetpoints(phase, livePvW, maxChargeW, forecast, nowHour, window) {
   if (phase === "before") {
@@ -169,14 +224,18 @@ function resolveCurtailmentSetpoints(phase, livePvW, maxChargeW, forecast, nowHo
 0 && (module.exports = {
   COMBINER_MAX_AC_OUTPUT_W,
   PV_SENSOR_IDS,
+  aggregateSolarbankSoc,
   calcMaxChargeW,
+  calcMissingChargeWh,
   isPvGenerationSensor,
   isPvSensorEntity,
+  normalizeSocPercent,
   parsePvSensorStateId,
   parseSystemPvStateId,
   pvSensorStatePaths,
   readLivePvPowerW,
   readPvFromEntities,
+  readSocPercentForCurtailment,
   resolveActiveExportW,
   resolveBeforeExportW,
   resolveCurtailmentSetpoints,
