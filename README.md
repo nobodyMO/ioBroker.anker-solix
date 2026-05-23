@@ -288,7 +288,7 @@ German guides/videos linked from the [HA README](https://github.com/thomluther/h
 
 ## Curtailment avoidance (optional)
 
-Tab **Abregelungsvermeidung** / **Curtailment avoidance**: reads hourly forecast from the [solarprognose](https://github.com/ioBroker/ioBroker.solarprognose) adapter (default path `solarprognose.0.forecast.00.hourly`, states `04h.power` … `20h.power` in **kW**, converted to W internally). When forecast PV exceeds the configured AC export limit, the adapter switches to **manual** mode for the whole curtailment day (**including before** the hourly window), sets **AC charge limit** to **0 W** (no battery charging), and adjusts **AC output limit** (and **grid export limit** on combiner) to the **current hour’s forecast** so PV is fed to the grid instead of stored. **After** the window, **self-consumption** or **smart** mode (configurable). Status: `anker-solix.0.curtailment.*` (`max_charge_w` = export target in W).
+Tab **Abregelungsvermeidung** / **Curtailment avoidance**: [solarprognose](https://github.com/ioBroker/ioBroker.solarprognose) hourly forecast detects overproduction days. On those days (**including before** the window): **manual** mode, **AC charge limit 0 W**. **AC output limit** (and **grid export limit** on combiner) follow **live PV** (`total_pv_power` / `input_power`) and are re-applied when generation changes (each poll and on MQTT sensor updates, min. 25 W delta); if live PV is unavailable, the current hour’s forecast is used. **After** the window, **self-consumption** or **smart** mode (configurable). Status: `anker-solix.0.curtailment.*` (`max_charge_w` = export target in W).
 
 **Admin:** checkbox *Combiner box present* — without combiner: device ID + solarbank type + battery Wh; with combiner: combiner ID + up to **4** solarbank slots (each slot can be *none*). **Combiner:** total AC limit = **sum** of per-unit limits (SB2 **1000** W, SB3 Pro **1200** W, SB4 Pro **2500** W). **Standalone:** always **800** W.
 
@@ -298,6 +298,7 @@ Tab **Abregelungsvermeidung** / **Curtailment avoidance**: reads hourly forecast
 
 ### 0.10.5
 
+- Curtailment: export limit tracks live PV power (updates on generation change); forecast fallback
 - Curtailment: manual + zero charge + export limit from forecast (before/active); no battery pre-charge strategy
 - Curtailment: fix solarprognose forecast (kW → W, state path `11h.power`)
 

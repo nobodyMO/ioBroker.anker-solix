@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.6",
+		"version": "0.10.7",
 		"messagebox": true,
 		"news": {
+			"0.10.7": {
+				"en": "Curtailment: export limit follows live PV (total_pv_power), updates on generation change",
+				"de": "Abregelung: Einspeise-Limit folgt live PV, Nachführung bei Erzeugungsänderung",
+				"ru": "Экспорт по live PV",
+				"pt": "Exportação segue PV em tempo real",
+				"nl": "Export volgt live PV",
+				"fr": "Export suit PV en direct",
+				"it": "Export segue PV live",
+				"es": "Exportación sigue PV en vivo",
+				"pl": "Eksport według live PV",
+				"uk": "Експорт за live PV",
+				"zh-cn": "并网限值跟随实时光伏"
+			},
 			"0.10.6": {
 				"en": "Curtailment: manual mode, no charge, export limit = hourly forecast (also before window)",
 				"de": "Abregelung: Benutzerdefiniert, kein Laden, Einspeise-Limit = Stundenprognose (auch vor Fenster)",

@@ -26,6 +26,7 @@ var path = __toESM(require("node:path"));
 var utils = __toESM(require("@iobroker/adapter-core"));
 var import_configHelpers = require("./lib/configHelpers");
 var import_controlQueue = require("./lib/controlQueue");
+var import_curtailmentPower = require("./lib/curtailmentPower");
 var import_curtailmentRunner = require("./lib/curtailmentRunner");
 var import_curtailmentStates = require("./lib/curtailmentStates");
 var import_ensurePython = require("./lib/ensurePython");
@@ -36,6 +37,8 @@ class AnkerSolix extends utils.Adapter {
   pollTimer;
   controlQueue = new import_controlQueue.ControlQueue();
   deviceContexts = /* @__PURE__ */ new Map();
+  deviceEntities = /* @__PURE__ */ new Map();
+  curtailmentPvDebounce = /* @__PURE__ */ new Map();
   pollAfterControlTimer;
   constructor(options = {}) {
     super({
@@ -167,6 +170,7 @@ class AnkerSolix extends utils.Adapter {
       const pollDevices = result.devices;
       if (pollDevices == null ? void 0 : pollDevices.length) {
         this.rememberDeviceContexts(pollDevices);
+        this.rememberDeviceEntities(pollDevices);
         await (0, import_stateSync.syncDevices)(this, pollDevices);
       }
       if (result.nickname) {
@@ -289,6 +293,30 @@ class AnkerSolix extends utils.Adapter {
       this.log
     );
   }
+  rememberDeviceEntities(devices) {
+    for (const device of devices) {
+      this.deviceEntities.set(device.info.id, device.entities);
+    }
+  }
+  getCurtailmentConfig() {
+    const modeAfter = this.config.curtailmentModeAfter === "smart" ? "smart" : "smartmeter";
+    return {
+      enabled: true,
+      forecastBasePath: (this.config.curtailmentForecastPath || "solarprognose.0.forecast.00.hourly").trim(),
+      modeAfter,
+      curtailmentHasCombiner: this.config.curtailmentHasCombiner,
+      curtailmentStandaloneDeviceId: this.config.curtailmentStandaloneDeviceId,
+      curtailmentStandaloneProfile: this.config.curtailmentStandaloneProfile,
+      curtailmentStandaloneBatteryWh: this.config.curtailmentStandaloneBatteryWh,
+      curtailmentCombinerDeviceId: this.config.curtailmentCombinerDeviceId,
+      curtailmentCombinerBatteryWh: this.config.curtailmentCombinerBatteryWh,
+      curtailmentCombinerUnit1: this.config.curtailmentCombinerUnit1,
+      curtailmentCombinerUnit2: this.config.curtailmentCombinerUnit2,
+      curtailmentCombinerUnit3: this.config.curtailmentCombinerUnit3,
+      curtailmentCombinerUnit4: this.config.curtailmentCombinerUnit4,
+      curtailmentDevicesJson: this.config.curtailmentDevicesJson
+    };
+  }
   getCurtailmentHost() {
     return {
       namespace: this.namespace,
@@ -296,6 +324,7 @@ class AnkerSolix extends utils.Adapter {
       getForeignStateAsync: (id) => this.getForeignStateAsync(id),
       getForeignObjectAsync: (id) => this.getForeignObjectAsync(id),
       getStateAsync: (id) => this.getStateAsync(id),
+      getDeviceEntities: (deviceId) => this.deviceEntities.get(deviceId),
       setState: async (id, val, ack) => {
         await this.setState(id, val, ack != null ? ack : true);
       },
@@ -303,28 +332,45 @@ class AnkerSolix extends utils.Adapter {
       applyControl: (deviceId, control, value, deviceContext) => this.applyAdapterControl(deviceId, control, value, deviceContext)
     };
   }
+  scheduleCurtailmentOnPvChange(deviceId) {
+    const existing = this.curtailmentPvDebounce.get(deviceId);
+    if (existing) {
+      clearTimeout(existing);
+    }
+    this.curtailmentPvDebounce.set(
+      deviceId,
+      setTimeout(() => {
+        this.curtailmentPvDebounce.delete(deviceId);
+        void this.runCurtailmentExportOnPvChange(deviceId);
+      }, 400)
+    );
+  }
+  async runCurtailmentExportOnPvChange(deviceId) {
+    if (!this.config.enableCurtailmentAvoidance) {
+      return;
+    }
+    try {
+      await (0, import_curtailmentRunner.runCurtailmentOnPvChange)(this.getCurtailmentHost(), this.getCurtailmentConfig(), deviceId);
+    } catch (err) {
+      this.log.debug(`Curtailment PV follow: ${err.message}`);
+    }
+  }
+  subscribeCurtailmentPvStates() {
+    if (!this.config.enableCurtailmentAvoidance) {
+      return;
+    }
+    const ns = this.namespace;
+    for (const channel of ["solarbank", "combiner_box"]) {
+      this.subscribeStates(`${ns}.${channel}.*.sensors.total_pv_power`);
+      this.subscribeStates(`${ns}.${channel}.*.sensors.input_power`);
+    }
+  }
   async runCurtailmentAvoidanceIfEnabled() {
     if (!this.config.enableCurtailmentAvoidance) {
       return;
     }
     try {
-      const modeAfter = this.config.curtailmentModeAfter === "smart" ? "smart" : "smartmeter";
-      await (0, import_curtailmentRunner.runCurtailmentAvoidance)(this.getCurtailmentHost(), {
-        enabled: true,
-        forecastBasePath: (this.config.curtailmentForecastPath || "solarprognose.0.forecast.00.hourly").trim(),
-        modeAfter,
-        curtailmentHasCombiner: this.config.curtailmentHasCombiner,
-        curtailmentStandaloneDeviceId: this.config.curtailmentStandaloneDeviceId,
-        curtailmentStandaloneProfile: this.config.curtailmentStandaloneProfile,
-        curtailmentStandaloneBatteryWh: this.config.curtailmentStandaloneBatteryWh,
-        curtailmentCombinerDeviceId: this.config.curtailmentCombinerDeviceId,
-        curtailmentCombinerBatteryWh: this.config.curtailmentCombinerBatteryWh,
-        curtailmentCombinerUnit1: this.config.curtailmentCombinerUnit1,
-        curtailmentCombinerUnit2: this.config.curtailmentCombinerUnit2,
-        curtailmentCombinerUnit3: this.config.curtailmentCombinerUnit3,
-        curtailmentCombinerUnit4: this.config.curtailmentCombinerUnit4,
-        curtailmentDevicesJson: this.config.curtailmentDevicesJson
-      });
+      await (0, import_curtailmentRunner.runCurtailmentAvoidance)(this.getCurtailmentHost(), this.getCurtailmentConfig());
     } catch (err) {
       this.log.warn(`Curtailment avoidance: ${err.message}`);
     }
@@ -339,7 +385,16 @@ class AnkerSolix extends utils.Adapter {
     }, 12e3);
   }
   async onStateChange(id, state) {
-    if (!state || state.ack) {
+    if (!state) {
+      return;
+    }
+    if (this.config.enableCurtailmentAvoidance) {
+      const pv = (0, import_curtailmentPower.parsePvSensorStateId)(this.namespace, id);
+      if (pv && state.val !== null && state.val !== void 0) {
+        this.scheduleCurtailmentOnPvChange(pv.deviceId);
+      }
+    }
+    if (state.ack) {
       return;
     }
     if (id.startsWith(`${this.namespace}.services.`) && state.val === true) {
@@ -491,6 +546,7 @@ class AnkerSolix extends utils.Adapter {
     await (0, import_pythonBridge.ensureBridgeDaemon)(this.getBridgeConfig(), this.config.pythonPath || "", this.log);
     this.subscribeStates(`${this.namespace}.*.control.*`);
     this.subscribeStates(`${this.namespace}.services.*`);
+    this.subscribeCurtailmentPvStates();
     await this.pollOnce();
     this.pollTimer = this.setInterval(() => {
       void this.pollOnce();
@@ -505,6 +561,10 @@ class AnkerSolix extends utils.Adapter {
       clearTimeout(this.pollAfterControlTimer);
       this.pollAfterControlTimer = void 0;
     }
+    for (const timer of this.curtailmentPvDebounce.values()) {
+      clearTimeout(timer);
+    }
+    this.curtailmentPvDebounce.clear();
     void (0, import_pythonBridge.stopBridgeDaemon)().finally(() => callback());
   }
 }
