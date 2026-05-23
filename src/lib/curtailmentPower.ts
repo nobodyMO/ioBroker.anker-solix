@@ -1,5 +1,9 @@
+import { aggregateSolarbankSoc, normalizeSocPercent, type SolarbankSocSample } from "./combinerSoc";
 import { forecastExportTargetW } from "./curtailmentForecast";
 import type { CurtailmentPhase, CurtailmentWindow, HourlyForecast } from "./curtailmentTypes";
+
+export type { SolarbankSocSample };
+export { normalizeSocPercent, aggregateSolarbankSoc };
 
 /** Sensors that reflect current PV generation (W). */
 export const PV_SENSOR_IDS = ["total_pv_power", "input_power", "solar_power_total"] as const;
@@ -15,6 +19,8 @@ export interface CurtailmentPowerHost {
 	getDeviceEntities?: (deviceId: string) => Record<string, unknown> | undefined;
 	/** Anker site UUID for system.*.sensors.total_pv_power (preferred PV source). */
 	getDeviceSiteId?: (deviceId: string) => string | undefined;
+	/** All solarbanks on the same site (for SOC aggregation when combiner has no total). */
+	getSiteSolarbankSocs?: (siteId: string) => SolarbankSocSample[];
 }
 
 export function systemTotalPvStatePath(namespace: string, siteId: string): string {
@@ -167,33 +173,45 @@ export async function readSocPercentForCurtailment(
 ): Promise<number | undefined> {
 	const fromEntities = host.getDeviceEntities?.(deviceId);
 	if (fromEntities) {
-		for (const key of ["state_of_charge", "battery_soc", "total_soc"] as const) {
-			const n = Number(fromEntities[key]);
-			if (Number.isFinite(n) && n >= 0 && n <= 100) {
+		const total = normalizeSocPercent(
+			fromEntities.total_state_of_charge ?? fromEntities.computed_total_soc ?? fromEntities.total_soc,
+		);
+		if (total !== undefined) {
+			return Math.round(total);
+		}
+		for (const key of ["state_of_charge", "battery_soc"] as const) {
+			const n = normalizeSocPercent(fromEntities[key]);
+			if (n !== undefined) {
 				return Math.round(n);
 			}
+		}
+	}
+
+	const combinerPaths = [
+		`${host.namespace}.combiner_box.${deviceId}.sensors.total_state_of_charge`,
+		`${host.namespace}.combiner_box.${deviceId}.sensors.state_of_charge`,
+		`${host.namespace}.combiner_box.${deviceId}.sensors.battery_soc`,
+	];
+	for (const id of combinerPaths) {
+		const st = await host.getStateAsync(id);
+		const n = normalizeSocPercent(st?.val);
+		if (n !== undefined) {
+			return Math.round(n);
 		}
 	}
 
 	const siteId = host.getDeviceSiteId?.(deviceId)?.trim();
 	if (siteId) {
 		const systemSoc = await host.getStateAsync(`${host.namespace}.system.${siteId}.sensors.state_of_charge`);
-		const n = Number(systemSoc?.val);
-		if (Number.isFinite(n) && n >= 0 && n <= 100) {
+		const n = normalizeSocPercent(systemSoc?.val);
+		if (n !== undefined) {
 			return Math.round(n);
 		}
-	}
 
-	const candidates = [
-		`${host.namespace}.combiner_box.${deviceId}.sensors.state_of_charge`,
-		`${host.namespace}.combiner_box.${deviceId}.sensors.battery_soc`,
-		`${host.namespace}.solarbank.${deviceId}.sensors.state_of_charge`,
-	];
-	for (const id of candidates) {
-		const st = await host.getStateAsync(id);
-		const n = Number(st?.val);
-		if (Number.isFinite(n) && n >= 0 && n <= 100) {
-			return Math.round(n);
+		const banks = host.getSiteSolarbankSocs?.(siteId) ?? [];
+		const aggregated = aggregateSolarbankSoc(banks);
+		if (aggregated !== undefined) {
+			return Math.round(aggregated);
 		}
 	}
 

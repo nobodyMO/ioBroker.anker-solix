@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.15",
+		"version": "0.10.16",
 		"messagebox": true,
 		"news": {
+			"0.10.16": {
+				"en": "Combiner total_state_of_charge (cloud or weighted solarbank SOC); curtailment uses it",
+				"de": "Combiner: Gesamt-Ladestand total_state_of_charge (Cloud oder gewichteter Solarbank-SOC)",
+				"ru": "Combiner total SOC",
+				"pt": "Combiner total SOC",
+				"nl": "Combiner total SOC",
+				"fr": "Combiner total SOC",
+				"it": "Combiner total SOC",
+				"es": "Combiner total SOC",
+				"pl": "Combiner total SOC",
+				"uk": "Combiner total SOC",
+				"zh-cn": "Combiner 总 SOC"
+			},
 			"0.10.15": {
 				"en": "Curtailment: API-only ac_output_limit; fix SOC/missing_charge_wh; no station feed-in changes",
 				"de": "Abregelung: ac_output_limit nur API; SOC/missing_charge_wh korrigiert; kein Einspeise-Limit",

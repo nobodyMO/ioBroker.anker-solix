@@ -66,6 +66,7 @@
 	"grid_power": "Grid power (W)",
 	"home_power": "Home load power (W)",
 	"state_of_charge": "State of charge (%)",
+	"total_state_of_charge": "Combiner total SOC (%)",
 	"set_output_power": "Output preset (W)",
 	"allow_grid_export": "Allow grid export",
 	"preset_allow_export": "Allow export (schedule preset)",

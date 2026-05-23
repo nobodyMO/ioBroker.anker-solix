@@ -66,6 +66,7 @@
 	"grid_power": "Netzleistung (W)",
 	"home_power": "Hausverbrauch (W)",
 	"state_of_charge": "Ladezustand SOC (%)",
+	"total_state_of_charge": "Gesamt-Ladestand Combiner (%)",
 	"set_output_power": "Ausgangs-Preset (W)",
 	"allow_grid_export": "Einspeisung ins Netz erlauben",
 	"preset_allow_export": "Export-Preset (Zeitplan)",

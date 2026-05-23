@@ -18,6 +18,7 @@ from aiohttp import ClientSession
 sys.path.insert(0, str(Path(__file__).parent))
 
 from entity_groups import GROUP_ENERGY_DETAIL, GROUP_ENERGY_STATISTICS, enabled_entity_groups
+from combiner_soc import enrich_combiner_soc
 from entities import (  # noqa: E402
     COMBINER,
     SOLARBANK,
@@ -741,6 +742,8 @@ def _devices_from_caches(
         if not should_include_device(str(ctx_id), ctx_data, info, config):
             continue
         ctx_data = _enrich_cache_entry(client, str(ctx_id), ctx_data, info)
+        if info["type"] == "combiner_box":
+            ctx_data = enrich_combiner_soc(client.api, str(ctx_id), ctx_data)
         entities = extract_entities(ctx_data, config)
         writable = writable_controls_for_device(ctx_data, info["type"], config)
         if not entities and not writable:

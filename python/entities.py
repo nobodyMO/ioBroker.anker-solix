@@ -92,6 +92,13 @@ _BASE_SENSOR_ENTITIES: list[dict[str, Any]] = [
         "types": [SOLARBANK, SYSTEM, COMBINER],
     },
     {
+        "id": "total_state_of_charge",
+        "keys": ["total_state_of_charge", "computed_total_soc", "total_soc"],
+        "unit": "%",
+        "role": "value.battery",
+        "types": [COMBINER],
+    },
+    {
         "id": "set_output_power",
         "keys": ["set_output_power", "set_load_power"],
         "unit": "W",

@@ -10,7 +10,12 @@ import * as utils from "@iobroker/adapter-core";
 
 import { parseSelectedDeviceIds } from "./lib/configHelpers";
 import { ControlQueue } from "./lib/controlQueue";
-import { parsePvSensorStateId, parseSystemPvStateId } from "./lib/curtailmentPower";
+import {
+	normalizeSocPercent,
+	parsePvSensorStateId,
+	parseSystemPvStateId,
+	type SolarbankSocSample,
+} from "./lib/curtailmentPower";
 import {
 	runCurtailmentAvoidance,
 	runCurtailmentOnPvChange,
@@ -307,6 +312,26 @@ class AnkerSolix extends utils.Adapter {
 		}
 	}
 
+	private collectSiteSolarbankSocs(siteId: string): SolarbankSocSample[] {
+		const banks: SolarbankSocSample[] = [];
+		for (const [deviceId, ctx] of this.deviceContexts) {
+			if (ctx.site_id !== siteId || ctx.type !== "solarbank") {
+				continue;
+			}
+			const entities = this.deviceEntities.get(deviceId);
+			const soc = normalizeSocPercent(entities?.state_of_charge ?? entities?.battery_soc);
+			if (soc === undefined) {
+				continue;
+			}
+			const capRaw = Number(entities?.battery_capacity);
+			banks.push({
+				socPercent: soc,
+				capacityWh: Number.isFinite(capRaw) && capRaw > 0 ? Math.round(capRaw) : undefined,
+			});
+		}
+		return banks;
+	}
+
 	private rememberDeviceContexts(devices: BridgeDevice[]): void {
 		for (const device of devices) {
 			const info = device.info;
@@ -377,6 +402,7 @@ class AnkerSolix extends utils.Adapter {
 			getStateAsync: id => this.getStateAsync(id),
 			getDeviceEntities: deviceId => this.deviceEntities.get(deviceId),
 			getDeviceSiteId: deviceId => this.deviceContexts.get(deviceId)?.site_id,
+			getSiteSolarbankSocs: siteId => this.collectSiteSolarbankSocs(siteId),
 			getDeviceWritable: deviceId => this.deviceWritable.get(deviceId),
 			setState: async (id, val, ack) => {
 				await this.setState(id, val as ioBroker.StateValue, ack ?? true);
