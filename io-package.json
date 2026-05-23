@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.20",
+		"version": "0.10.21",
 		"messagebox": true,
 		"news": {
+			"0.10.21": {
+				"en": "Fix: API client config attribute (daemon crash); stagger week/month/year API calls",
+				"de": "Fix: API-Client config (Daemon-Absturz); Wochen/Monat/Jahr-API nacheinander statt parallel",
+				"ru": "Fix: config + API throttle",
+				"pt": "Fix: config + API throttle",
+				"nl": "Fix: config + API throttle",
+				"fr": "Fix: config + API throttle",
+				"it": "Fix: config + API throttle",
+				"es": "Fix: config + API throttle",
+				"pl": "Fix: config + API throttle",
+				"uk": "Fix: config + API throttle",
+				"zh-cn": "修复 config；周期统计 API 分批"
+			},
 			"0.10.20": {
 				"en": "Period energy stats under statistics.week|month|year.* subfolders (enable entity groups)",
 				"de": "Wochen-/Monats-/Jahresstatistik unter statistics.week|month|year.* (Entitätsgruppen aktivieren)",
@@ -237,19 +250,6 @@
 				"pl": "Combiner: suma do 4 profili",
 				"uk": "Combiner: сума до 4 профілів",
 				"zh-cn": "Combiner：最多4种机型功率相加"
-			},
-			"0.10.0": {
-				"en": "Optional curtailment avoidance via solar forecast (solarprognose adapter)",
-				"de": "Optionale Abregelungsvermeidung per Solarprognose (Adapter solarprognose)",
-				"ru": "Избегание ограничения мощности",
-				"pt": "Evitar limitação de potência",
-				"nl": "Afbegrenzingsvermijding",
-				"fr": "Évitement de limitation",
-				"it": "Evita limitazione potenza",
-				"es": "Evitar limitación de potencia",
-				"pl": "Unikanie ograniczenia mocy",
-				"uk": "Уникнення обмеження потужності",
-				"zh-cn": "可选防限电（太阳能预测）"
 			}
 		},
 		"titleLang": {

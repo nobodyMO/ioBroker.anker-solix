@@ -39,6 +39,7 @@ class IoBrokerAnkerApiClient:
         session: ClientSession,
         logger: logging.Logger,
     ) -> None:
+        self.config = config
         email = str(config.get("username") or "").strip()
         password = str(config.get("password") or "")
         country = (config.get("country") or "DE").upper()
@@ -64,6 +65,7 @@ class IoBrokerAnkerApiClient:
             1, int(config.get("deviceDetailMultiplier", DEFAULT_DEVICE_MULTIPLIER))
         )
         self._intervalcount = 0
+        self._period_rotate = 0
         self._mqtt_usage = bool(config.get("mqttUsage", True))
         self._startup = True
         self.deferred_data = False
@@ -79,6 +81,7 @@ class IoBrokerAnkerApiClient:
         try:
             data = json.loads(self._state_path.read_text(encoding="utf-8"))
             self._intervalcount = int(data.get("intervalcount", 0))
+            self._period_rotate = int(data.get("period_rotate", 0))
             self._startup = bool(data.get("startup", True))
             self.deferred_data = bool(data.get("deferred_data", False))
         except (OSError, ValueError, TypeError) as exc:
@@ -90,6 +93,7 @@ class IoBrokerAnkerApiClient:
                 json.dumps(
                     {
                         "intervalcount": self._intervalcount,
+                        "period_rotate": self._period_rotate,
                         "startup": self._startup,
                         "deferred_data": self.deferred_data,
                     },
@@ -141,8 +145,7 @@ class IoBrokerAnkerApiClient:
                 await self.api.update_device_energy(
                     exclude=set(self.exclude_categories)
                 )
-                if enabled_periods(self.config):
-                    await update_site_energy_periods(self.api, self.config)
+                await self._update_energy_periods()
             self._intervalcount = self._deviceintervals
             self.active_device_refresh = False
             await self.check_mqtt_session()
@@ -152,8 +155,7 @@ class IoBrokerAnkerApiClient:
             self.active_device_refresh = True
             self._logger.info("Updating deferred energy data")
             await self.api.update_device_energy(exclude=set(self.exclude_categories))
-            if enabled_periods(self.config):
-                await update_site_energy_periods(self.api, self.config)
+            await self._update_energy_periods()
             self.deferred_data = True
             self._startup = False
             self.active_device_refresh = False
@@ -212,6 +214,7 @@ class IoBrokerAnkerApiClient:
 
     def apply_runtime_config(self, config: dict) -> None:
         """Update poll options without tearing down the persistent session."""
+        self.config = config
         self.exclude_categories = build_exclude_categories(config)
         self._deviceintervals = max(
             1, int(config.get("deviceDetailMultiplier", self._deviceintervals))

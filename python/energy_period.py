@@ -372,9 +372,14 @@ def enabled_periods(config: dict) -> list[str]:
     return periods
 
 
-async def update_site_energy_periods(api: AnkerSolixApi, config: dict) -> None:
+async def update_site_energy_periods(
+    api: AnkerSolixApi,
+    config: dict,
+    *,
+    periods: list[str] | None = None,
+) -> None:
     """Query week/month/year totals for all sites when entity groups are enabled."""
-    periods = enabled_periods(config)
+    periods = periods if periods is not None else enabled_periods(config)
     if not periods:
         return
     exclude = set(build_exclude_categories(config))
