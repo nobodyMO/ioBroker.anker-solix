@@ -299,6 +299,10 @@ Tab **Abregelungsvermeidung** / **Curtailment avoidance**: requires the [ioBroke
 
 ## Changelog
 
+### 0.10.25
+
+- **Fix:** `curtailment.soc_percent` state object is created on start (was missing since 0.10.16)
+
 ### 0.10.24
 
 - **Fix:** `NameError: needs_daily_energy_poll` / missing `PERIOD_YEAR` imports in **0.10.23** (incomplete release)

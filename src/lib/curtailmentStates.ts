@@ -71,6 +71,20 @@ export async function setupCurtailmentStates(adapter: ioBroker.Adapter): Promise
 			},
 		},
 		{
+			id: CURTAILMENT_STATE_IDS.socPercent,
+			common: {
+				name: "Battery SOC used for curtailment (%)",
+				type: "number",
+				role: "value.battery",
+				unit: "%",
+				min: 0,
+				max: 100,
+				read: true,
+				write: false,
+				def: 0,
+			},
+		},
+		{
 			id: CURTAILMENT_STATE_IDS.maxChargeW,
 			common: {
 				name: "Max AC charge power (missing Wh ÷ remaining hours, W)",
