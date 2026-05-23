@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.8",
+		"version": "0.10.9",
 		"messagebox": true,
 		"news": {
+			"0.10.9": {
+				"en": "Curtailment active: AC output = full PV (not PV−charge); combiner cap 4800 W",
+				"de": "Abregelung active: AC-Ausgang = volle PV (nicht PV−Laden); Combiner max 4800 W",
+				"ru": "Active: полный PV на выход",
+				"pt": "Active: saída AC = PV total",
+				"nl": "Active: AC = volledige PV",
+				"fr": "Active: sortie AC = PV complète",
+				"it": "Active: uscita AC = PV piena",
+				"es": "Active: salida AC = PV completa",
+				"pl": "Active: AC = pełna PV",
+				"uk": "Active: AC = повна PV",
+				"zh-cn": "active：AC 输出=满光伏"
+			},
 			"0.10.8": {
 				"en": "Curtailment: instant PV export in before; active = calculated charge + export surplus",
 				"de": "Abregelung: before sofort Export=PV; active langsam laden + Rest einspeisen",

@@ -288,7 +288,7 @@ German guides/videos linked from the [HA README](https://github.com/thomluther/h
 
 ## Curtailment avoidance (optional)
 
-Tab **Abregelungsvermeidung** / **Curtailment avoidance**: [solarprognose](https://github.com/ioBroker/ioBroker.solarprognose) detects overproduction days. **Before** the window: **manual**, **charge 0 W**, **export limit = live PV** (`total_pv_power`, updated **immediately** on every change when states are written). **Active** window: **manual**, **AC charge limit** = calculated slow charge to fill the battery by end of curtailment (`missing_Wh / remaining_hours`), **export limit** = `live PV − charge limit`. **After** the window: restore selected mode. Status: `curtailment.live_pv_w`, `export_w`, `max_charge_w`.
+Tab **Abregelungsvermeidung** / **Curtailment avoidance**: [solarprognose](https://github.com/ioBroker/ioBroker.solarprognose) detects overproduction days. **Before** the window: **manual**, **charge 0 W**, **export limit = live PV** (`total_pv_power`, updated **immediately** on every change when states are written). **Active** window: **manual**, **AC output limit** = full live PV (combiner max **4800 W**), **AC charge limit** = calculated slow charge (`missing_Wh / remaining_hours`). **After** the window: restore selected mode. Status: `curtailment.live_pv_w`, `export_w`, `max_charge_w`.
 
 **Admin:** checkbox *Combiner box present* — without combiner: device ID + solarbank type + battery Wh; with combiner: combiner ID + up to **4** solarbank slots (each slot can be *none*). **Combiner:** total AC limit = **sum** of per-unit limits (SB2 **1000** W, SB3 Pro **1200** W, SB4 Pro **2500** W). **Standalone:** always **800** W.
 

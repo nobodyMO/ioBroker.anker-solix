@@ -86,15 +86,18 @@ export function resolveBeforeExportW(
 	return forecastExportTargetW(forecast, nowHour, window);
 }
 
+/** Combiner / multisystem AC output (max_load_parallel MQTT steps up to 4800 W). */
+export const COMBINER_MAX_AC_OUTPUT_W = 4800;
+
 /**
- * Active window: export surplus so only maxChargeW goes to the battery.
- * export = generation - maxCharge (battery fills slowly until curtailment ends).
+ * Active window: AC output limit = full PV (charging capped separately via ac_charge_limit).
+ * Slow battery fill uses maxChargeW only; do not subtract it from the export limit.
  */
-export function resolveActiveExportW(livePvW: number, maxChargeW: number): number {
+export function resolveActiveExportW(livePvW: number, _maxChargeW: number): number {
 	if (livePvW <= 0) {
 		return 0;
 	}
-	return Math.max(0, Math.round(livePvW) - Math.max(0, Math.round(maxChargeW)));
+	return Math.round(livePvW);
 }
 
 export function calcMaxChargeW(batteryCapacityWh: number, socPercent: number, hoursRemaining: number): number {

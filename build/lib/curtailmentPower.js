@@ -18,6 +18,7 @@ var __copyProps = (to, from, except, desc) => {
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var curtailmentPower_exports = {};
 __export(curtailmentPower_exports, {
+  COMBINER_MAX_AC_OUTPUT_W: () => COMBINER_MAX_AC_OUTPUT_W,
   PV_SENSOR_IDS: () => PV_SENSOR_IDS,
   calcMaxChargeW: () => calcMaxChargeW,
   isPvSensorEntity: () => isPvSensorEntity,
@@ -92,11 +93,12 @@ function resolveBeforeExportW(livePvW, forecast, nowHour, window) {
   }
   return (0, import_curtailmentForecast.forecastExportTargetW)(forecast, nowHour, window);
 }
-function resolveActiveExportW(livePvW, maxChargeW) {
+const COMBINER_MAX_AC_OUTPUT_W = 4800;
+function resolveActiveExportW(livePvW, _maxChargeW) {
   if (livePvW <= 0) {
     return 0;
   }
-  return Math.max(0, Math.round(livePvW) - Math.max(0, Math.round(maxChargeW)));
+  return Math.round(livePvW);
 }
 function calcMaxChargeW(batteryCapacityWh, socPercent, hoursRemaining) {
   const hours = Math.max(1, hoursRemaining);
@@ -117,6 +119,7 @@ function resolveCurtailmentSetpoints(phase, livePvW, maxChargeW, forecast, nowHo
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  COMBINER_MAX_AC_OUTPUT_W,
   PV_SENSOR_IDS,
   calcMaxChargeW,
   isPvSensorEntity,

@@ -40,11 +40,12 @@ function berlinHour() {
   const h = (_a = parts.find((p) => p.type === "hour")) == null ? void 0 : _a.value;
   return Math.min(23, Math.max(0, Number(h) || 0));
 }
-function clampExportW(powerW) {
+function clampExportW(powerW, role) {
   if (powerW <= 0) {
     return 0;
   }
-  return Math.min(1e5, Math.max(100, Math.round(powerW)));
+  const hardwareMax = role === "combiner" ? import_curtailmentPower.COMBINER_MAX_AC_OUTPUT_W : 1e5;
+  return Math.min(hardwareMax, Math.max(100, Math.round(powerW)));
 }
 async function readSocPercent(host, deviceId) {
   const candidates = [
@@ -87,7 +88,7 @@ async function applyChargeLimit(host, device, chargeW) {
   lastAppliedChargeW.set(device.deviceId, rounded);
 }
 async function applyExportLimit(host, device, exportTargetW) {
-  const exportW = clampExportW(exportTargetW);
+  const exportW = clampExportW(exportTargetW, device.role);
   if (exportW <= 0) {
     return;
   }

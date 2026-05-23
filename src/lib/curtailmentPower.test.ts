@@ -19,14 +19,14 @@ describe("curtailmentPower", () => {
 		expect(set.chargeW).to.equal(0);
 	});
 
-	it("active: export is PV minus max charge", () => {
-		expect(resolveActiveExportW(5000, 800)).to.equal(4200);
-		expect(resolveActiveExportW(400, 800)).to.equal(0);
+	it("active: export is full PV, charge is separate", () => {
+		expect(resolveActiveExportW(5000, 800)).to.equal(5000);
+		expect(resolveActiveExportW(400, 800)).to.equal(400);
 		const forecast = { hours: new Map<number, number>([[11, 5000]]) };
 		const window = detectCurtailmentWindow(forecast, 800);
 		const set = resolveCurtailmentSetpoints("active", 5000, 800, forecast, 11, window);
 		expect(set.chargeW).to.equal(800);
-		expect(set.exportW).to.equal(4200);
+		expect(set.exportW).to.equal(5000);
 	});
 
 	it("calc max charge from remaining hours", () => {

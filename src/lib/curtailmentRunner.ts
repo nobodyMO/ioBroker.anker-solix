@@ -7,13 +7,14 @@ import {
 	remainingCurtailmentHours,
 } from "./curtailmentForecast";
 import {
+	COMBINER_MAX_AC_OUTPUT_W,
 	calcMaxChargeW,
 	readLivePvPowerW,
 	resolveCurtailmentSetpoints,
 	type CurtailmentPowerHost,
 } from "./curtailmentPower";
 import { CURTAILMENT_STATE_IDS } from "./curtailmentStates";
-import type { CurtailmentDeviceConfig, CurtailmentPhase } from "./curtailmentTypes";
+import type { CurtailmentDeviceConfig, CurtailmentDeviceRole, CurtailmentPhase } from "./curtailmentTypes";
 import type { DeviceControlContext } from "./types";
 
 export interface CurtailmentRunnerConfig extends CurtailmentStructuredNative {
@@ -54,11 +55,12 @@ function berlinHour(): number {
 	return Math.min(23, Math.max(0, Number(h) || 0));
 }
 
-function clampExportW(powerW: number): number {
+function clampExportW(powerW: number, role: CurtailmentDeviceRole): number {
 	if (powerW <= 0) {
 		return 0;
 	}
-	return Math.min(100_000, Math.max(100, Math.round(powerW)));
+	const hardwareMax = role === "combiner" ? COMBINER_MAX_AC_OUTPUT_W : 100_000;
+	return Math.min(hardwareMax, Math.max(100, Math.round(powerW)));
 }
 
 async function readSocPercent(host: CurtailmentRunnerHost, deviceId: string): Promise<number> {
@@ -123,7 +125,7 @@ async function applyExportLimit(
 	device: CurtailmentDeviceConfig,
 	exportTargetW: number,
 ): Promise<void> {
-	const exportW = clampExportW(exportTargetW);
+	const exportW = clampExportW(exportTargetW, device.role);
 	if (exportW <= 0) {
 		return;
 	}
