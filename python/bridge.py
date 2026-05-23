@@ -26,6 +26,10 @@ from entity_groups import (
     enabled_entity_groups,
 )
 from combiner_soc import enrich_combiner_soc
+from energy_statistics import (
+    build_site_has_combiner,
+    device_exposes_energy_statistics,
+)
 from entities import (  # noqa: E402
     COMBINER,
     SOLARBANK,
@@ -723,13 +727,25 @@ async def run_service(config: dict) -> dict:
 
 
 def _enrich_cache_entry(
-    client: IoBrokerAnkerApiClient, ctx_id: str, ctx_data: dict, info: dict
+    client: IoBrokerAnkerApiClient,
+    ctx_id: str,
+    ctx_data: dict,
+    info: dict,
+    *,
+    site_has_combiner: bool,
+    enable_stats: bool,
 ) -> dict:
-    """Attach site-level energy_details to system/site/combiner/solarbank caches."""
+    """Attach site-level energy_details only to the statistics holder device(s)."""
     site_id = str(ctx_data.get("site_id") or "")
     if info["type"] in ("site", "system") and not site_id:
         site_id = str(ctx_id)
     if not site_id:
+        return ctx_data
+    if not device_exposes_energy_statistics(
+        str(info.get("type") or ""),
+        site_has_combiner,
+        enable_stats=enable_stats,
+    ):
         return ctx_data
     site = client.api.sites.get(site_id) or {}
     energy = site.get("energy_details")
@@ -742,13 +758,33 @@ def _devices_from_caches(
     client: IoBrokerAnkerApiClient, config: dict, caches: dict
 ) -> list[dict]:
     devices: list[dict] = []
+    site_has_combiner = build_site_has_combiner(caches)
+    _enabled = enabled_entity_groups(config)
+    enable_stats = (
+        GROUP_ENERGY_STATISTICS in _enabled
+        or GROUP_ENERGY_DETAIL in _enabled
+        or GROUP_ENERGY_STATISTICS_WEEK in _enabled
+        or GROUP_ENERGY_STATISTICS_MONTH in _enabled
+        or GROUP_ENERGY_STATISTICS_YEAR in _enabled
+    )
     for ctx_id, ctx_data in caches.items():
         if not isinstance(ctx_data, dict):
             continue
         info = device_info(str(ctx_id), ctx_data)
         if not should_include_device(str(ctx_id), ctx_data, info, config):
             continue
-        ctx_data = _enrich_cache_entry(client, str(ctx_id), ctx_data, info)
+        site_id = str(info.get("site_id") or "")
+        if info["type"] in ("site", "system") and not site_id:
+            site_id = str(ctx_id)
+        combiner_site = site_has_combiner.get(site_id, False)
+        ctx_data = _enrich_cache_entry(
+            client,
+            str(ctx_id),
+            ctx_data,
+            info,
+            site_has_combiner=combiner_site,
+            enable_stats=enable_stats,
+        )
         if info["type"] == "combiner_box":
             ctx_data = enrich_combiner_soc(client.api, str(ctx_id), ctx_data)
         entities = extract_entities(ctx_data, config)
@@ -758,20 +794,10 @@ def _devices_from_caches(
         usage_opts = sorted(
             client.api.solarbank_usage_mode_options(deviceSn=str(ctx_id))
         )
-        _enabled = enabled_entity_groups(config)
-        enable_stats = (
-            GROUP_ENERGY_STATISTICS in _enabled
-            or GROUP_ENERGY_DETAIL in _enabled
-            or GROUP_ENERGY_STATISTICS_WEEK in _enabled
-            or GROUP_ENERGY_STATISTICS_MONTH in _enabled
-            or GROUP_ENERGY_STATISTICS_YEAR in _enabled
-        )
-        has_statistics = enable_stats and info["type"] in (
-            "system",
-            "site",
-            "combiner_box",
-            "solarbank",
-            "smartmeter",
+        has_statistics = device_exposes_energy_statistics(
+            str(info.get("type") or ""),
+            combiner_site,
+            enable_stats=enable_stats,
         )
         devices.append(
             {
