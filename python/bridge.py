@@ -824,6 +824,7 @@ async def run_poll_with_client(
         "refreshDetails": poll_result.get("refreshDetails", False),
         "intervalcount": poll_result.get("intervalcount"),
         "deviceintervals": poll_result.get("deviceintervals"),
+        "periodEnergyUpdated": poll_result.get("periodEnergyUpdated") or [],
         "persistent": True,
     }
 

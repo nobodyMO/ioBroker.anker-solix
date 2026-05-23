@@ -75,6 +75,7 @@ class IoBrokerAnkerApiClient:
         self._period_rotate = 0
         self._period_detail_count = 0
         self._period_backoff_until = 0.0
+        self._last_period_energy_updated: list[str] = []
         self._mqtt_usage = bool(config.get("mqttUsage", True))
         self._startup = True
         self.deferred_data = False
@@ -138,6 +139,7 @@ class IoBrokerAnkerApiClient:
 
     async def async_get_data(self) -> dict[str, Any]:
         """Same sequence as HA AnkerSolixApiClient.async_get_data (normal poll path)."""
+        self._last_period_energy_updated = []
         await self.api.update_sites(exclude=set(self.exclude_categories))
 
         self._intervalcount -= 1
@@ -153,7 +155,13 @@ class IoBrokerAnkerApiClient:
             await self.api.update_site_details(exclude=set(self.exclude_categories))
             await self._refresh_power_limits()
             if self._startup:
-                self._logger.info("Deferring energy updates on first device refresh")
+                if needs_daily_energy_poll(self.config):
+                    self._logger.info("Deferring energy updates on first device refresh")
+                else:
+                    updated = await self._update_energy_periods()
+                    if updated:
+                        self.deferred_data = True
+                        self._startup = False
             else:
                 if needs_daily_energy_poll(self.config):
                     await self.api.update_device_energy(
@@ -186,6 +194,7 @@ class IoBrokerAnkerApiClient:
             "refreshDetails": refresh_details,
             "intervalcount": self._intervalcount,
             "deviceintervals": self._deviceintervals,
+            "periodEnergyUpdated": list(self._last_period_energy_updated),
         }
 
     async def check_mqtt_session(self) -> None:
@@ -235,14 +244,22 @@ class IoBrokerAnkerApiClient:
         if not periods:
             return 99
         if periods == {PERIOD_YEAR}:
-            return 8
+            return 6
+        if PERIOD_YEAR in periods and PERIOD_MONTH not in periods and PERIOD_WEEK not in periods:
+            return 6
+        if periods == {PERIOD_WEEK}:
+            return 1
+        if PERIOD_WEEK in periods and PERIOD_MONTH not in periods:
+            return 1
+        if PERIOD_MONTH in periods and PERIOD_WEEK not in periods:
+            return 2
         if PERIOD_YEAR in periods:
-            return 5
-        if PERIOD_MONTH in periods:
             return 4
+        if PERIOD_MONTH in periods:
+            return 2
         if PERIOD_WEEK in periods:
-            return 3
-        return 3
+            return 1
+        return 2
 
     def _periods_for_this_refresh(self) -> list[str]:
         """At most one enabled period per detail refresh."""
@@ -266,25 +283,37 @@ class IoBrokerAnkerApiClient:
         self._period_detail_count = 0
         return True
 
-    async def _update_energy_periods(self) -> None:
+    async def _update_energy_periods(self) -> bool:
         if not self._periods_due():
-            return
+            self._last_period_energy_updated = []
+            return False
         periods = self._periods_for_this_refresh()
         if not periods:
-            return
+            self._last_period_energy_updated = []
+            return False
         from solixapi import errors  # noqa: PLC0415
 
         try:
             await update_site_energy_periods(
                 self.api, self.config, periods=periods
             )
+            self._last_period_energy_updated = list(periods)
+            self._logger.info(
+                "Period energy updated for %s (next in ~%s detail refresh cycles)",
+                ", ".join(periods),
+                self._period_detail_interval(),
+            )
+            return True
         except errors.RequestLimitError as exc:
             self._period_backoff_until = time.time() + 1800
+            self._last_period_energy_updated = []
             self._logger.warning(
                 "Period energy skipped for 30 min (rate limit): %s", exc
             )
         except Exception as exc:  # noqa: BLE001
+            self._last_period_energy_updated = []
             self._logger.warning("Period energy update failed: %s", exc)
+        return False
 
     def apply_runtime_config(self, config: dict) -> None:
         """Update poll options without tearing down the persistent session."""

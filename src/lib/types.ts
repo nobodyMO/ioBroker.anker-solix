@@ -48,6 +48,8 @@ export interface BridgePollResult {
 	refreshDetails?: boolean;
 	intervalcount?: number;
 	deviceintervals?: number;
+	/** week|month|year — set when period energy_analysis ran this poll */
+	periodEnergyUpdated?: string[];
 }
 
 export interface BridgeConfig {

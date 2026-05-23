@@ -155,7 +155,7 @@ Typical paths (instance `anker-solix.0`):
 - `anker-solix.0.solarbank.<deviceId>.sensors.*` — power, SOC, etc.
 - `anker-solix.0.solarbank.<deviceId>.control.*` — writable controls where supported
 - `anker-solix.0.<device>.<id>.statistics.*` — daily kWh (enable **Entities** → energy statistics)
-- `…statistics.week.*` / `statistics.month.*` / `statistics.year.*` — calendar week, month, year totals in kWh (separate entity groups; polled on detail refresh, not every cycle)
+- `…statistics.week.*` / `statistics.month.*` / `statistics.year.*` — calendar week, month, year totals in kWh (separate entity groups; **detail refresh** only, ~every `deviceDetailMultiplier` polls; week ≈ each detail cycle, year slower)
 - **Combiner site:** statistics only under `combiner_box.<id>.statistics.*` (not duplicated on `system.*` or each `solarbank.*`). **Without combiner:** per `solarbank.*` (and `smartmeter.*` for grid metrics). API queries remain **once per site**.
 - `anker-solix.0.smartmeter.<deviceId>.sensors.*`
 - `anker-solix.0.services.*` — export, schedule, refresh (button states)
@@ -298,6 +298,10 @@ Tab **Abregelungsvermeidung** / **Curtailment avoidance**: requires the [ioBroke
 ---
 
 ## Changelog
+
+### 0.10.26
+
+- **Week/month period stats:** fetched on first detail refresh when only period groups are enabled (not after ~30 min); week interval = every detail refresh (was every 3rd); log line `Period statistics updated (week)`
 
 ### 0.10.25
 

@@ -221,6 +221,12 @@ class AnkerSolix extends utils.Adapter {
 					? `, next detail in ~${result.intervalcount} polls`
 					: "";
 			this.log.debug(`Poll OK (${pollDevices?.length ?? 0} devices, ${detailHint}${intervalHint})`);
+			if (result.periodEnergyUpdated?.length) {
+				this.log.info(
+					`Period statistics updated (${result.periodEnergyUpdated.join(", ")}) – ` +
+						"values under combiner_box.*.statistics.week|month|year.* (or solarbank if no combiner)",
+				);
+			}
 
 			await this.runCurtailmentAvoidanceIfEnabled();
 		} catch (error) {
