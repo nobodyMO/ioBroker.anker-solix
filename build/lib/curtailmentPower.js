@@ -24,17 +24,22 @@ __export(curtailmentPower_exports, {
   isPvGenerationSensor: () => isPvGenerationSensor,
   isPvSensorEntity: () => isPvSensorEntity,
   parsePvSensorStateId: () => parsePvSensorStateId,
+  parseSystemPvStateId: () => parseSystemPvStateId,
   pvSensorStatePaths: () => pvSensorStatePaths,
   readLivePvPowerW: () => readLivePvPowerW,
   readPvFromEntities: () => readPvFromEntities,
   resolveActiveExportW: () => resolveActiveExportW,
   resolveBeforeExportW: () => resolveBeforeExportW,
-  resolveCurtailmentSetpoints: () => resolveCurtailmentSetpoints
+  resolveCurtailmentSetpoints: () => resolveCurtailmentSetpoints,
+  systemTotalPvStatePath: () => systemTotalPvStatePath
 });
 module.exports = __toCommonJS(curtailmentPower_exports);
 var import_curtailmentForecast = require("./curtailmentForecast");
 const PV_SENSOR_IDS = ["total_pv_power", "input_power", "solar_power_total"];
 const PV_FLOW_SUM_IDS = ["pv_to_home_power", "pv_to_battery_power", "photovoltaic_to_grid_power"];
+function systemTotalPvStatePath(namespace, siteId) {
+  return `${namespace}.system.${siteId}.sensors.total_pv_power`;
+}
 function pvSensorStatePaths(namespace, deviceId) {
   const paths = [];
   for (const channel of ["solarbank", "combiner_box"]) {
@@ -43,6 +48,19 @@ function pvSensorStatePaths(namespace, deviceId) {
     }
   }
   return paths;
+}
+function parseSystemPvStateId(namespace, stateId) {
+  var _a;
+  const prefix = `${namespace}.`;
+  if (!stateId.startsWith(prefix)) {
+    return void 0;
+  }
+  const rest = stateId.slice(prefix.length);
+  const match = /^system\.([^.]+)\.sensors\.total_pv_power$/.exec(rest);
+  if (!match) {
+    return void 0;
+  }
+  return { siteId: (_a = match[1]) != null ? _a : "" };
 }
 function parsePvSensorStateId(namespace, stateId) {
   var _a;
@@ -89,9 +107,21 @@ function readPvFromEntities(entities) {
   }
   return 0;
 }
+async function readSystemTotalPvW(host, siteId) {
+  const st = await host.getStateAsync(systemTotalPvStatePath(host.namespace, siteId));
+  const n = Number(st == null ? void 0 : st.val);
+  return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
+}
 async function readLivePvPowerW(host, deviceId) {
-  var _a;
-  const fromPoll = readPvFromEntities((_a = host.getDeviceEntities) == null ? void 0 : _a.call(host, deviceId));
+  var _a, _b, _c;
+  const siteId = (_b = (_a = host.getDeviceSiteId) == null ? void 0 : _a.call(host, deviceId)) == null ? void 0 : _b.trim();
+  if (siteId) {
+    const fromSystem = await readSystemTotalPvW(host, siteId);
+    if (fromSystem > 0) {
+      return fromSystem;
+    }
+  }
+  const fromPoll = readPvFromEntities((_c = host.getDeviceEntities) == null ? void 0 : _c.call(host, deviceId));
   if (fromPoll > 0) {
     return fromPoll;
   }
@@ -143,11 +173,13 @@ function resolveCurtailmentSetpoints(phase, livePvW, maxChargeW, forecast, nowHo
   isPvGenerationSensor,
   isPvSensorEntity,
   parsePvSensorStateId,
+  parseSystemPvStateId,
   pvSensorStatePaths,
   readLivePvPowerW,
   readPvFromEntities,
   resolveActiveExportW,
   resolveBeforeExportW,
-  resolveCurtailmentSetpoints
+  resolveCurtailmentSetpoints,
+  systemTotalPvStatePath
 });
 //# sourceMappingURL=curtailmentPower.js.map

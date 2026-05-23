@@ -74,7 +74,7 @@
 	"cloud_state": "Cloud-Status",
 	"wifi_state": "WLAN-Status",
 	"CurtailmentAvoidance": "Abregelungsvermeidung",
-	"curtailment_hint": "Prognose (solarprognose) erkennt Überproduktions-Tage. Vor dem Fenster (before): Benutzerdefiniert, Laden 0 W, AC-Ausgabe = live PV. Im Fenster (active): AC-Ausgabe = live PV (Combiner max. 4800 W), AC-Laden = berechnetes Max-Ladelimit (Akku langsam voll). Status: curtailment.live_pv_w, export_w, max_charge_w. MQTT erforderlich.",
+	"curtailment_hint": "Prognose (solarprognose) erkennt Überproduktions-Tage. Live-Erzeugung primär aus system.{Site-ID}.sensors.total_pv_power (Anlage), sonst Combiner/Solarbank-Sensoren. Vor dem Fenster: Benutzerdefiniert, Laden 0 W, Einspeise über set_output_power. Im Fenster (active): volle PV + berechnetes Laden. Status: curtailment.live_pv_w, export_w, max_charge_w.",
 	"enableCurtailmentAvoidance": "Abregelungsvermeidung aktivieren",
 	"curtailmentForecastPath": "Objektpfad Prognose (Basis hourly, z. B. solarprognose.0.forecast.00.hourly)",
 	"curtailmentModeAfter": "Nutzungsmodus nach Abregelungsfenster",

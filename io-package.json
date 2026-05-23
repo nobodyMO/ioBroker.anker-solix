@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.10",
+		"version": "0.10.11",
 		"messagebox": true,
 		"news": {
+			"0.10.11": {
+				"en": "Curtailment: live PV from system.{siteId}.sensors.total_pv_power (priority)",
+				"de": "Abregelung: live PV aus system.{siteId}.sensors.total_pv_power (Priorität)",
+				"ru": "PV из system.total_pv_power",
+				"pt": "PV de system.total_pv_power",
+				"nl": "PV van system.total_pv_power",
+				"fr": "PV depuis system.total_pv_power",
+				"it": "PV da system.total_pv_power",
+				"es": "PV desde system.total_pv_power",
+				"pl": "PV z system.total_pv_power",
+				"uk": "PV з system.total_pv_power",
+				"zh-cn": "优先使用 system.total_pv_power"
+			},
 			"0.10.10": {
 				"en": "Combiner export via set_output_power; fix 4800 W max; better live PV sensors",
 				"de": "Combiner: Einspeisung über set_output_power; max 4800 W; mehr PV-Sensoren für live_pv_w",

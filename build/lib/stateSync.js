@@ -188,11 +188,18 @@ async function syncDevices(adapter, devices) {
       }
       if (hasValue || writable) {
         await adapter.setState(stateId, stateVal, true);
-        if ((0, import_curtailmentPower.isPvGenerationSensor)(entityId) && typeof stateVal === "number" && curtailmentHost.onCurtailmentPvUpdated) {
+        if (typeof stateVal === "number") {
           device.entities[entityId] = stateVal;
-          const livePvW = (0, import_curtailmentPower.readPvFromEntities)(device.entities);
-          if (livePvW > 0) {
-            curtailmentHost.onCurtailmentPvUpdated(device.info.id, livePvW);
+          if (entityId === "total_pv_power" && device.info.type === "system" && curtailmentHost.onCurtailmentSystemPvUpdated) {
+            const livePvW = Math.round(stateVal);
+            if (livePvW > 0) {
+              curtailmentHost.onCurtailmentSystemPvUpdated(device.info.id, livePvW);
+            }
+          } else if ((0, import_curtailmentPower.isPvGenerationSensor)(entityId) && curtailmentHost.onCurtailmentPvUpdated) {
+            const livePvW = (0, import_curtailmentPower.readPvFromEntities)(device.entities);
+            if (livePvW > 0) {
+              curtailmentHost.onCurtailmentPvUpdated(device.info.id, livePvW);
+            }
           }
         }
       } else if ((meta == null ? void 0 : meta.kind) === "statistics") {

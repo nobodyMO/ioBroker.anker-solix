@@ -10,9 +10,11 @@ import { isEntityEnabled } from "./entityGroups";
 import { isPvGenerationSensor, readPvFromEntities } from "./curtailmentPower";
 import type { BridgeDevice } from "./types";
 
-/** Optional hook on the adapter instance (see main.ts). */
+/** Optional hooks on the adapter instance (see main.ts). */
 export interface CurtailmentPvSyncHost extends ioBroker.Adapter {
 	onCurtailmentPvUpdated?: (deviceId: string, livePvW: number) => void;
+	/** system.{siteId}.sensors.total_pv_power changed */
+	onCurtailmentSystemPvUpdated?: (siteId: string, livePvW: number) => void;
 }
 
 function resolveStateType(meta: EntityMeta | undefined, value: unknown): ioBroker.CommonType {
@@ -195,15 +197,22 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 			}
 			if (hasValue || writable) {
 				await adapter.setState(stateId, stateVal, true);
-				if (
-					isPvGenerationSensor(entityId) &&
-					typeof stateVal === "number" &&
-					curtailmentHost.onCurtailmentPvUpdated
-				) {
+				if (typeof stateVal === "number") {
 					device.entities[entityId] = stateVal;
-					const livePvW = readPvFromEntities(device.entities);
-					if (livePvW > 0) {
-						curtailmentHost.onCurtailmentPvUpdated(device.info.id, livePvW);
+					if (
+						entityId === "total_pv_power" &&
+						device.info.type === "system" &&
+						curtailmentHost.onCurtailmentSystemPvUpdated
+					) {
+						const livePvW = Math.round(stateVal);
+						if (livePvW > 0) {
+							curtailmentHost.onCurtailmentSystemPvUpdated(device.info.id, livePvW);
+						}
+					} else if (isPvGenerationSensor(entityId) && curtailmentHost.onCurtailmentPvUpdated) {
+						const livePvW = readPvFromEntities(device.entities);
+						if (livePvW > 0) {
+							curtailmentHost.onCurtailmentPvUpdated(device.info.id, livePvW);
+						}
 					}
 				}
 			} else if (meta?.kind === "statistics") {

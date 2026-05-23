@@ -4,10 +4,13 @@ import { detectCurtailmentWindow } from "./curtailmentForecast";
 import {
 	calcMaxChargeW,
 	parsePvSensorStateId,
+	parseSystemPvStateId,
+	readLivePvPowerW,
 	readPvFromEntities,
 	resolveActiveExportW,
 	resolveBeforeExportW,
 	resolveCurtailmentSetpoints,
+	systemTotalPvStatePath,
 } from "./curtailmentPower";
 
 describe("curtailmentPower", () => {
@@ -46,5 +49,22 @@ describe("curtailmentPower", () => {
 	it("detects PV sensor state ids", () => {
 		const parsed = parsePvSensorStateId("anker-solix.0", "anker-solix.0.solarbank.ABC.sensors.total_pv_power");
 		expect(parsed?.deviceId).to.equal("ABC");
+	});
+
+	it("prefers system.total_pv_power for live PV", async () => {
+		const siteId = "fc8547a3-d56f-4d48-8ad7-a30f29dd171c";
+		const path = systemTotalPvStatePath("anker-solix.0", siteId);
+		expect(path).to.equal(`anker-solix.0.system.${siteId}.sensors.total_pv_power`);
+		const parsed = parseSystemPvStateId("anker-solix.0", path);
+		expect(parsed?.siteId).to.equal(siteId);
+		const live = await readLivePvPowerW(
+			{
+				namespace: "anker-solix.0",
+				getStateAsync: id => Promise.resolve((id === path ? { val: 4800 } : null) as ioBroker.State),
+				getDeviceSiteId: () => siteId,
+			},
+			"APCDKL50F37300140",
+		);
+		expect(live).to.equal(4800);
 	});
 });

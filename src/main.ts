@@ -10,7 +10,7 @@ import * as utils from "@iobroker/adapter-core";
 
 import { parseSelectedDeviceIds } from "./lib/configHelpers";
 import { ControlQueue } from "./lib/controlQueue";
-import { parsePvSensorStateId } from "./lib/curtailmentPower";
+import { parsePvSensorStateId, parseSystemPvStateId } from "./lib/curtailmentPower";
 import {
 	runCurtailmentAvoidance,
 	runCurtailmentOnPvChange,
@@ -374,6 +374,7 @@ class AnkerSolix extends utils.Adapter {
 			getForeignObjectAsync: id => this.getForeignObjectAsync(id),
 			getStateAsync: id => this.getStateAsync(id),
 			getDeviceEntities: deviceId => this.deviceEntities.get(deviceId),
+			getDeviceSiteId: deviceId => this.deviceContexts.get(deviceId)?.site_id,
 			getDeviceWritable: deviceId => this.deviceWritable.get(deviceId),
 			setState: async (id, val, ack) => {
 				await this.setState(id, val as ioBroker.StateValue, ack ?? true);
@@ -408,6 +409,24 @@ class AnkerSolix extends utils.Adapter {
 		void this.runCurtailmentExportOnPvChange(deviceId, rounded);
 	}
 
+	private handleCurtailmentSystemPvUpdated(siteId: string, livePvW: number): void {
+		if (!this.config.enableCurtailmentAvoidance) {
+			return;
+		}
+		const rounded = Math.round(livePvW);
+		for (const deviceId of this.curtailmentDeviceIds) {
+			const ctx = this.deviceContexts.get(deviceId);
+			if (ctx?.site_id !== siteId) {
+				continue;
+			}
+			if (this.lastNotifiedPvW.get(deviceId) === rounded) {
+				continue;
+			}
+			this.lastNotifiedPvW.set(deviceId, rounded);
+			void this.runCurtailmentExportOnPvChange(deviceId, rounded);
+		}
+	}
+
 	private async runCurtailmentExportOnPvChange(deviceId: string, livePvW: number): Promise<void> {
 		if (!this.config.enableCurtailmentAvoidance) {
 			return;
@@ -424,6 +443,7 @@ class AnkerSolix extends utils.Adapter {
 			return;
 		}
 		const ns = this.namespace;
+		this.subscribeStates(`${ns}.system.*.sensors.total_pv_power`);
 		for (const channel of ["solarbank", "combiner_box"]) {
 			this.subscribeStates(`${ns}.${channel}.*.sensors.total_pv_power`);
 			this.subscribeStates(`${ns}.${channel}.*.sensors.input_power`);
@@ -458,10 +478,17 @@ class AnkerSolix extends utils.Adapter {
 		}
 
 		if (this.config.enableCurtailmentAvoidance) {
-			const pv = parsePvSensorStateId(this.namespace, id);
 			const n = Number(state.val);
-			if (pv && Number.isFinite(n) && n >= 0) {
-				this.handleCurtailmentPvUpdated(pv.deviceId, n);
+			if (Number.isFinite(n) && n >= 0) {
+				const systemPv = parseSystemPvStateId(this.namespace, id);
+				if (systemPv) {
+					this.handleCurtailmentSystemPvUpdated(systemPv.siteId, n);
+				} else {
+					const pv = parsePvSensorStateId(this.namespace, id);
+					if (pv) {
+						this.handleCurtailmentPvUpdated(pv.deviceId, n);
+					}
+				}
 			}
 		}
 
@@ -631,6 +658,8 @@ class AnkerSolix extends utils.Adapter {
 		await setupCurtailmentStates(this);
 		(this as CurtailmentPvSyncHost).onCurtailmentPvUpdated = (deviceId, livePvW) =>
 			this.handleCurtailmentPvUpdated(deviceId, livePvW);
+		(this as CurtailmentPvSyncHost).onCurtailmentSystemPvUpdated = (siteId, livePvW) =>
+			this.handleCurtailmentSystemPvUpdated(siteId, livePvW);
 		this.refreshCurtailmentDeviceIds();
 		await this.setState("info.connection", false, true);
 
@@ -666,6 +695,7 @@ class AnkerSolix extends utils.Adapter {
 		}
 		this.lastNotifiedPvW.clear();
 		(this as CurtailmentPvSyncHost).onCurtailmentPvUpdated = undefined;
+		(this as CurtailmentPvSyncHost).onCurtailmentSystemPvUpdated = undefined;
 		void stopBridgeDaemon().finally(() => callback());
 	}
 }

@@ -13,6 +13,12 @@ export interface CurtailmentPowerHost {
 	namespace: string;
 	getStateAsync: (id: string) => Promise<ioBroker.State | null | undefined>;
 	getDeviceEntities?: (deviceId: string) => Record<string, unknown> | undefined;
+	/** Anker site UUID for system.*.sensors.total_pv_power (preferred PV source). */
+	getDeviceSiteId?: (deviceId: string) => string | undefined;
+}
+
+export function systemTotalPvStatePath(namespace: string, siteId: string): string {
+	return `${namespace}.system.${siteId}.sensors.total_pv_power`;
 }
 
 export function pvSensorStatePaths(namespace: string, deviceId: string): string[] {
@@ -23,6 +29,19 @@ export function pvSensorStatePaths(namespace: string, deviceId: string): string[
 		}
 	}
 	return paths;
+}
+
+export function parseSystemPvStateId(namespace: string, stateId: string): { siteId: string } | undefined {
+	const prefix = `${namespace}.`;
+	if (!stateId.startsWith(prefix)) {
+		return undefined;
+	}
+	const rest = stateId.slice(prefix.length);
+	const match = /^system\.([^.]+)\.sensors\.total_pv_power$/.exec(rest);
+	if (!match) {
+		return undefined;
+	}
+	return { siteId: match[1] ?? "" };
 }
 
 export function parsePvSensorStateId(
@@ -77,8 +96,21 @@ export function readPvFromEntities(entities: Record<string, unknown> | undefined
 	return 0;
 }
 
-/** Read live PV generation (W) from the last poll or ioBroker states. */
+async function readSystemTotalPvW(host: CurtailmentPowerHost, siteId: string): Promise<number> {
+	const st = await host.getStateAsync(systemTotalPvStatePath(host.namespace, siteId));
+	const n = Number(st?.val);
+	return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
+}
+
+/** Read live PV generation (W): system.total_pv_power first, then device sensors. */
 export async function readLivePvPowerW(host: CurtailmentPowerHost, deviceId: string): Promise<number> {
+	const siteId = host.getDeviceSiteId?.(deviceId)?.trim();
+	if (siteId) {
+		const fromSystem = await readSystemTotalPvW(host, siteId);
+		if (fromSystem > 0) {
+			return fromSystem;
+		}
+	}
 	const fromPoll = readPvFromEntities(host.getDeviceEntities?.(deviceId));
 	if (fromPoll > 0) {
 		return fromPoll;
