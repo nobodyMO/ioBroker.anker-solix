@@ -27,8 +27,8 @@ describe("curtailmentForecast", () => {
 		};
 		const forecast = await readHourlyForecast(
 			"solarprognose.0.forecast.00.hourly",
-			async id => ({ val: states[id] } as ioBroker.State),
-			async id => ({ common: { unit: units[id] } } as ioBroker.Object),
+			id => Promise.resolve({ val: states[id] }) as Promise<ioBroker.State>,
+			id => Promise.resolve({ common: { unit: units[id] } }) as Promise<ioBroker.Object>,
 		);
 		expect(forecast.hours.get(11)).to.equal(5473);
 	});
