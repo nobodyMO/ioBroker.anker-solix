@@ -10,6 +10,7 @@ import {
 	calcMaxChargeW,
 	calcMissingChargeWh,
 	readLivePvPowerW,
+	readSocPercentForCurtailment,
 	resolveCurtailmentSetpoints,
 	type CurtailmentPowerHost,
 } from "./curtailmentPower";
@@ -40,6 +41,7 @@ export interface CurtailmentRunnerHost extends CurtailmentPowerHost {
 		control: string,
 		value: string | number | boolean,
 		deviceContext?: DeviceControlContext,
+		opts?: { acOutputApiOnly?: boolean },
 	) => Promise<void>;
 }
 
@@ -64,24 +66,6 @@ function clampAcOutputW(powerW: number, role: CurtailmentDeviceRole): number {
 	return Math.min(hardwareMax, Math.max(0, Math.round(powerW)));
 }
 
-async function readSocPercent(host: CurtailmentRunnerHost, deviceId: string): Promise<number> {
-	const candidates = [
-		`${host.namespace}.solarbank.${deviceId}.sensors.state_of_charge`,
-		`${host.namespace}.combiner_box.${deviceId}.sensors.state_of_charge`,
-		`${host.namespace}.combiner_box.${deviceId}.sensors.battery_soc`,
-	];
-	for (const id of candidates) {
-		const st = await host.getStateAsync(id);
-		if (st?.val !== null && st?.val !== undefined) {
-			const n = Number(st.val);
-			if (!Number.isNaN(n)) {
-				return Math.min(100, Math.max(0, n));
-			}
-		}
-	}
-	return 0;
-}
-
 async function applyManualMode(host: CurtailmentRunnerHost, device: CurtailmentDeviceConfig): Promise<void> {
 	const ctx = host.getDeviceContext(device.deviceId);
 	await host.applyControl(device.deviceId, "preset_usage_mode", "manual", ctx);
@@ -98,7 +82,7 @@ async function applyAcOutputLimit(
 		return;
 	}
 	const ctx = host.getDeviceContext(device.deviceId);
-	await host.applyControl(device.deviceId, "ac_output_limit", acOutputW, ctx);
+	await host.applyControl(device.deviceId, "ac_output_limit", acOutputW, ctx, { acOutputApiOnly: true });
 	lastAppliedExportW.set(device.deviceId, acOutputW);
 }
 
@@ -151,7 +135,7 @@ interface DeviceRunContext {
 	exportW: number;
 	chargeW: number;
 	remaining: number;
-	soc: number;
+	soc?: number;
 }
 
 async function buildDeviceContext(
@@ -171,9 +155,14 @@ async function buildDeviceContext(
 				? await readLivePvPowerW(host, device.deviceId)
 				: 0;
 	const remaining = remainingCurtailmentHours(window, nowHour);
-	const soc = window.today && phase === "active" ? await readSocPercent(host, device.deviceId) : 0;
-	const missingChargeWh = window.today && phase === "active" ? calcMissingChargeWh(device.batteryCapacityWh, soc) : 0;
-	const maxChargeW = window.today && phase === "active" ? calcMaxChargeW(missingChargeWh, remaining) : 0;
+	const soc =
+		window.today && phase === "active" ? await readSocPercentForCurtailment(host, device.deviceId) : undefined;
+	const missingChargeWh =
+		window.today && phase === "active" && soc !== undefined
+			? calcMissingChargeWh(device.batteryCapacityWh, soc)
+			: 0;
+	const maxChargeW =
+		window.today && phase === "active" && soc !== undefined ? calcMaxChargeW(missingChargeWh, remaining) : 0;
 	const { exportW, chargeW } = resolveCurtailmentSetpoints(phase, livePvW, maxChargeW, forecast, nowHour, window);
 	return { limit, window, phase, livePvW, missingChargeWh, maxChargeW, exportW, chargeW, remaining, soc };
 }
@@ -191,6 +180,7 @@ async function publishDeviceStates(host: CurtailmentRunnerHost, ctx: DeviceRunCo
 		true,
 	);
 	await host.setState(CURTAILMENT_STATE_IDS.missingChargeWh, ctx.missingChargeWh, true);
+	await host.setState(CURTAILMENT_STATE_IDS.socPercent, ctx.soc ?? 0, true);
 	await host.setState(CURTAILMENT_STATE_IDS.maxChargeW, ctx.maxChargeW, true);
 	await host.setState(CURTAILMENT_STATE_IDS.exportW, ctx.exportW, true);
 	await host.setState(CURTAILMENT_STATE_IDS.remainingHours, ctx.remaining, true);
@@ -226,10 +216,16 @@ async function runDeviceCurtailment(
 			device.role === "combiner" && device.units?.length
 				? `, units=${device.units.join("+")} (${device.units.length} banks)`
 				: "";
+		const socHint = ctx.soc === undefined ? "SOC=n/a" : `SOC=${ctx.soc}%`;
+		if (ctx.phase === "active" && ctx.soc === undefined) {
+			host.log.warn(
+				`Curtailment [${device.deviceId}]: no SOC sensor — missing_charge_wh and max_charge_w stay 0; check state_of_charge`,
+			);
+		}
 		host.log.info(
 			`Curtailment [${device.deviceId}]: phase=${ctx.phase}, limit=${ctx.limit}W${unitsHint}, ` +
 				`window ${ctx.window.startHour}-${ctx.window.endHour}h, livePv=${ctx.livePvW}W, ` +
-				`missingWh=${ctx.missingChargeWh}, maxCharge=${ctx.maxChargeW}W, export=${ctx.exportW}W, SOC=${ctx.soc}%`,
+				`missingWh=${ctx.missingChargeWh}, maxCharge=${ctx.maxChargeW}W, export=${ctx.exportW}W, ${socHint}`,
 		);
 	}
 

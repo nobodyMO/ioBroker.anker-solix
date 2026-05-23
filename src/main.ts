@@ -325,6 +325,7 @@ class AnkerSolix extends utils.Adapter {
 		control: string,
 		value: string | number | boolean,
 		deviceContext?: DeviceControlContext,
+		opts?: { acOutputApiOnly?: boolean },
 	): Promise<void> {
 		await runBridge(
 			"set",
@@ -334,6 +335,7 @@ class AnkerSolix extends utils.Adapter {
 				control,
 				value,
 				deviceContext,
+				acOutputApiOnly: opts?.acOutputApiOnly,
 			},
 			this.config.pythonPath || "",
 			this.log,
@@ -380,8 +382,8 @@ class AnkerSolix extends utils.Adapter {
 				await this.setState(id, val as ioBroker.StateValue, ack ?? true);
 			},
 			getDeviceContext: deviceId => this.deviceContexts.get(deviceId),
-			applyControl: (deviceId, control, value, deviceContext) =>
-				this.applyAdapterControl(deviceId, control, value, deviceContext),
+			applyControl: (deviceId, control, value, deviceContext, opts) =>
+				this.applyAdapterControl(deviceId, control, value, deviceContext, opts),
 		};
 	}
 

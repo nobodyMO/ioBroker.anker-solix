@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.14",
+		"version": "0.10.15",
 		"messagebox": true,
 		"news": {
+			"0.10.15": {
+				"en": "Curtailment: API-only ac_output_limit; fix SOC/missing_charge_wh; no station feed-in changes",
+				"de": "Abregelung: ac_output_limit nur API; SOC/missing_charge_wh korrigiert; kein Einspeise-Limit",
+				"ru": "Abregelung: API ac_output_limit",
+				"pt": "Abregelung: API ac_output_limit",
+				"nl": "Abregelung: API ac_output_limit",
+				"fr": "Abregelung: API ac_output_limit",
+				"it": "Abregelung: API ac_output_limit",
+				"es": "Abregelung: API ac_output_limit",
+				"pl": "Abregelung: API ac_output_limit",
+				"uk": "Abregelung: API ac_output_limit",
+				"zh-cn": "限电 API ac_output_limit"
+			},
 			"0.10.14": {
 				"en": "Curtailment: manual + ac_output_limit only; missing_charge_wh; active export = PV − charge",
 				"de": "Abregelung: nur Benutzerdefiniert + ac_output_limit; missing_charge_wh; active: Einspeisung = PV − Laden",

@@ -160,6 +160,46 @@ export function calcMaxChargeW(missingWh: number, hoursRemaining: number): numbe
 	return Math.max(0, Math.round(missingWh / hours));
 }
 
+/** Read battery SOC (%) for curtailment; undefined if no trustworthy sensor value. */
+export async function readSocPercentForCurtailment(
+	host: CurtailmentPowerHost,
+	deviceId: string,
+): Promise<number | undefined> {
+	const fromEntities = host.getDeviceEntities?.(deviceId);
+	if (fromEntities) {
+		for (const key of ["state_of_charge", "battery_soc", "total_soc"] as const) {
+			const n = Number(fromEntities[key]);
+			if (Number.isFinite(n) && n >= 0 && n <= 100) {
+				return Math.round(n);
+			}
+		}
+	}
+
+	const siteId = host.getDeviceSiteId?.(deviceId)?.trim();
+	if (siteId) {
+		const systemSoc = await host.getStateAsync(`${host.namespace}.system.${siteId}.sensors.state_of_charge`);
+		const n = Number(systemSoc?.val);
+		if (Number.isFinite(n) && n >= 0 && n <= 100) {
+			return Math.round(n);
+		}
+	}
+
+	const candidates = [
+		`${host.namespace}.combiner_box.${deviceId}.sensors.state_of_charge`,
+		`${host.namespace}.combiner_box.${deviceId}.sensors.battery_soc`,
+		`${host.namespace}.solarbank.${deviceId}.sensors.state_of_charge`,
+	];
+	for (const id of candidates) {
+		const st = await host.getStateAsync(id);
+		const n = Number(st?.val);
+		if (Number.isFinite(n) && n >= 0 && n <= 100) {
+			return Math.round(n);
+		}
+	}
+
+	return undefined;
+}
+
 /** Active window: AC output (export) = live PV − max charge power. */
 export function resolveActiveExportW(livePvW: number, maxChargeW: number): number {
 	if (livePvW <= 0) {

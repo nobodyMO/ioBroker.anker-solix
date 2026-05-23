@@ -44,9 +44,13 @@ describe("curtailmentPower", () => {
 	});
 
 	it("calc missing Wh and max charge from remaining hours", () => {
-		expect(calcMissingChargeWh(5000, 50)).to.equal(2500);
-		expect(calcMaxChargeW(2500, 5)).to.equal(500);
-		expect(calcMaxChargeW(2500, 0)).to.equal(2500);
+		expect(calcMissingChargeWh(10000, 50)).to.equal(5000);
+		expect(calcMaxChargeW(5000, 5)).to.equal(1000);
+		expect(calcMaxChargeW(5000, 0)).to.equal(5000);
+	});
+
+	it("active export uses live PV minus max charge", () => {
+		expect(resolveActiveExportW(5000, 1000)).to.equal(4000);
 	});
 
 	it("detects PV sensor state ids", () => {

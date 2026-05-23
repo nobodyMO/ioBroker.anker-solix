@@ -5,6 +5,7 @@ export const CURTAILMENT_STATE_IDS = {
 	start: `${CURTAILMENT_CHANNEL}.curtailment_start`,
 	end: `${CURTAILMENT_CHANNEL}.curtailment_end`,
 	missingChargeWh: `${CURTAILMENT_CHANNEL}.missing_charge_wh`,
+	socPercent: `${CURTAILMENT_CHANNEL}.soc_percent`,
 	maxChargeW: `${CURTAILMENT_CHANNEL}.max_charge_w`,
 	exportW: `${CURTAILMENT_CHANNEL}.export_w`,
 	livePvW: `${CURTAILMENT_CHANNEL}.live_pv_w`,
@@ -148,5 +149,7 @@ export async function setupCurtailmentStates(adapter: ioBroker.Adapter): Promise
 			common: st.common,
 			native: {},
 		});
+		// Ensure new states appear after adapter upgrades (setObjectNotExists alone does not update).
+		await adapter.extendObject(st.id, { common: st.common });
 	}
 }

@@ -90,6 +90,8 @@ export interface BridgeSetConfig extends BridgeConfig {
 	control: string;
 	value: string | number | boolean;
 	deviceContext?: DeviceControlContext;
+	/** Curtailment: set AC output via API only (no MQTT / station feed-in side effects). */
+	acOutputApiOnly?: boolean;
 }
 
 export interface BridgeServiceConfig extends BridgeConfig {

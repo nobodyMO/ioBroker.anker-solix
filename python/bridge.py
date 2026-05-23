@@ -318,6 +318,7 @@ async def _set_ac_output_limit(
     device: dict,
     limit: int,
     ha_client: IoBrokerAnkerApiClient | None = None,
+    api_only: bool = False,
 ) -> Any:
     """HA max_load / max_load_total: MQTT first, optional API cache sync without get_power_limit."""
     dev_type = str(device.get("type") or "").lower()
@@ -325,19 +326,20 @@ async def _set_ac_output_limit(
     multisystem = dev_type == COMBINER or "all_power_limit" in device
     mqtt_ok = False
 
-    if multisystem:
-        mqtt_ok = await _mqtt_max_load_parallel(
-            api, site_id, limit, control_sn, ha_client=ha_client
-        )
-    elif dev_type == SOLARBANK and not station_sn:
-        mqtt_ok = await _mqtt_command(
-            api,
-            device_id,
-            SolixMqttCommands.sb_max_load,
-            limit,
-            "set_max_load",
-            ha_client=ha_client,
-        )
+    if not api_only:
+        if multisystem:
+            mqtt_ok = await _mqtt_max_load_parallel(
+                api, site_id, limit, control_sn, ha_client=ha_client
+            )
+        elif dev_type == SOLARBANK and not station_sn:
+            mqtt_ok = await _mqtt_command(
+                api,
+                device_id,
+                SolixMqttCommands.sb_max_load,
+                limit,
+                "set_max_load",
+                ha_client=ha_client,
+            )
 
     api_sn = (
         control_sn
@@ -346,6 +348,8 @@ async def _set_ac_output_limit(
     )
     api_ok = await _api_set_ac_output_only(api, site_id, api_sn, limit, device)
 
+    if api_only and api_ok:
+        return {"api": True, "curtailment_api_only": True}
     if mqtt_ok:
         return {"mqtt": True, "api": api_ok}
     if api_ok:
@@ -497,7 +501,9 @@ async def apply_control(
     control: str,
     value: Any,
     ha_client: IoBrokerAnkerApiClient | None = None,
+    config: dict | None = None,
 ) -> None:
+    config = config or {}
     site_id, control_sn, device_id, device = _control_context(api, device_id)
     dev_type = str(device.get("type") or "").lower()
 
@@ -537,6 +543,7 @@ async def apply_control(
             device,
             int(value),
             ha_client=ha_client,
+            api_only=bool(config.get("acOutputApiOnly")),
         )
     elif control == "pv_input_limit":
         result = await api.set_power_limit(
@@ -803,6 +810,7 @@ async def run_set_with_client(client: IoBrokerAnkerApiClient, config: dict) -> d
         str(config["control"]),
         config["value"],
         ha_client=client,
+        config=config,
     )
     return {"ok": True, "persistent": True}
 
