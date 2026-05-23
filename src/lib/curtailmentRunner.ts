@@ -9,6 +9,7 @@ import {
 import {
 	calcMaxChargeW,
 	calcMissingChargeWh,
+	hasSolarGenerationForCurtailment,
 	readLivePvPowerW,
 	readSocPercentForCurtailment,
 	resolveCurtailmentSetpoints,
@@ -211,6 +212,16 @@ async function runDeviceCurtailment(
 		return;
 	}
 
+	if (!hasSolarGenerationForCurtailment(ctx.livePvW)) {
+		if (!opts?.setpointsOnly) {
+			await applyAfterPhase(host, device, config.modeAfter);
+			host.log.debug(
+				`Curtailment [${device.deviceId}]: no live PV (${ctx.livePvW}W) — controls deferred until generation returns`,
+			);
+		}
+		return;
+	}
+
 	if (!opts?.setpointsOnly) {
 		const unitsHint =
 			device.role === "combiner" && device.units?.length
@@ -265,6 +276,14 @@ export async function runCurtailmentOnPvChange(
 			continue;
 		}
 		await publishDeviceStates(host, ctx);
+		if (!hasSolarGenerationForCurtailment(ctx.livePvW)) {
+			try {
+				await applyAfterPhase(host, device, config.modeAfter);
+			} catch (err) {
+				host.log.warn(`Curtailment PV follow (idle) failed for ${device.deviceId}: ${(err as Error).message}`);
+			}
+			continue;
+		}
 		try {
 			await applyCurtailmentSetpoints(host, device, ctx.phase, ctx.exportW, config.modeAfter, {
 				modeOnly: lastAppliedPhase.get(device.deviceId) === ctx.phase,

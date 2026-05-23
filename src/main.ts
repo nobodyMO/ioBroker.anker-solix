@@ -222,10 +222,24 @@ class AnkerSolix extends utils.Adapter {
 					: "";
 			this.log.debug(`Poll OK (${pollDevices?.length ?? 0} devices, ${detailHint}${intervalHint})`);
 			if (result.periodEnergyUpdated?.length) {
-				this.log.info(
-					`Period statistics updated (${result.periodEnergyUpdated.join(", ")}) – ` +
-						"values under combiner_box.*.statistics.week|month|year.* (or solarbank if no combiner)",
+				const hasWeekValues = pollDevices?.some(
+					d =>
+						d.hasStatistics &&
+						Object.keys(d.entities).some(
+							k => k.startsWith("week_") && d.entities[k] != null,
+						),
 				);
+				if (hasWeekValues) {
+					this.log.info(
+						`Period statistics updated (${result.periodEnergyUpdated.join(", ")}) – ` +
+							"see combiner_box.*.statistics.week.* (or solarbank.* if no combiner)",
+					);
+				} else {
+					this.log.warn(
+						`Period fetch ran (${result.periodEnergyUpdated.join(", ")}) but no week values in objects – ` +
+							"Anker API returned empty/errors (10003); retry at next detail refresh (~10 polls)",
+					);
+				}
 			}
 
 			await this.runCurtailmentAvoidanceIfEnabled();

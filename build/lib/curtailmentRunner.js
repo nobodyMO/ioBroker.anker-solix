@@ -129,6 +129,15 @@ async function runDeviceCurtailment(host, device, config, forecast, nowHour, opt
     }
     return;
   }
+  if (!(0, import_curtailmentPower.hasSolarGenerationForCurtailment)(ctx.livePvW)) {
+    if (!(opts == null ? void 0 : opts.setpointsOnly)) {
+      await applyAfterPhase(host, device, config.modeAfter);
+      host.log.debug(
+        `Curtailment [${device.deviceId}]: no live PV (${ctx.livePvW}W) \u2014 controls deferred until generation returns`
+      );
+    }
+    return;
+  }
   if (!(opts == null ? void 0 : opts.setpointsOnly)) {
     const unitsHint = device.role === "combiner" && ((_a = device.units) == null ? void 0 : _a.length) ? `, units=${device.units.join("+")} (${device.units.length} banks)` : "";
     const socHint = ctx.soc === void 0 ? "SOC=n/a" : `SOC=${ctx.soc}%`;
@@ -170,6 +179,14 @@ async function runCurtailmentOnPvChange(host, config, deviceId, livePvW) {
       continue;
     }
     await publishDeviceStates(host, ctx);
+    if (!(0, import_curtailmentPower.hasSolarGenerationForCurtailment)(ctx.livePvW)) {
+      try {
+        await applyAfterPhase(host, device, config.modeAfter);
+      } catch (err) {
+        host.log.warn(`Curtailment PV follow (idle) failed for ${device.deviceId}: ${err.message}`);
+      }
+      continue;
+    }
     try {
       await applyCurtailmentSetpoints(host, device, ctx.phase, ctx.exportW, config.modeAfter, {
         modeOnly: lastAppliedPhase.get(device.deviceId) === ctx.phase

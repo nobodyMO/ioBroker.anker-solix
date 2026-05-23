@@ -18,10 +18,18 @@ describe("curtailmentPower", () => {
 	it("before: export equals live PV", () => {
 		const forecast = { hours: new Map<number, number>([[11, 5000]]) };
 		const window = detectCurtailmentWindow(forecast, 800);
-		expect(resolveBeforeExportW(3200, forecast, 10, window)).to.equal(3200);
+		expect(resolveBeforeExportW(3200)).to.equal(3200);
 		const set = resolveCurtailmentSetpoints("before", 3200, 0, forecast, 10, window);
 		expect(set.exportW).to.equal(3200);
 		expect(set.chargeW).to.equal(0);
+	});
+
+	it("before: no forecast export when live PV is zero (night / no generation)", () => {
+		const forecast = { hours: new Map<number, number>([[11, 5473]]) };
+		const window = detectCurtailmentWindow(forecast, 800);
+		expect(resolveBeforeExportW(0)).to.equal(0);
+		const set = resolveCurtailmentSetpoints("before", 0, 0, forecast, 0, window);
+		expect(set.exportW).to.equal(0);
 	});
 
 	it("active: export is live PV minus max charge", () => {

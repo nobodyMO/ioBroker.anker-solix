@@ -294,13 +294,20 @@ class IoBrokerAnkerApiClient:
         from solixapi import errors  # noqa: PLC0415
 
         try:
-            await update_site_energy_periods(
+            updated = await update_site_energy_periods(
                 self.api, self.config, periods=periods
             )
-            self._last_period_energy_updated = list(periods)
+            if not updated:
+                self._last_period_energy_updated = []
+                self._logger.warning(
+                    "Period energy %s: no kWh values from cloud (see energy_analysis warnings)",
+                    ", ".join(periods),
+                )
+                return False
+            self._last_period_energy_updated = updated
             self._logger.info(
                 "Period energy updated for %s (next in ~%s detail refresh cycles)",
-                ", ".join(periods),
+                ", ".join(updated),
                 self._period_detail_interval(),
             )
             return True

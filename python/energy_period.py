@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+import logging
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -177,12 +179,42 @@ def _merge_entry(entry: dict, updates: dict[str, Any]) -> None:
             entry[key] = val
 
 
-def site_energy_query_types(site: dict, exclude: set[str]) -> tuple[set[str], str]:
+def resolve_site_device_sn(api: AnkerSolixApi, site_id: str, site: dict) -> str:
+    """Device SN for energy_analysis (combiner preferred, else first solarbank)."""
+    for cb in (site.get("combiner_box_info") or {}).get("combiner_box_list") or []:
+        if sn := cb.get("device_sn"):
+            return str(sn)
+    for sb in (site.get("solarbank_info") or {}).get("solarbank_list") or []:
+        if sn := sb.get("device_sn"):
+            return str(sn)
+    for dev in api.devices.values():
+        if str(dev.get("site_id") or "") == site_id and (sn := dev.get("device_sn")):
+            if dev.get("type") in (
+                SolixDeviceType.COMBINER_BOX.value,
+                SolixDeviceType.SOLARBANK.value,
+            ):
+                return str(sn)
+    return ""
+
+
+def period_block_has_values(block: dict[str, Any]) -> bool:
+    """True if block has at least one kWh metric (not only date labels)."""
+    skip = {"date", "period_label"}
+    return any(
+        block.get(k) not in (None, "")
+        for k in block
+        if k not in skip
+    )
+
+
+def site_energy_query_types(
+    api: AnkerSolixApi, site_id: str, site: dict, exclude: set[str]
+) -> tuple[set[str], str]:
     """Mirror poll_device_energy query_types for balcony power sites."""
     from solixapi.apitypes import SolixDeviceType as DT  # noqa: N811
 
     query_types: set[str] = set()
-    query_sn = ""
+    query_sn = resolve_site_device_sn(api, site_id, site)
     if site.get("site_type", "") == DT.SOLARBANK_PPS.value:
         query_types.add(DT.SOLARBANK_PPS.value)
         return query_types, query_sn
@@ -228,6 +260,52 @@ def site_energy_query_types(site: dict, exclude: set[str]) -> tuple[set[str], st
     return query_types, query_sn
 
 
+async def _energy_analysis_safe(
+    api: AnkerSolixApi,
+    *,
+    site_id: str,
+    device_sn: str,
+    range_type: str,
+    start: datetime,
+    dev_type: str,
+    logger: logging.Logger,
+) -> dict[str, Any] | None:
+    """Single energy_analysis call with one retry on transient Anker errors."""
+    last_exc: Exception | None = None
+    for attempt in range(2):
+        try:
+            return await api.energy_analysis(
+                siteId=site_id,
+                deviceSn=device_sn,
+                rangeType=range_type,
+                startDay=start,
+                devType=dev_type,
+            )
+        except Exception as exc:  # noqa: BLE001
+            last_exc = exc
+            msg = str(exc)
+            if attempt == 0 and ("10003" in msg or "Failed to request" in msg):
+                await asyncio.sleep(4)
+                continue
+            logger.warning(
+                "energy_analysis %s (%s) failed for site %s: %s",
+                dev_type,
+                range_type,
+                site_id,
+                exc,
+            )
+            return None
+    if last_exc:
+        logger.warning(
+            "energy_analysis %s (%s) failed for site %s: %s",
+            dev_type,
+            range_type,
+            site_id,
+            last_exc,
+        )
+    return None
+
+
 async def fetch_energy_period_block(
     api: AnkerSolixApi,
     site_id: str,
@@ -253,29 +331,35 @@ async def fetch_energy_period_block(
         "date": period_label(period, start),
         "period_label": period_label(period, start),
     }
+    log = api._logger
 
     if SolixDeviceType.SOLARBANK.value in query_types:
-        resp = await api.energy_analysis(
-            siteId=site_id,
-            deviceSn=device_sn,
-            rangeType=range_type,
-            startDay=start,
-            devType="solarbank",
+        resp = await _energy_analysis_safe(
+            api,
+            site_id=site_id,
+            device_sn=device_sn,
+            range_type=range_type,
+            start=start,
+            dev_type="solarbank",
+            logger=log,
         )
-        discharge = _sum_power_kwh(resp) or _total_kwh(resp, "discharge_total", "battery_discharging_total")
-        _merge_entry(
-            entry,
-            {
-                "battery_discharge": discharge,
-                "solarbank_discharge": discharge,
-                "grid_to_battery": _total_kwh(resp, "grid_to_battery_total"),
-                "battery_to_home": _total_kwh(resp, "battery_to_home_total"),
-                "3rd_party_pv_to_bat": _total_kwh(resp, "third_party_pv_to_bat")
-                if other_pv
-                else None,
-                "ac_socket": _total_kwh(resp, "ac_out_put_total"),
-            },
-        )
+        if resp:
+            discharge = _sum_power_kwh(resp) or _total_kwh(
+                resp, "discharge_total", "battery_discharging_total"
+            )
+            _merge_entry(
+                entry,
+                {
+                    "battery_discharge": discharge,
+                    "solarbank_discharge": discharge,
+                    "grid_to_battery": _total_kwh(resp, "grid_to_battery_total"),
+                    "battery_to_home": _total_kwh(resp, "battery_to_home_total"),
+                    "3rd_party_pv_to_bat": _total_kwh(resp, "third_party_pv_to_bat")
+                    if other_pv
+                    else None,
+                    "ac_socket": _total_kwh(resp, "ac_out_put_total"),
+                },
+            )
 
     if (SolixDeviceType.SOLARBANK.value in query_types and sb2s) or (
         {
@@ -285,79 +369,95 @@ async def fetch_energy_period_block(
         }
         & query_types
     ):
-        resp = await api.energy_analysis(
-            siteId=site_id,
-            deviceSn=device_sn,
-            rangeType=range_type,
-            startDay=start,
-            devType="home_usage",
+        resp = await _energy_analysis_safe(
+            api,
+            site_id=site_id,
+            device_sn=device_sn,
+            range_type=range_type,
+            start=start,
+            dev_type="home_usage",
+            logger=log,
         )
-        _merge_entry(
-            entry,
-            {
-                "home_usage": _sum_power_kwh(resp) or _total_kwh(resp, "home_usage_total"),
-                "grid_to_home": _total_kwh(resp, "grid_to_home_total"),
-                "battery_to_home": entry.get("battery_to_home")
-                or _total_kwh(resp, "battery_to_home_total"),
-                "grid_import": _total_kwh(resp, "grid_imported_total", "grid_import_total"),
-            },
-        )
+        if resp:
+            _merge_entry(
+                entry,
+                {
+                    "home_usage": _sum_power_kwh(resp)
+                    or _total_kwh(resp, "home_usage_total"),
+                    "grid_to_home": _total_kwh(resp, "grid_to_home_total"),
+                    "battery_to_home": entry.get("battery_to_home")
+                    or _total_kwh(resp, "battery_to_home_total"),
+                    "grid_import": _total_kwh(
+                        resp, "grid_imported_total", "grid_import_total"
+                    ),
+                },
+            )
 
     if SolixDeviceType.SMARTMETER.value in query_types and (
         SolixDeviceType.SOLARBANK.value not in query_types or other_pv
     ):
-        resp = await api.energy_analysis(
-            siteId=site_id,
-            deviceSn=device_sn,
-            rangeType=range_type,
-            startDay=start,
-            devType="grid",
+        resp = await _energy_analysis_safe(
+            api,
+            site_id=site_id,
+            device_sn=device_sn,
+            range_type=range_type,
+            start=start,
+            dev_type="grid",
+            logger=log,
         )
-        export = _sum_power_kwh(resp)
-        if export is not None:
-            export = abs(export)
-        _merge_entry(
-            entry,
-            {
-                "solar_to_grid": export or _total_kwh(resp, "solar_to_grid_total"),
-                "grid_export": export or _total_kwh(resp, "solar_to_grid_total"),
-                "grid_to_home": entry.get("grid_to_home") or _total_kwh(resp, "grid_to_home_total"),
-            },
-        )
+        if resp:
+            export = _sum_power_kwh(resp)
+            if export is not None:
+                export = abs(export)
+            _merge_entry(
+                entry,
+                {
+                    "solar_to_grid": export or _total_kwh(resp, "solar_to_grid_total"),
+                    "grid_export": export or _total_kwh(resp, "solar_to_grid_total"),
+                    "grid_to_home": entry.get("grid_to_home")
+                    or _total_kwh(resp, "grid_to_home_total"),
+                },
+            )
 
     if SolixDeviceType.EV_CHARGER.value in query_types:
-        resp = await api.energy_analysis(
-            siteId=site_id,
-            deviceSn=device_sn,
-            rangeType=range_type,
-            startDay=start,
-            devType="ev_charger",
+        resp = await _energy_analysis_safe(
+            api,
+            site_id=site_id,
+            device_sn=device_sn,
+            range_type=range_type,
+            start=start,
+            dev_type="ev_charger",
+            logger=log,
         )
-        _merge_entry(entry, {"ev_charge": _sum_power_kwh(resp)})
+        if resp:
+            _merge_entry(entry, {"ev_charge": _sum_power_kwh(resp)})
 
     if SolixDeviceType.SOLARBANK_PPS.value not in query_types:
-        resp = await api.energy_analysis(
-            siteId=site_id,
-            deviceSn=device_sn,
-            rangeType=range_type,
-            startDay=start,
-            devType="solar_production",
+        resp = await _energy_analysis_safe(
+            api,
+            site_id=site_id,
+            device_sn=device_sn,
+            range_type=range_type,
+            start=start,
+            dev_type="solar_production",
+            logger=log,
         )
-        _merge_entry(
-            entry,
-            {
-                "solar_production": _sum_power_kwh(resp)
-                or _total_kwh(resp, "solar_total", "charge_total"),
-                "battery_charge": _total_kwh(resp, "charge_total"),
-                "solarbank_charge": _total_kwh(resp, "charge_total"),
-                "solar_to_grid": entry.get("solar_to_grid")
-                or _total_kwh(resp, "solar_to_grid_total"),
-                "solar_to_battery": _total_kwh(resp, "solar_to_battery_total"),
-                "solar_to_home": _total_kwh(resp, "solar_to_home_total"),
-            },
-        )
+        if resp:
+            _merge_entry(
+                entry,
+                {
+                    "solar_production": _sum_power_kwh(resp)
+                    or _total_kwh(resp, "solar_total", "charge_total"),
+                    "battery_charge": _total_kwh(resp, "charge_total"),
+                    "solarbank_charge": _total_kwh(resp, "charge_total"),
+                    "solar_to_grid": entry.get("solar_to_grid")
+                    or _total_kwh(resp, "solar_to_grid_total"),
+                    "solar_to_battery": _total_kwh(resp, "solar_to_battery_total"),
+                    "solar_to_home": _total_kwh(resp, "solar_to_home_total"),
+                },
+            )
 
-    return entry
+    return entry if period_block_has_values(entry) else {}
 
 
 def enabled_periods(config: dict) -> list[str]:
@@ -377,12 +477,13 @@ async def update_site_energy_periods(
     config: dict,
     *,
     periods: list[str] | None = None,
-) -> None:
-    """Query week/month/year totals for all sites when entity groups are enabled."""
+) -> list[str]:
+    """Query week/month/year totals for all sites. Returns periods that got data on any site."""
     periods = periods if periods is not None else enabled_periods(config)
     if not periods:
-        return
+        return []
     exclude = set(build_exclude_categories(config))
+    updated_periods: set[str] = set()
     for site_id, site in list(api.sites.items()):
         if site_id.startswith(SolixDeviceType.VIRTUAL.value):
             continue
@@ -390,26 +491,26 @@ async def update_site_energy_periods(
             continue
         if api.hesApi and site_id in (api.hesApi.sites or {}):
             continue
-        query_types, query_sn = site_energy_query_types(site, exclude)
+        query_types, query_sn = site_energy_query_types(api, site_id, site, exclude)
         if not query_types:
             continue
         energy = dict(site.get("energy_details") or {})
         for period in periods:
-            try:
-                block = await fetch_energy_period_block(
-                    api, site_id, query_sn, query_types, period
-                )
-                if block:
-                    energy[period] = block
-            except Exception as exc:  # noqa: BLE001
+            block = await fetch_energy_period_block(
+                api, site_id, query_sn, query_types, period
+            )
+            if block:
+                energy[period] = block
+                updated_periods.add(period)
+            else:
                 api._logger.warning(
-                    "Energy period %s failed for site %s: %s",
+                    "Energy period %s: no data for site %s (API errors or empty response)",
                     period,
                     site_id,
-                    exc,
                 )
         site["energy_details"] = energy
         api.sites[site_id] = site
+    return sorted(updated_periods)
 
 
 def pick_period_value(

@@ -43,6 +43,7 @@ class AnkerSolix extends utils.Adapter {
   lastNotifiedPvW = /* @__PURE__ */ new Map();
   curtailmentDeviceIds = /* @__PURE__ */ new Set();
   pollAfterControlTimer;
+  pollInFlight = false;
   constructor(options = {}) {
     super({
       ...options,
@@ -151,7 +152,19 @@ class AnkerSolix extends utils.Adapter {
     return result.ok;
   }
   async pollOnce() {
-    var _a, _b, _c;
+    if (this.pollInFlight) {
+      this.log.debug("Poll skipped (previous poll still running)");
+      return;
+    }
+    this.pollInFlight = true;
+    try {
+      await this.pollOnceBody();
+    } finally {
+      this.pollInFlight = false;
+    }
+  }
+  async pollOnceBody() {
+    var _a, _b, _c, _d;
     if (!this.config.acceptTerms) {
       this.log.warn("Please accept the usage terms in the adapter configuration.");
       await this.setState("info.connection", false, true);
@@ -189,6 +202,22 @@ class AnkerSolix extends utils.Adapter {
       const detailHint = result.refreshDetails ? "devices+mqtt" : "sites";
       const intervalHint = result.intervalcount !== void 0 && result.deviceintervals !== void 0 ? `, next detail in ~${result.intervalcount} polls` : "";
       this.log.debug(`Poll OK (${(_c = pollDevices == null ? void 0 : pollDevices.length) != null ? _c : 0} devices, ${detailHint}${intervalHint})`);
+      if ((_d = result.periodEnergyUpdated) == null ? void 0 : _d.length) {
+        const hasWeekValues = pollDevices == null ? void 0 : pollDevices.some(
+          (d) => d.hasStatistics && Object.keys(d.entities).some(
+            (k) => k.startsWith("week_") && d.entities[k] != null
+          )
+        );
+        if (hasWeekValues) {
+          this.log.info(
+            `Period statistics updated (${result.periodEnergyUpdated.join(", ")}) \u2013 see combiner_box.*.statistics.week.* (or solarbank.* if no combiner)`
+          );
+        } else {
+          this.log.warn(
+            `Period fetch ran (${result.periodEnergyUpdated.join(", ")}) but no week values in objects \u2013 Anker API returned empty/errors (10003); retry at next detail refresh (~10 polls)`
+          );
+        }
+      }
       await this.runCurtailmentAvoidanceIfEnabled();
     } catch (error) {
       await this.setState("info.connection", false, true);

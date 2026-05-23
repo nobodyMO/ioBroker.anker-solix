@@ -1,12 +1,18 @@
 import { aggregateSolarbankSoc, normalizeSocPercent, type SolarbankSocSample } from "./combinerSoc";
-import { forecastExportTargetW } from "./curtailmentForecast";
 import type { CurtailmentPhase, CurtailmentWindow, HourlyForecast } from "./curtailmentTypes";
 
 export type { SolarbankSocSample };
 export { normalizeSocPercent, aggregateSolarbankSoc };
 
+/** Minimum live PV (W) before curtailment applies manual mode and ac_output_limit. */
+export const MIN_PV_FOR_CURTAILMENT_W = 50;
+
 /** Sensors that reflect current PV generation (W). */
 export const PV_SENSOR_IDS = ["total_pv_power", "input_power", "solar_power_total"] as const;
+
+export function hasSolarGenerationForCurtailment(livePvW: number): boolean {
+	return Number.isFinite(livePvW) && livePvW >= MIN_PV_FOR_CURTAILMENT_W;
+}
 
 /** Optional power-flow sensors: sum ≈ total PV when direct sensors are missing. */
 const PV_FLOW_SUM_IDS = ["pv_to_home_power", "pv_to_battery_power", "photovoltaic_to_grid_power"] as const;
@@ -132,17 +138,9 @@ export async function readLivePvPowerW(host: CurtailmentPowerHost, deviceId: str
 	return max > 0 ? Math.round(max) : 0;
 }
 
-/** Before window: export all live generation, no battery charging. */
-export function resolveBeforeExportW(
-	livePvW: number,
-	forecast: HourlyForecast,
-	nowHour: number,
-	window: CurtailmentWindow,
-): number {
-	if (livePvW > 0) {
-		return livePvW;
-	}
-	return forecastExportTargetW(forecast, nowHour, window);
+/** Before window: export live generation only (no forecast pre-set at night). */
+export function resolveBeforeExportW(livePvW: number): number {
+	return livePvW > 0 ? livePvW : 0;
 }
 
 /** Combiner / multisystem AC output (max_load_parallel MQTT steps up to 4800 W). */
@@ -235,7 +233,7 @@ export function resolveCurtailmentSetpoints(
 	window: CurtailmentWindow,
 ): { exportW: number; chargeW: number } {
 	if (phase === "before") {
-		return { exportW: resolveBeforeExportW(livePvW, forecast, nowHour, window), chargeW: 0 };
+		return { exportW: resolveBeforeExportW(livePvW), chargeW: 0 };
 	}
 	if (phase === "active") {
 		return { exportW: resolveActiveExportW(livePvW, maxChargeW), chargeW: maxChargeW };

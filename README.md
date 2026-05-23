@@ -155,7 +155,7 @@ Typical paths (instance `anker-solix.0`):
 - `anker-solix.0.solarbank.<deviceId>.sensors.*` — power, SOC, etc.
 - `anker-solix.0.solarbank.<deviceId>.control.*` — writable controls where supported
 - `anker-solix.0.<device>.<id>.statistics.*` — daily kWh (enable **Entities** → energy statistics)
-- `…statistics.week.*` / `statistics.month.*` / `statistics.year.*` — calendar week, month, year totals in kWh (separate entity groups; **detail refresh** only, ~every `deviceDetailMultiplier` polls; week ≈ each detail cycle, year slower)
+- `…statistics.week.*` / `statistics.month.*` / `statistics.year.*` — calendar week, month, year totals in kWh (separate entity groups; polled on detail refresh, not every cycle)
 - **Combiner site:** statistics only under `combiner_box.<id>.statistics.*` (not duplicated on `system.*` or each `solarbank.*`). **Without combiner:** per `solarbank.*` (and `smartmeter.*` for grid metrics). API queries remain **once per site**.
 - `anker-solix.0.smartmeter.<deviceId>.sensors.*`
 - `anker-solix.0.services.*` — export, schedule, refresh (button states)
@@ -298,6 +298,14 @@ Tab **Abregelungsvermeidung** / **Curtailment avoidance**: requires the [ioBroke
 ---
 
 ## Changelog
+
+### 0.10.28
+
+- **Curtailment:** manual mode and `ac_output_limit` only when live PV ≥ 50 W — no midnight feed-in from forecast (fixes 4800 W at `livePv=0`)
+
+### 0.10.27
+
+- Period `energy_analysis`: per-call retry on 10003, partial metrics if only some calls fail; uses combiner/solarbank SN; success log only when kWh values exist
 
 ### 0.10.26
 

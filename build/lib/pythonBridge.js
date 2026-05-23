@@ -146,9 +146,13 @@ async function runBridge(action, config, pythonPath, log, options) {
         return await runBridgeDaemon(action, config, pythonPath, log);
       } catch (retryErr) {
         log == null ? void 0 : log.warn(`Daemon retry failed: ${retryErr.message}`);
+        throw retryErr;
       }
     }
     if (isAuthError(msg)) {
+      throw error;
+    }
+    if (isTransientApiError(msg)) {
       throw error;
     }
     await daemon.stop().catch(() => void 0);

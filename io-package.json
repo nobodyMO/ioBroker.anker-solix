@@ -1,9 +1,35 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.26",
+		"version": "0.10.28",
 		"messagebox": true,
 		"news": {
+			"0.10.28": {
+				"en": "Curtailment: no manual/export limit until live PV ≥50 W (fixes midnight 4800 W feed-in)",
+				"de": "Abregelung: erst bei Live-PV ≥50 W (Fix Mitternacht: kein manuell/4800 W ohne Erzeugung)",
+				"ru": "Curtailment only with live PV",
+				"pt": "Curtailment only with live PV",
+				"nl": "Curtailment only with live PV",
+				"fr": "Curtailment only with live PV",
+				"it": "Curtailment only with live PV",
+				"es": "Curtailment only with live PV",
+				"pl": "Curtailment only with live PV",
+				"uk": "Curtailment only with live PV",
+				"zh-cn": "限电仅在有实时光伏时生效"
+			},
+			"0.10.27": {
+				"en": "Period stats: resilient energy_analysis (partial data on 10003), combiner SN, honest logging",
+				"de": "Perioden-Statistik: robuste energy_analysis (Teildaten bei 10003), Combiner-SN, ehrliches Logging",
+				"ru": "Period stats resilient",
+				"pt": "Period stats resilient",
+				"nl": "Period stats resilient",
+				"fr": "Period stats resilient",
+				"it": "Period stats resilient",
+				"es": "Period stats resilient",
+				"pl": "Period stats resilient",
+				"uk": "Period stats resilient",
+				"zh-cn": "周期统计更稳健"
+			},
 			"0.10.26": {
 				"en": "Week statistics: fetch on first detail refresh; week interval 1 (was 3); log when updated",
 				"de": "Wochenstatistik: Abruf beim ersten Detail-Refresh; Intervall 1 (statt 3); Log bei Update",
@@ -225,32 +251,6 @@
 				"uk": "Before: експорт=PV; active: повільний заряд",
 				"zh-cn": "before 即时并网=光伏；active 慢充+余电上网"
 			},
-			"0.10.7": {
-				"en": "Curtailment: export limit follows live PV (total_pv_power), updates on generation change",
-				"de": "Abregelung: Einspeise-Limit folgt live PV, Nachführung bei Erzeugungsänderung",
-				"ru": "Экспорт по live PV",
-				"pt": "Exportação segue PV em tempo real",
-				"nl": "Export volgt live PV",
-				"fr": "Export suit PV en direct",
-				"it": "Export segue PV live",
-				"es": "Exportación sigue PV en vivo",
-				"pl": "Eksport według live PV",
-				"uk": "Експорт за live PV",
-				"zh-cn": "并网限值跟随实时光伏"
-			},
-			"0.10.6": {
-				"en": "Curtailment: manual mode, no charge, export limit = hourly forecast (also before window)",
-				"de": "Abregelung: Benutzerdefiniert, kein Laden, Einspeise-Limit = Stundenprognose (auch vor Fenster)",
-				"ru": "Ограничение: ручной режим, без зарядки, экспорт по прогнозу",
-				"pt": "Curtailment: manual, sem carga, exportação conforme previsão",
-				"nl": "Curtailment: handmatig, geen laden, export volgens prognose",
-				"fr": "Curtailment: manuel, pas de charge, export selon prévision",
-				"it": "Curtailment: manuale, niente carica, export da previsione",
-				"es": "Curtailment: manual, sin carga, exportación según pronóstico",
-				"pl": "Curtailment: ręczny, bez ładowania, eksport z prognozy",
-				"uk": "Обмеження: ручний режим, без зарядки, експорт за прогнозом",
-				"zh-cn": "限电：手动模式、不充电、按小时预测并网"
-			},
 			"0.10.5": {
 				"en": "Curtailment: read solarprognose kW (11h.power), convert to W",
 				"de": "Abregelung: solarprognose kW (11h.power) lesen, in W umrechnen",
@@ -263,19 +263,6 @@
 				"pl": "Prognoza kW → W",
 				"uk": "Прогноз kW → W",
 				"zh-cn": "预测 kW 转 W"
-			},
-			"0.10.6": {
-				"en": "Curtailment: manual mode, no charge, export limit = hourly forecast (also before window)",
-				"de": "Abregelung: Benutzerdefiniert, kein Laden, Einspeise-Limit = Stundenprognose (auch vor Fenster)",
-				"ru": "Ограничение: ручной режим, без зарядки, экспорт по прогнозу",
-				"pt": "Curtailment: manual, sem carga, exportação conforme previsão",
-				"nl": "Curtailment: handmatig, geen laden, export volgens prognose",
-				"fr": "Curtailment: manuel, pas de charge, export selon prévision",
-				"it": "Curtailment: manuale, niente carica, export da previsione",
-				"es": "Curtailment: manual, sin carga, exportación según pronóstico",
-				"pl": "Curtailment: ręczny, bez ładowania, eksport z prognozy",
-				"uk": "Обмеження: ручний режим, без зарядки, експорт за прогнозом",
-				"zh-cn": "限电：手动模式、不充电、按小时预测并网"
 			}
 		},
 		"titleLang": {
