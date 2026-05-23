@@ -296,12 +296,56 @@ Tab **Abregelungsvermeidung** / **Curtailment avoidance**: [solarprognose](https
 
 ## Changelog
 
+### 0.10.17
+
+- **Fix:** Stale `build/` still ran old curtailment code that set **grid export limit** (`grid_export_limit`) to up to **4800 W** on adapter start (App: *Netzeinspeisungs-Leistungsgrenze* → *Anpassen*). Rebuilt `build/` from current TypeScript; tests verify compiled curtailment never touches feed-in controls
+
+### 0.10.16
+
+- Combiner sensor **`total_state_of_charge`**: cloud total or capacity-weighted average of all site solarbanks (poll + ioBroker state)
+- Curtailment uses total SOC for `missing_charge_wh`, `max_charge_w`, and `soc_percent`
+
+### 0.10.15
+
+- Curtailment: **`ac_output_limit` via API only** (no MQTT) to avoid station side effects
+- Fix SOC handling when combiner had no SOC (`max_charge_w` wrong); ensure `missing_charge_wh` state exists on upgrade
+
+### 0.10.14
+
+- Curtailment: **only** manual mode + **`ac_output_limit`** (no `grid_export_limit`, `allow_grid_export`, home load preset, AC charge limit)
+- New state `curtailment.missing_charge_wh`; active phase: export = live PV − calculated max charge
+
+### 0.10.12
+
+- Curtailment combiner: export via **`ac_output_limit`** (`max_load`); home load preset 0 W (superseded by 0.10.14+)
+
+### 0.10.11
+
+- Curtailment: prefer **`system.{siteId}.sensors.total_pv_power`** for live PV
+
+### 0.10.10
+
+- Curtailment combiner: export via `set_output_power` (later replaced); 4800 W cap; more PV sensors for `live_pv_w`
+
+### 0.10.9
+
+- Curtailment active phase: AC output = full PV (intermediate behaviour; refined in 0.10.14+)
+
+### 0.10.8
+
+- Curtailment: **before** = instant export = live PV; **active** = slow battery charge + export surplus
+
+### 0.10.7
+
+- Curtailment: export limit follows live PV; updates when generation sensors change
+
+### 0.10.6
+
+- Curtailment: manual mode, no charge, export limit from hourly forecast (also before curtailment window)
+
 ### 0.10.5
 
-- Curtailment: before = export equals live PV (instant on sensor update); active = slow charge + export surplus
-- Curtailment: export limit tracks live PV power (updates on generation change); forecast fallback
-- Curtailment: manual + zero charge + export limit from forecast (before/active); no battery pre-charge strategy
-- Curtailment: fix solarprognose forecast (kW → W, state path `11h.power`)
+- Curtailment: read [solarprognose](https://github.com/ioBroker/ioBroker.solarprognose) forecast (kW → W, path `11h.power`)
 
 ### 0.10.4
 

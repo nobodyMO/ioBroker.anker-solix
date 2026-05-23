@@ -1,5 +1,7 @@
 # Older changelog entries (moved from io-package.json common.news)
 
+Current releases **0.10.6 and newer** are documented in [README.md](README.md#changelog).
+
 ## 0.9.5 – 0.9.0
 
 See git history / GitHub releases for 0.9.x notes (login cache, entity groups, captcha handling).
