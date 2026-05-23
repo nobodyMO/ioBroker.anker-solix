@@ -39,6 +39,7 @@ class AnkerSolix extends utils.Adapter {
 	private readonly lastNotifiedPvW = new Map<string, number>();
 	private readonly curtailmentDeviceIds = new Set<string>();
 	private pollAfterControlTimer: NodeJS.Timeout | undefined;
+	private pollInFlight = false;
 
 	public constructor(options: Partial<utils.AdapterOptions> = {}) {
 		super({
@@ -160,6 +161,19 @@ class AnkerSolix extends utils.Adapter {
 	}
 
 	private async pollOnce(): Promise<void> {
+		if (this.pollInFlight) {
+			this.log.debug("Poll skipped (previous poll still running)");
+			return;
+		}
+		this.pollInFlight = true;
+		try {
+			await this.pollOnceBody();
+		} finally {
+			this.pollInFlight = false;
+		}
+	}
+
+	private async pollOnceBody(): Promise<void> {
 		if (!this.config.acceptTerms) {
 			this.log.warn("Please accept the usage terms in the adapter configuration.");
 			await this.setState("info.connection", false, true);

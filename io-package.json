@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.22",
+		"version": "0.10.23",
 		"messagebox": true,
 		"news": {
+			"0.10.23": {
+				"en": "Fix daemon crash (_update_energy_periods); year-only skips daily energy poll; less API load",
+				"de": "Fix Daemon-Absturz (_update_energy_periods); nur Jahresstatistik ohne Tages-Poll; weniger API-Last",
+				"ru": "Fix daemon; year-only less API",
+				"pt": "Fix daemon; year-only less API",
+				"nl": "Fix daemon; year-only less API",
+				"fr": "Fix daemon; year-only less API",
+				"it": "Fix daemon; year-only less API",
+				"es": "Fix daemon; year-only less API",
+				"pl": "Fix daemon; year-only less API",
+				"uk": "Fix daemon; year-only less API",
+				"zh-cn": "修复守护进程；仅年统计减少 API"
+			},
 			"0.10.22": {
 				"en": "Energy statistics only on combiner (multisystem) or per solarbank; not on system + all banks",
 				"de": "Energie-Statistik nur am Combiner (Multisystem) bzw. pro Solarbank; nicht zusätzlich unter System",
@@ -237,19 +250,6 @@
 				"pl": "CI: testy Mocha/Chai",
 				"uk": "CI: тести Mocha/Chai",
 				"zh-cn": "CI：Mocha/Chai 单元测试"
-			},
-			"0.10.2": {
-				"en": "Curtailment AC limits: standalone 800 W; combiner SB2 1000, SB3 1200, SB4 2500 W",
-				"de": "Abregelungs-Limits: einzeln 800 W; Combiner SB2 1000, SB3 1200, SB4 2500 W",
-				"ru": "Лимиты AC: 800 W / Combiner",
-				"pt": "Limites AC corrigidos",
-				"nl": "AC-limieten gecorrigeerd",
-				"fr": "Limites AC corrigées",
-				"it": "Limiti AC corretti",
-				"es": "Límites AC corregidos",
-				"pl": "Poprawione limity AC",
-				"uk": "Виправлені ліміти AC",
-				"zh-cn": "修正 AC 功率限制"
 			},
 			"0.10.2": {
 				"en": "Curtailment AC limits: standalone 800 W; combiner SB2 1000, SB3 1200, SB4 2500 W",

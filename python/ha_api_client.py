@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from pathlib import Path
 from typing import Any
 
@@ -82,6 +83,8 @@ class IoBrokerAnkerApiClient:
             data = json.loads(self._state_path.read_text(encoding="utf-8"))
             self._intervalcount = int(data.get("intervalcount", 0))
             self._period_rotate = int(data.get("period_rotate", 0))
+            self._period_detail_count = int(data.get("period_detail_count", 0))
+            self._period_backoff_until = float(data.get("period_backoff_until", 0))
             self._startup = bool(data.get("startup", True))
             self.deferred_data = bool(data.get("deferred_data", False))
         except (OSError, ValueError, TypeError) as exc:
@@ -94,6 +97,8 @@ class IoBrokerAnkerApiClient:
                     {
                         "intervalcount": self._intervalcount,
                         "period_rotate": self._period_rotate,
+                        "period_detail_count": self._period_detail_count,
+                        "period_backoff_until": self._period_backoff_until,
                         "startup": self._startup,
                         "deferred_data": self.deferred_data,
                     },
@@ -142,9 +147,10 @@ class IoBrokerAnkerApiClient:
             if self._startup:
                 self._logger.info("Deferring energy updates on first device refresh")
             else:
-                await self.api.update_device_energy(
-                    exclude=set(self.exclude_categories)
-                )
+                if needs_daily_energy_poll(self.config):
+                    await self.api.update_device_energy(
+                        exclude=set(self.exclude_categories)
+                    )
                 await self._update_energy_periods()
             self._intervalcount = self._deviceintervals
             self.active_device_refresh = False
@@ -154,7 +160,10 @@ class IoBrokerAnkerApiClient:
         elif self._startup and not self.deferred_data:
             self.active_device_refresh = True
             self._logger.info("Updating deferred energy data")
-            await self.api.update_device_energy(exclude=set(self.exclude_categories))
+            if needs_daily_energy_poll(self.config):
+                await self.api.update_device_energy(
+                    exclude=set(self.exclude_categories)
+                )
             await self._update_energy_periods()
             self.deferred_data = True
             self._startup = False
@@ -211,6 +220,63 @@ class IoBrokerAnkerApiClient:
 
     def get_mqtt_device(self, sn: str) -> SolixMqttDevice | None:
         return self.mqtt_devices.get(sn) if sn else None
+
+    def _period_detail_interval(self) -> int:
+        """Detail refreshes between period energy_analysis batches (year = slowest)."""
+        periods = set(enabled_periods(self.config))
+        if not periods:
+            return 99
+        if periods == {PERIOD_YEAR}:
+            return 8
+        if PERIOD_YEAR in periods:
+            return 5
+        if PERIOD_MONTH in periods:
+            return 4
+        if PERIOD_WEEK in periods:
+            return 3
+        return 3
+
+    def _periods_for_this_refresh(self) -> list[str]:
+        """At most one enabled period per detail refresh."""
+        periods = enabled_periods(self.config)
+        if not periods:
+            return []
+        if len(periods) == 1:
+            return periods
+        idx = self._period_rotate % len(periods)
+        self._period_rotate += 1
+        return [periods[idx]]
+
+    def _periods_due(self) -> bool:
+        if time.time() < self._period_backoff_until:
+            return False
+        if not enabled_periods(self.config):
+            return False
+        self._period_detail_count += 1
+        if self._period_detail_count < self._period_detail_interval():
+            return False
+        self._period_detail_count = 0
+        return True
+
+    async def _update_energy_periods(self) -> None:
+        if not self._periods_due():
+            return
+        periods = self._periods_for_this_refresh()
+        if not periods:
+            return
+        from solixapi import errors  # noqa: PLC0415
+
+        try:
+            await update_site_energy_periods(
+                self.api, self.config, periods=periods
+            )
+        except errors.RequestLimitError as exc:
+            self._period_backoff_until = time.time() + 1800
+            self._logger.warning(
+                "Period energy skipped for 30 min (rate limit): %s", exc
+            )
+        except Exception as exc:  # noqa: BLE001
+            self._logger.warning("Period energy update failed: %s", exc)
 
     def apply_runtime_config(self, config: dict) -> None:
         """Update poll options without tearing down the persistent session."""

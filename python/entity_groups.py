@@ -138,6 +138,12 @@ def entity_spec_enabled(spec: dict, enabled: set[str]) -> bool:
     return any(g in enabled for g in spec_groups)
 
 
+def needs_daily_energy_poll(config: dict) -> bool:
+    """Today/yesterday energy via poll_device_energy (many API calls)."""
+    enabled = enabled_entity_groups(config)
+    return GROUP_ENERGY_STATISTICS in enabled or GROUP_ENERGY_DETAIL in enabled
+
+
 def build_exclude_categories(config: dict) -> list[str]:
     """Build API exclude set: everything optional off unless enabled in config."""
     enabled = enabled_entity_groups(config)

@@ -171,10 +171,15 @@ export async function runBridge(
 				return await runBridgeDaemon(action, config, pythonPath, log);
 			} catch (retryErr) {
 				log?.warn(`Daemon retry failed: ${(retryErr as Error).message}`);
+				throw retryErr;
 			}
 		}
 
 		if (isAuthError(msg)) {
+			throw error;
+		}
+
+		if (isTransientApiError(msg)) {
 			throw error;
 		}
 
