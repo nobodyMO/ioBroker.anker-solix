@@ -4,6 +4,7 @@ export const CURTAILMENT_STATE_IDS = {
 	today: `${CURTAILMENT_CHANNEL}.today`,
 	start: `${CURTAILMENT_CHANNEL}.curtailment_start`,
 	end: `${CURTAILMENT_CHANNEL}.curtailment_end`,
+	missingChargeWh: `${CURTAILMENT_CHANNEL}.missing_charge_wh`,
 	maxChargeW: `${CURTAILMENT_CHANNEL}.max_charge_w`,
 	exportW: `${CURTAILMENT_CHANNEL}.export_w`,
 	livePvW: `${CURTAILMENT_CHANNEL}.live_pv_w`,
@@ -57,9 +58,21 @@ export async function setupCurtailmentStates(adapter: ioBroker.Adapter): Promise
 			},
 		},
 		{
+			id: CURTAILMENT_STATE_IDS.missingChargeWh,
+			common: {
+				name: "Missing charge energy to full SOC (active phase, Wh)",
+				type: "number",
+				role: "value.energy",
+				unit: "Wh",
+				read: true,
+				write: false,
+				def: 0,
+			},
+		},
+		{
 			id: CURTAILMENT_STATE_IDS.maxChargeW,
 			common: {
-				name: "Max AC charge power (active phase, W)",
+				name: "Max AC charge power (missing Wh ÷ remaining hours, W)",
 				type: "number",
 				role: "value.power",
 				unit: "W",

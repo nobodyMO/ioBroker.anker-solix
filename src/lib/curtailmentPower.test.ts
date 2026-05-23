@@ -3,6 +3,7 @@ import { expect } from "chai";
 import { detectCurtailmentWindow } from "./curtailmentForecast";
 import {
 	calcMaxChargeW,
+	calcMissingChargeWh,
 	parsePvSensorStateId,
 	parseSystemPvStateId,
 	readLivePvPowerW,
@@ -23,14 +24,14 @@ describe("curtailmentPower", () => {
 		expect(set.chargeW).to.equal(0);
 	});
 
-	it("active: export is full PV, charge is separate", () => {
-		expect(resolveActiveExportW(5000, 800)).to.equal(5000);
-		expect(resolveActiveExportW(400, 800)).to.equal(400);
+	it("active: export is live PV minus max charge", () => {
+		expect(resolveActiveExportW(5000, 800)).to.equal(4200);
+		expect(resolveActiveExportW(400, 800)).to.equal(0);
 		const forecast = { hours: new Map<number, number>([[11, 5000]]) };
 		const window = detectCurtailmentWindow(forecast, 800);
 		const set = resolveCurtailmentSetpoints("active", 5000, 800, forecast, 11, window);
 		expect(set.chargeW).to.equal(800);
-		expect(set.exportW).to.equal(5000);
+		expect(set.exportW).to.equal(4200);
 	});
 
 	it("sums power-flow sensors when direct PV sensors are missing", () => {
@@ -42,8 +43,10 @@ describe("curtailmentPower", () => {
 		expect(pv).to.equal(2800);
 	});
 
-	it("calc max charge from remaining hours", () => {
-		expect(calcMaxChargeW(5000, 50, 5)).to.equal(500);
+	it("calc missing Wh and max charge from remaining hours", () => {
+		expect(calcMissingChargeWh(5000, 50)).to.equal(2500);
+		expect(calcMaxChargeW(2500, 5)).to.equal(500);
+		expect(calcMaxChargeW(2500, 0)).to.equal(2500);
 	});
 
 	it("detects PV sensor state ids", () => {

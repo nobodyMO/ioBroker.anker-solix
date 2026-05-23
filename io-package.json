@@ -1,21 +1,21 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.13",
+		"version": "0.10.14",
 		"messagebox": true,
 		"news": {
-			"0.10.13": {
-				"en": "Curtailment: no longer sets grid_export_limit (app feed-in cap); combiner ac_output_limit only",
-				"de": "Abregelung: setzt grid_export_limit (App Einspeise-Limit) nicht mehr; nur ac_output_limit",
-				"ru": "Abregelung: без grid_export_limit",
-				"pt": "Abregelung: sem grid_export_limit",
-				"nl": "Abregelung: geen grid_export_limit",
-				"fr": "Abregelung: sans grid_export_limit",
-				"it": "Abregelung: senza grid_export_limit",
-				"es": "Abregelung: sin grid_export_limit",
-				"pl": "Abregelung: bez grid_export_limit",
-				"uk": "Abregelung: без grid_export_limit",
-				"zh-cn": "限电不再修改 grid_export_limit"
+			"0.10.14": {
+				"en": "Curtailment: manual + ac_output_limit only; missing_charge_wh; active export = PV − charge",
+				"de": "Abregelung: nur Benutzerdefiniert + ac_output_limit; missing_charge_wh; active: Einspeisung = PV − Laden",
+				"ru": "Abregelung: manual + ac_output_limit",
+				"pt": "Abregelung: manual + ac_output_limit",
+				"nl": "Abregelung: manual + ac_output_limit",
+				"fr": "Abregelung: manual + ac_output_limit",
+				"it": "Abregelung: manual + ac_output_limit",
+				"es": "Abregelung: manual + ac_output_limit",
+				"pl": "Abregelung: manual + ac_output_limit",
+				"uk": "Abregelung: manual + ac_output_limit",
+				"zh-cn": "限电仅 manual + ac_output_limit"
 			},
 			"0.10.12": {
 				"en": "Curtailment combiner: ac_output_limit (max_load) for export; home load preset 0 W",

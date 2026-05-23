@@ -142,24 +142,30 @@ export function resolveBeforeExportW(
 /** Combiner / multisystem AC output (max_load_parallel MQTT steps up to 4800 W). */
 export const COMBINER_MAX_AC_OUTPUT_W = 4800;
 
-/**
- * Active window: AC output limit = full PV (charging capped separately via ac_charge_limit).
- * Slow battery fill uses maxChargeW only; do not subtract it from the export limit.
- */
-export function resolveActiveExportW(livePvW: number, _maxChargeW: number): number {
-	if (livePvW <= 0) {
-		return 0;
-	}
-	return Math.round(livePvW);
-}
-
-export function calcMaxChargeW(batteryCapacityWh: number, socPercent: number, hoursRemaining: number): number {
-	const hours = Math.max(1, hoursRemaining);
+/** Wh still required to reach 100 % SOC (active phase). */
+export function calcMissingChargeWh(batteryCapacityWh: number, socPercent: number): number {
 	if (batteryCapacityWh <= 0) {
 		return 0;
 	}
-	const missingWh = ((100 - socPercent) / 100) * batteryCapacityWh;
+	const soc = Math.min(100, Math.max(0, socPercent));
+	return Math.max(0, Math.round(((100 - soc) / 100) * batteryCapacityWh));
+}
+
+/** Max AC charge power (W) = missing Wh ÷ remaining curtailment hours. */
+export function calcMaxChargeW(missingWh: number, hoursRemaining: number): number {
+	const hours = Math.max(1, hoursRemaining);
+	if (missingWh <= 0) {
+		return 0;
+	}
 	return Math.max(0, Math.round(missingWh / hours));
+}
+
+/** Active window: AC output (export) = live PV − max charge power. */
+export function resolveActiveExportW(livePvW: number, maxChargeW: number): number {
+	if (livePvW <= 0) {
+		return 0;
+	}
+	return Math.max(0, Math.round(livePvW - Math.max(0, maxChargeW)));
 }
 
 export function resolveCurtailmentSetpoints(
