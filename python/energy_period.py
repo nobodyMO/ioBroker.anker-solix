@@ -25,6 +25,9 @@ PERIOD_WEEK = "week"
 PERIOD_MONTH = "month"
 PERIOD_YEAR = "year"
 
+# Pause between energy_analysis calls (HA poll_device_energy uses request_delay; bursts → 10003).
+PERIOD_ANALYSIS_DELAY_SEC = 2.5
+
 _PERIOD_GROUPS: dict[str, str] = {
     PERIOD_WEEK: GROUP_ENERGY_STATISTICS_WEEK,
     PERIOD_MONTH: GROUP_ENERGY_STATISTICS_MONTH,
@@ -179,22 +182,41 @@ def _merge_entry(entry: dict, updates: dict[str, Any]) -> None:
             entry[key] = val
 
 
-def resolve_site_device_sn(api: AnkerSolixApi, site_id: str, site: dict) -> str:
-    """Device SN for energy_analysis (combiner preferred, else first solarbank)."""
-    for cb in (site.get("combiner_box_info") or {}).get("combiner_box_list") or []:
-        if sn := cb.get("device_sn"):
-            return str(sn)
-    for sb in (site.get("solarbank_info") or {}).get("solarbank_list") or []:
-        if sn := sb.get("device_sn"):
-            return str(sn)
-    for dev in api.devices.values():
-        if str(dev.get("site_id") or "") == site_id and (sn := dev.get("device_sn")):
-            if dev.get("type") in (
-                SolixDeviceType.COMBINER_BOX.value,
-                SolixDeviceType.SOLARBANK.value,
-            ):
-                return str(sn)
-    return ""
+def period_num_days(period: str, now: datetime | None = None) -> int:
+    """Days to aggregate for current calendar week / month (inclusive)."""
+    now = now or datetime.now()
+    start = period_start_day(period, now)
+    if period == PERIOD_YEAR:
+        return (now.date() - start.date()).days + 1
+    if period == PERIOD_MONTH:
+        return now.day
+    return (now.date() - start.date()).days + 1
+
+
+def _aggregate_daily_energy_table(
+    table: dict[str, Any], period: str, start: datetime
+) -> dict[str, Any]:
+    """Sum daily energy_daily rows into one week/month block (HA-style site totals)."""
+    skip = {"date", "statistics", "smartplug_list"}
+    sums: dict[str, float] = {}
+    for day_entry in table.values():
+        if not isinstance(day_entry, dict):
+            continue
+        for key, raw in day_entry.items():
+            if key in skip:
+                continue
+            val = parse_energy_value(raw)
+            if val is None:
+                continue
+            sums[key] = sums.get(key, 0.0) + float(val)
+    entry: dict[str, Any] = {
+        "date": period_label(period, start),
+        "period_label": period_label(period, start),
+    }
+    for key, total in sums.items():
+        if total > 0:
+            entry[key] = round(total, 2)
+    return entry if period_block_has_values(entry) else {}
 
 
 def period_block_has_values(block: dict[str, Any]) -> bool:
@@ -214,10 +236,9 @@ def site_energy_query_types(
     from solixapi.apitypes import SolixDeviceType as DT  # noqa: N811
 
     query_types: set[str] = set()
-    query_sn = resolve_site_device_sn(api, site_id, site)
     if site.get("site_type", "") == DT.SOLARBANK_PPS.value:
         query_types.add(DT.SOLARBANK_PPS.value)
-        return query_types, query_sn
+        return query_types, ""
 
     parallel_sbs = [
         item.get("device_sn")
@@ -257,7 +278,8 @@ def site_energy_query_types(
             if {ApiCategories.solar_energy} - exclude and len(parallel_sbs) == 1:
                 query_types.add(DT.INVERTER.value)
 
-    return query_types, query_sn
+    # HA poll_device_energy: empty device_sn → site-level totals (combiner SN → 10003).
+    return query_types, ""
 
 
 async def _energy_analysis_safe(
@@ -269,23 +291,25 @@ async def _energy_analysis_safe(
     start: datetime,
     dev_type: str,
     logger: logging.Logger,
+    end: datetime | None = None,
 ) -> dict[str, Any] | None:
-    """Single energy_analysis call with one retry on transient Anker errors."""
+    """Single energy_analysis call with retries on transient Anker errors."""
     last_exc: Exception | None = None
-    for attempt in range(2):
+    for attempt in range(3):
         try:
             return await api.energy_analysis(
                 siteId=site_id,
                 deviceSn=device_sn,
                 rangeType=range_type,
                 startDay=start,
+                endDay=end,
                 devType=dev_type,
             )
         except Exception as exc:  # noqa: BLE001
             last_exc = exc
             msg = str(exc)
-            if attempt == 0 and ("10003" in msg or "Failed to request" in msg):
-                await asyncio.sleep(4)
+            if attempt < 2 and ("10003" in msg or "Failed to request" in msg):
+                await asyncio.sleep(4 + attempt * 2)
                 continue
             logger.warning(
                 "energy_analysis %s (%s) failed for site %s: %s",
@@ -306,14 +330,54 @@ async def _energy_analysis_safe(
     return None
 
 
-async def fetch_energy_period_block(
+async def _pause_between_period_calls() -> None:
+    await asyncio.sleep(PERIOD_ANALYSIS_DELAY_SEC)
+
+
+async def fetch_energy_period_block_from_daily(
+    api: AnkerSolixApi,
+    site_id: str,
+    query_types: set[str],
+    period: str,
+) -> dict[str, Any]:
+    """Week/month totals via energy_daily (same path as HA poll_device_energy)."""
+    if period not in (PERIOD_WEEK, PERIOD_MONTH):
+        return {}
+    start = period_start_day(period)
+    num_days = period_num_days(period)
+    if num_days <= 0:
+        return {}
+    log = api._logger
+    log.debug(
+        "Period %s for site %s: energy_daily from %s (%s days, device_sn empty)",
+        period,
+        site_id,
+        start.strftime("%Y-%m-%d"),
+        num_days,
+    )
+    try:
+        table = await api.energy_daily(
+            siteId=site_id,
+            deviceSn="",
+            startDay=start,
+            numDays=num_days,
+            dayTotals=True,
+            devTypes=query_types,
+        )
+    except Exception as exc:  # noqa: BLE001
+        log.warning("energy_daily (%s) failed for site %s: %s", period, site_id, exc)
+        return {}
+    return _aggregate_daily_energy_table(table, period, start)
+
+
+async def fetch_energy_period_block_from_analysis(
     api: AnkerSolixApi,
     site_id: str,
     device_sn: str,
     query_types: set[str],
     period: str,
 ) -> dict[str, Any]:
-    """Fetch one period block (week/month/year) for a site."""
+    """Year (and fallback): calendar period via energy_analysis type week/month/year."""
     site = api.sites.get(site_id) or {}
     other_pv = bool(
         ((site.get("feature_switch") or {}).get("show_third_party_pv_panel"))
@@ -327,6 +391,7 @@ async def fetch_energy_period_block(
     ]
     start = period_start_day(period)
     range_type = period if period in ("week", "month", "year") else "week"
+    end = datetime.now() if range_type == "week" else None
     entry: dict[str, Any] = {
         "date": period_label(period, start),
         "period_label": period_label(period, start),
@@ -340,6 +405,7 @@ async def fetch_energy_period_block(
             device_sn=device_sn,
             range_type=range_type,
             start=start,
+            end=end,
             dev_type="solarbank",
             logger=log,
         )
@@ -360,6 +426,7 @@ async def fetch_energy_period_block(
                     "ac_socket": _total_kwh(resp, "ac_out_put_total"),
                 },
             )
+        await _pause_between_period_calls()
 
     if (SolixDeviceType.SOLARBANK.value in query_types and sb2s) or (
         {
@@ -375,6 +442,7 @@ async def fetch_energy_period_block(
             device_sn=device_sn,
             range_type=range_type,
             start=start,
+            end=end,
             dev_type="home_usage",
             logger=log,
         )
@@ -392,6 +460,7 @@ async def fetch_energy_period_block(
                     ),
                 },
             )
+        await _pause_between_period_calls()
 
     if SolixDeviceType.SMARTMETER.value in query_types and (
         SolixDeviceType.SOLARBANK.value not in query_types or other_pv
@@ -402,6 +471,7 @@ async def fetch_energy_period_block(
             device_sn=device_sn,
             range_type=range_type,
             start=start,
+            end=end,
             dev_type="grid",
             logger=log,
         )
@@ -418,6 +488,7 @@ async def fetch_energy_period_block(
                     or _total_kwh(resp, "grid_to_home_total"),
                 },
             )
+        await _pause_between_period_calls()
 
     if SolixDeviceType.EV_CHARGER.value in query_types:
         resp = await _energy_analysis_safe(
@@ -426,11 +497,13 @@ async def fetch_energy_period_block(
             device_sn=device_sn,
             range_type=range_type,
             start=start,
+            end=end,
             dev_type="ev_charger",
             logger=log,
         )
         if resp:
             _merge_entry(entry, {"ev_charge": _sum_power_kwh(resp)})
+        await _pause_between_period_calls()
 
     if SolixDeviceType.SOLARBANK_PPS.value not in query_types:
         resp = await _energy_analysis_safe(
@@ -439,6 +512,7 @@ async def fetch_energy_period_block(
             device_sn=device_sn,
             range_type=range_type,
             start=start,
+            end=end,
             dev_type="solar_production",
             logger=log,
         )
@@ -458,6 +532,34 @@ async def fetch_energy_period_block(
             )
 
     return entry if period_block_has_values(entry) else {}
+
+
+async def fetch_energy_period_block(
+    api: AnkerSolixApi,
+    site_id: str,
+    device_sn: str,
+    query_types: set[str],
+    period: str,
+) -> dict[str, Any]:
+    """Fetch one period block (week/month/year) for a site."""
+    sn = (device_sn or "").strip()
+    if period in (PERIOD_WEEK, PERIOD_MONTH):
+        block = await fetch_energy_period_block_from_daily(
+            api, site_id, query_types, period
+        )
+        if block:
+            return block
+        api._logger.info(
+            "Period %s for site %s: energy_daily empty, trying energy_analysis",
+            period,
+            site_id,
+        )
+    block = await fetch_energy_period_block_from_analysis(
+        api, site_id, sn, query_types, period
+    )
+    if block or period == PERIOD_YEAR:
+        return block
+    return await fetch_energy_period_block_from_daily(api, site_id, query_types, period)
 
 
 def enabled_periods(config: dict) -> list[str]:

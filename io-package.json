@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.29",
+		"version": "0.10.30",
 		"messagebox": true,
 		"news": {
+			"0.10.30": {
+				"en": "Week/month stats: energy_daily + empty device_sn (HA style); fixes energy_analysis 10003",
+				"de": "Wochen/Monats-Statistik: energy_daily + leere device_sn (wie HA); Fix energy_analysis 10003",
+				"ru": "Period stats HA-style",
+				"pt": "Period stats HA-style",
+				"nl": "Period stats HA-style",
+				"fr": "Period stats HA-style",
+				"it": "Period stats HA-style",
+				"es": "Period stats HA-style",
+				"pl": "Period stats HA-style",
+				"uk": "Period stats HA-style",
+				"zh-cn": "周期统计按 HA 方式获取"
+			},
 			"0.10.28": {
 				"en": "Curtailment: no manual/export limit until live PV ≥50 W (fixes midnight 4800 W feed-in)",
 				"de": "Abregelung: erst bei Live-PV ≥50 W (Fix Mitternacht: kein manuell/4800 W ohne Erzeugung)",
