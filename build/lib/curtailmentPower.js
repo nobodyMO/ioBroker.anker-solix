@@ -21,6 +21,7 @@ __export(curtailmentPower_exports, {
   COMBINER_MAX_AC_OUTPUT_W: () => COMBINER_MAX_AC_OUTPUT_W,
   PV_SENSOR_IDS: () => PV_SENSOR_IDS,
   calcMaxChargeW: () => calcMaxChargeW,
+  isPvGenerationSensor: () => isPvGenerationSensor,
   isPvSensorEntity: () => isPvSensorEntity,
   parsePvSensorStateId: () => parsePvSensorStateId,
   pvSensorStatePaths: () => pvSensorStatePaths,
@@ -32,11 +33,12 @@ __export(curtailmentPower_exports, {
 });
 module.exports = __toCommonJS(curtailmentPower_exports);
 var import_curtailmentForecast = require("./curtailmentForecast");
-const PV_SENSOR_IDS = ["total_pv_power", "input_power"];
+const PV_SENSOR_IDS = ["total_pv_power", "input_power", "solar_power_total"];
+const PV_FLOW_SUM_IDS = ["pv_to_home_power", "pv_to_battery_power", "photovoltaic_to_grid_power"];
 function pvSensorStatePaths(namespace, deviceId) {
   const paths = [];
   for (const channel of ["solarbank", "combiner_box"]) {
-    for (const sensor of PV_SENSOR_IDS) {
+    for (const sensor of [...PV_SENSOR_IDS, ...PV_FLOW_SUM_IDS]) {
       paths.push(`${namespace}.${channel}.${deviceId}.sensors.${sensor}`);
     }
   }
@@ -58,6 +60,9 @@ function parsePvSensorStateId(namespace, stateId) {
 function isPvSensorEntity(entityId) {
   return PV_SENSOR_IDS.includes(entityId);
 }
+function isPvGenerationSensor(entityId) {
+  return isPvSensorEntity(entityId) || PV_FLOW_SUM_IDS.includes(entityId);
+}
 function readPvFromEntities(entities) {
   if (!entities) {
     return 0;
@@ -69,7 +74,20 @@ function readPvFromEntities(entities) {
       max = n;
     }
   }
-  return max > 0 ? Math.round(max) : 0;
+  if (max > 0) {
+    return Math.round(max);
+  }
+  let flowSum = 0;
+  for (const key of PV_FLOW_SUM_IDS) {
+    const n = Number(entities[key]);
+    if (Number.isFinite(n) && n > 0) {
+      flowSum += n;
+    }
+  }
+  if (flowSum > 0) {
+    return Math.round(flowSum);
+  }
+  return 0;
 }
 async function readLivePvPowerW(host, deviceId) {
   var _a;
@@ -122,6 +140,7 @@ function resolveCurtailmentSetpoints(phase, livePvW, maxChargeW, forecast, nowHo
   COMBINER_MAX_AC_OUTPUT_W,
   PV_SENSOR_IDS,
   calcMaxChargeW,
+  isPvGenerationSensor,
   isPvSensorEntity,
   parsePvSensorStateId,
   pvSensorStatePaths,

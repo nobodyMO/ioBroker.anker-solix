@@ -4,6 +4,7 @@ import { detectCurtailmentWindow } from "./curtailmentForecast";
 import {
 	calcMaxChargeW,
 	parsePvSensorStateId,
+	readPvFromEntities,
 	resolveActiveExportW,
 	resolveBeforeExportW,
 	resolveCurtailmentSetpoints,
@@ -27,6 +28,15 @@ describe("curtailmentPower", () => {
 		const set = resolveCurtailmentSetpoints("active", 5000, 800, forecast, 11, window);
 		expect(set.chargeW).to.equal(800);
 		expect(set.exportW).to.equal(5000);
+	});
+
+	it("sums power-flow sensors when direct PV sensors are missing", () => {
+		const pv = readPvFromEntities({
+			pv_to_home_power: 1000,
+			pv_to_battery_power: 500,
+			photovoltaic_to_grid_power: 1300,
+		});
+		expect(pv).to.equal(2800);
 	});
 
 	it("calc max charge from remaining hours", () => {

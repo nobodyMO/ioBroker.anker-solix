@@ -106,7 +106,7 @@ const SENSOR_ENTITIES = [
 const CONTROL_ENTITIES = [
   { id: "allow_grid_export", kind: "switch", role: "switch" },
   { id: "preset_allow_export", kind: "switch", role: "switch" },
-  { id: "set_output_power", kind: "number", role: "level.power", unit: "W", min: 0, max: 1200 },
+  { id: "set_output_power", kind: "number", role: "level.power", unit: "W", min: 0, max: 4800 },
   {
     id: "ac_output_limit",
     kind: "number",

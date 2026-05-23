@@ -30,6 +30,7 @@ class AnkerSolix extends utils.Adapter {
 	private readonly controlQueue = new ControlQueue();
 	private readonly deviceContexts = new Map<string, DeviceControlContext>();
 	private readonly deviceEntities = new Map<string, Record<string, unknown>>();
+	private readonly deviceWritable = new Map<string, string[]>();
 	private readonly lastNotifiedPvW = new Map<string, number>();
 	private readonly curtailmentDeviceIds = new Set<string>();
 	private pollAfterControlTimer: NodeJS.Timeout | undefined;
@@ -373,6 +374,7 @@ class AnkerSolix extends utils.Adapter {
 			getForeignObjectAsync: id => this.getForeignObjectAsync(id),
 			getStateAsync: id => this.getStateAsync(id),
 			getDeviceEntities: deviceId => this.deviceEntities.get(deviceId),
+			getDeviceWritable: deviceId => this.deviceWritable.get(deviceId),
 			setState: async (id, val, ack) => {
 				await this.setState(id, val as ioBroker.StateValue, ack ?? true);
 			},

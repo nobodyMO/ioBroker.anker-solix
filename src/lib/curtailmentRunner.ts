@@ -24,6 +24,8 @@ export interface CurtailmentRunnerConfig extends CurtailmentStructuredNative {
 }
 
 export interface CurtailmentRunnerHost extends CurtailmentPowerHost {
+	/** Writable control ids from last poll (e.g. set_output_power on combiner). */
+	getDeviceWritable?: (deviceId: string) => string[] | undefined;
 	log: {
 		debug: (msg: string) => void;
 		info: (msg: string) => void;
@@ -120,6 +122,14 @@ async function applyChargeLimit(
 	lastAppliedChargeW.set(device.deviceId, rounded);
 }
 
+function deviceHasControl(host: CurtailmentRunnerHost, deviceId: string, control: string): boolean {
+	const writable = host.getDeviceWritable?.(deviceId);
+	if (!writable?.length) {
+		return true;
+	}
+	return writable.includes(control);
+}
+
 async function applyExportLimit(
 	host: CurtailmentRunnerHost,
 	device: CurtailmentDeviceConfig,
@@ -134,9 +144,17 @@ async function applyExportLimit(
 		return;
 	}
 	const ctx = host.getDeviceContext(device.deviceId);
-	await host.applyControl(device.deviceId, "ac_output_limit", exportW, ctx);
-	if (device.role === "combiner") {
-		await host.applyControl(device.deviceId, "grid_export_limit", exportW, ctx);
+	const id = device.deviceId;
+
+	// Combiner / SB2+: manual export target is set_output_power (home load preset), not only max_load.
+	if (device.role === "combiner" && deviceHasControl(host, id, "set_output_power")) {
+		await host.applyControl(id, "set_output_power", exportW, ctx);
+	}
+	if (deviceHasControl(host, id, "ac_output_limit")) {
+		await host.applyControl(id, "ac_output_limit", exportW, ctx);
+	}
+	if (device.role === "combiner" && deviceHasControl(host, id, "grid_export_limit")) {
+		await host.applyControl(id, "grid_export_limit", exportW, ctx);
 	}
 	lastAppliedExportW.set(device.deviceId, exportW);
 }

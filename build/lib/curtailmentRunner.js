@@ -87,6 +87,14 @@ async function applyChargeLimit(host, device, chargeW) {
   await host.applyControl(device.deviceId, "ac_charge_limit", rounded, ctx);
   lastAppliedChargeW.set(device.deviceId, rounded);
 }
+function deviceHasControl(host, deviceId, control) {
+  var _a;
+  const writable = (_a = host.getDeviceWritable) == null ? void 0 : _a.call(host, deviceId);
+  if (!(writable == null ? void 0 : writable.length)) {
+    return true;
+  }
+  return writable.includes(control);
+}
 async function applyExportLimit(host, device, exportTargetW) {
   const exportW = clampExportW(exportTargetW, device.role);
   if (exportW <= 0) {
@@ -97,9 +105,15 @@ async function applyExportLimit(host, device, exportTargetW) {
     return;
   }
   const ctx = host.getDeviceContext(device.deviceId);
-  await host.applyControl(device.deviceId, "ac_output_limit", exportW, ctx);
-  if (device.role === "combiner") {
-    await host.applyControl(device.deviceId, "grid_export_limit", exportW, ctx);
+  const id = device.deviceId;
+  if (device.role === "combiner" && deviceHasControl(host, id, "set_output_power")) {
+    await host.applyControl(id, "set_output_power", exportW, ctx);
+  }
+  if (deviceHasControl(host, id, "ac_output_limit")) {
+    await host.applyControl(id, "ac_output_limit", exportW, ctx);
+  }
+  if (device.role === "combiner" && deviceHasControl(host, id, "grid_export_limit")) {
+    await host.applyControl(id, "grid_export_limit", exportW, ctx);
   }
   lastAppliedExportW.set(device.deviceId, exportW);
 }

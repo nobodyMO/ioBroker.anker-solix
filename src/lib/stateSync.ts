@@ -7,7 +7,7 @@ import {
 	type EntityMeta,
 } from "./entities";
 import { isEntityEnabled } from "./entityGroups";
-import { isPvSensorEntity, readPvFromEntities } from "./curtailmentPower";
+import { isPvGenerationSensor, readPvFromEntities } from "./curtailmentPower";
 import type { BridgeDevice } from "./types";
 
 /** Optional hook on the adapter instance (see main.ts). */
@@ -196,7 +196,7 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 			if (hasValue || writable) {
 				await adapter.setState(stateId, stateVal, true);
 				if (
-					isPvSensorEntity(entityId) &&
+					isPvGenerationSensor(entityId) &&
 					typeof stateVal === "number" &&
 					curtailmentHost.onCurtailmentPvUpdated
 				) {

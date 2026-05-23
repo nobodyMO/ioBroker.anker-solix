@@ -1,7 +1,11 @@
 import { forecastExportTargetW } from "./curtailmentForecast";
 import type { CurtailmentPhase, CurtailmentWindow, HourlyForecast } from "./curtailmentTypes";
 
-export const PV_SENSOR_IDS = ["total_pv_power", "input_power"] as const;
+/** Sensors that reflect current PV generation (W). */
+export const PV_SENSOR_IDS = ["total_pv_power", "input_power", "solar_power_total"] as const;
+
+/** Optional power-flow sensors: sum ≈ total PV when direct sensors are missing. */
+const PV_FLOW_SUM_IDS = ["pv_to_home_power", "pv_to_battery_power", "photovoltaic_to_grid_power"] as const;
 
 export type PvSensorId = (typeof PV_SENSOR_IDS)[number];
 
@@ -14,7 +18,7 @@ export interface CurtailmentPowerHost {
 export function pvSensorStatePaths(namespace: string, deviceId: string): string[] {
 	const paths: string[] = [];
 	for (const channel of ["solarbank", "combiner_box"] as const) {
-		for (const sensor of PV_SENSOR_IDS) {
+		for (const sensor of [...PV_SENSOR_IDS, ...PV_FLOW_SUM_IDS]) {
 			paths.push(`${namespace}.${channel}.${deviceId}.sensors.${sensor}`);
 		}
 	}
@@ -41,7 +45,11 @@ export function isPvSensorEntity(entityId: string): entityId is PvSensorId {
 	return (PV_SENSOR_IDS as readonly string[]).includes(entityId);
 }
 
-/** Max of total_pv_power / input_power from poll entity map. */
+export function isPvGenerationSensor(entityId: string): boolean {
+	return isPvSensorEntity(entityId) || (PV_FLOW_SUM_IDS as readonly string[]).includes(entityId);
+}
+
+/** Best estimate of current PV generation (W) from poll entity map. */
 export function readPvFromEntities(entities: Record<string, unknown> | undefined): number {
 	if (!entities) {
 		return 0;
@@ -53,7 +61,20 @@ export function readPvFromEntities(entities: Record<string, unknown> | undefined
 			max = n;
 		}
 	}
-	return max > 0 ? Math.round(max) : 0;
+	if (max > 0) {
+		return Math.round(max);
+	}
+	let flowSum = 0;
+	for (const key of PV_FLOW_SUM_IDS) {
+		const n = Number(entities[key]);
+		if (Number.isFinite(n) && n > 0) {
+			flowSum += n;
+		}
+	}
+	if (flowSum > 0) {
+		return Math.round(flowSum);
+	}
+	return 0;
 }
 
 /** Read live PV generation (W) from the last poll or ioBroker states. */

@@ -39,6 +39,7 @@ class AnkerSolix extends utils.Adapter {
   controlQueue = new import_controlQueue.ControlQueue();
   deviceContexts = /* @__PURE__ */ new Map();
   deviceEntities = /* @__PURE__ */ new Map();
+  deviceWritable = /* @__PURE__ */ new Map();
   lastNotifiedPvW = /* @__PURE__ */ new Map();
   curtailmentDeviceIds = /* @__PURE__ */ new Set();
   pollAfterControlTimer;
@@ -330,6 +331,7 @@ class AnkerSolix extends utils.Adapter {
       getForeignObjectAsync: (id) => this.getForeignObjectAsync(id),
       getStateAsync: (id) => this.getStateAsync(id),
       getDeviceEntities: (deviceId) => this.deviceEntities.get(deviceId),
+      getDeviceWritable: (deviceId) => this.deviceWritable.get(deviceId),
       setState: async (id, val, ack) => {
         await this.setState(id, val, ack != null ? ack : true);
       },

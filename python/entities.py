@@ -189,7 +189,7 @@ _BASE_CONTROL_ENTITIES: list[dict[str, Any]] = [
         "types": [SOLARBANK, COMBINER],
         "control": "set_output_power",
         "min": 0,
-        "max": 1200,
+        "max": 4800,
     },
     {
         "id": "ac_output_limit",

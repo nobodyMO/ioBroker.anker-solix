@@ -188,7 +188,7 @@ async function syncDevices(adapter, devices) {
       }
       if (hasValue || writable) {
         await adapter.setState(stateId, stateVal, true);
-        if ((0, import_curtailmentPower.isPvSensorEntity)(entityId) && typeof stateVal === "number" && curtailmentHost.onCurtailmentPvUpdated) {
+        if ((0, import_curtailmentPower.isPvGenerationSensor)(entityId) && typeof stateVal === "number" && curtailmentHost.onCurtailmentPvUpdated) {
           device.entities[entityId] = stateVal;
           const livePvW = (0, import_curtailmentPower.readPvFromEntities)(device.entities);
           if (livePvW > 0) {
