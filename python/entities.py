@@ -690,6 +690,14 @@ def extract_entities(data: dict, config: dict | None = None) -> dict[str, Any]:
             continue
         if dev_type and dev_type not in spec.get("types", []):
             continue
+        if spec["id"] in ("bat_charge_power", "bat_discharge_power"):
+            from battery_power_pick import pick_bat_charge_discharge  # noqa: PLC0415
+
+            charge, discharge = pick_bat_charge_discharge(data)
+            entities[spec["id"]] = (
+                charge if spec["id"] == "bat_charge_power" else discharge
+            )
+            continue
         val = pick_value(data, spec["keys"], nested=bool(spec.get("nested")))
         if val is not None:
             if spec.get("kind") == "boolean":

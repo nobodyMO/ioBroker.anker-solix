@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.42",
+		"version": "0.10.43",
 		"messagebox": true,
 		"news": {
+			"0.10.43": {
+				"en": "Battery charge/discharge power from cloud scene API (no MQTT); per-SB and solarbank_info totals",
+				"de": "Lade-/Entladeleistung aus Cloud-Scene-API (ohne MQTT); pro Solarbank und solarbank_info-Summen",
+				"ru": "Battery power from cloud API",
+				"pt": "Battery power from cloud API",
+				"nl": "Battery power from cloud API",
+				"fr": "Battery power from cloud API",
+				"it": "Battery power from cloud API",
+				"es": "Battery power from cloud API",
+				"pl": "Battery power from cloud API",
+				"uk": "Battery power from cloud API",
+				"zh-cn": "电池充放电功率来自云端 Scene API（无需 MQTT）"
+			},
 			"0.10.42": {
 				"en": "Fix multisystem solarbank_info: total_charging_power and battery_discharge_power (sum per SB, no null)",
 				"de": "Fix Multisystem solarbank_info: Lade-/Entladeleistung gesamt korrekt (Summe pro SB, nicht mehr null)",
@@ -250,19 +263,6 @@
 				"pl": "Fix daemon; year-only less API",
 				"uk": "Fix daemon; year-only less API",
 				"zh-cn": "修复守护进程；仅年统计减少 API"
-			},
-			"0.10.22": {
-				"en": "Energy statistics only on combiner (multisystem) or per solarbank; not on system + all banks",
-				"de": "Energie-Statistik nur am Combiner (Multisystem) bzw. pro Solarbank; nicht zusätzlich unter System",
-				"ru": "Stats only on combiner or solarbank",
-				"pt": "Stats only on combiner or solarbank",
-				"nl": "Stats only on combiner or solarbank",
-				"fr": "Stats only on combiner or solarbank",
-				"it": "Stats only on combiner or solarbank",
-				"es": "Stats only on combiner or solarbank",
-				"pl": "Stats only on combiner or solarbank",
-				"uk": "Stats only on combiner or solarbank",
-				"zh-cn": "统计仅在 Combiner 或各 Solarbank"
 			}
 		},
 		"titleLang": {
