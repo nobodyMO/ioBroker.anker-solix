@@ -20,8 +20,6 @@ describe("stateSync statistics paths", () => {
 	it("places lifetime totals under sensors.* on system channel", () => {
 		const base = "anker-solix.0.system.site-1";
 		expect(lifetimeStatisticsStatePath(base, "total_energy")).to.equal(`${base}.sensors.total_energy`);
-		expect(lifetimeStatisticsStatePath(base, "total_co2_savings")).to.equal(
-			`${base}.sensors.total_co2_savings`,
-		);
+		expect(lifetimeStatisticsStatePath(base, "total_co2_savings")).to.equal(`${base}.sensors.total_co2_savings`);
 	});
 });

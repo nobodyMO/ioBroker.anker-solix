@@ -85,10 +85,7 @@ export function lifetimeStatisticsStatePath(channelPath: string, entityId: strin
 }
 
 function isSystemLifetimeStatistic(entityId: string, devType: string): boolean {
-	return (
-		LIFETIME_STATISTICS_ENTITY_IDS.includes(entityId) &&
-		(devType === "system" || devType === "site")
-	);
+	return LIFETIME_STATISTICS_ENTITY_IDS.includes(entityId) && (devType === "system" || devType === "site");
 }
 
 /** `week_solar_production` → `statistics.week.solar_production`; daily stays flat under `statistics.*`. */
