@@ -943,6 +943,9 @@ def _enrich_cache_entry(
         stats = site.get("statistics")
         if stats is not None:
             ctx_data = {**ctx_data, "statistics": stats}
+        sb_info = site.get("solarbank_info")
+        if isinstance(sb_info, dict):
+            ctx_data = {**ctx_data, "solarbank_info": sb_info, "site_id": site_id}
     if not site_id:
         return ctx_data
     if not device_exposes_energy_statistics(
@@ -998,7 +1001,14 @@ def _devices_from_caches(
             ctx_data = enrich_solarbank_scene(client.api, str(ctx_id), ctx_data)
         entities = extract_entities(ctx_data, config)
         writable = writable_controls_for_device(ctx_data, info["type"], config)
-        if not entities and not writable:
+        solarbank_info = None
+        if info["type"] in ("system", "site"):
+            from solarbank_info import extract_solarbank_info  # noqa: PLC0415
+
+            solarbank_info = extract_solarbank_info(
+                {**ctx_data, "site_id": site_id}, client.api, config
+            )
+        if not entities and not writable and not solarbank_info:
             continue
         usage_opts = sorted(
             client.api.solarbank_usage_mode_options(deviceSn=str(ctx_id))
@@ -1011,13 +1021,6 @@ def _devices_from_caches(
             combiner_site,
             enable_stats=enable_stats,
         )
-        solarbank_info = None
-        if info["type"] in ("system", "site"):
-            from solarbank_info import extract_solarbank_info  # noqa: PLC0415
-
-            solarbank_info = extract_solarbank_info(
-                ctx_data, client.api, config
-            )
         devices.append(
             {
                 "info": info,

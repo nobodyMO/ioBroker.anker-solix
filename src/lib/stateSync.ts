@@ -340,7 +340,9 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 			}
 		}
 
-		await syncSolarbankInfo(adapter, channelPath, device.solarbankInfo);
+		if (device.info.type === "system" || device.info.type === "site" || device.solarbankInfo) {
+			await syncSolarbankInfo(adapter, channelPath, device.solarbankInfo);
+		}
 	}
 }
 

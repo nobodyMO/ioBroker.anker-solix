@@ -88,6 +88,31 @@ def test_extract_negative_cloud_charge_clamped_and_discharge_from_banks() -> Non
     assert result["battery_discharge_power"] == 600
 
 
+def test_extract_uses_site_cache_when_solarbank_info_missing_on_data() -> None:
+    api = MagicMock()
+    api.devices = {
+        "SB1": {
+            "type": "solarbank",
+            "site_id": "site1",
+            "charging_power": "400",
+            "bat_charge_power": "400",
+        },
+    }
+    api.sites = {
+        "site1": {
+            "solarbank_info": {
+                "total_charging_power": "0",
+                "solarbank_list": [{"device_sn": "SB1"}],
+            }
+        }
+    }
+    data = {"type": "system", "site_id": "site1"}
+    result = extract_solarbank_info(data, api, {"enablePowerFlows": True})
+    assert result is not None
+    assert result["total_charging_power"] == 400
+    assert result["battery_discharge_power"] == 0
+
+
 def test_extract_disabled_without_overview_or_power_flows() -> None:
     data = {
         "type": "system",

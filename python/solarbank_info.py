@@ -64,13 +64,17 @@ def extract_solarbank_info(
     dev_type = str(data.get("type") or "").lower()
     if dev_type not in (SYSTEM, SITE):
         return None
+    site_id = str(data.get("site_id") or "")
     sb_info = data.get("solarbank_info")
+    if not isinstance(sb_info, dict) and api and site_id:
+        site = (api.sites or {}).get(site_id) or {}
+        cached = site.get("solarbank_info")
+        if isinstance(cached, dict):
+            sb_info = cached
     if not isinstance(sb_info, dict):
         return None
 
-    charge, discharge = _resolve_system_power_totals(
-        sb_info, api, site_id=str(data.get("site_id") or "")
-    )
+    charge, discharge = _resolve_system_power_totals(sb_info, api, site_id=site_id)
     out: dict[str, Any] = {
         "battery_discharge_power": discharge,
         "total_charging_power": charge,
