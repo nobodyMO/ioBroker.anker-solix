@@ -263,19 +263,6 @@
 				"pl": "Abregelung: manual + ac_output_limit",
 				"uk": "Abregelung: manual + ac_output_limit",
 				"zh-cn": "限电仅 manual + ac_output_limit"
-			},
-			"0.10.12": {
-				"en": "Curtailment combiner: ac_output_limit (max_load) for export; home load preset 0 W",
-				"de": "Abregelung Combiner: Einspeisung über ac_output_limit (max_load); Hauslast-Preset 0 W",
-				"ru": "Combiner: ac_output_limit для экспорта",
-				"pt": "Combiner: ac_output_limit para exportação",
-				"nl": "Combiner: ac_output_limit voor export",
-				"fr": "Combiner: ac_output_limit pour export",
-				"it": "Combiner: ac_output_limit per export",
-				"es": "Combiner: ac_output_limit para exportación",
-				"pl": "Combiner: ac_output_limit do eksportu",
-				"uk": "Combiner: ac_output_limit для експорту",
-				"zh-cn": "Combiner 通过 ac_output_limit 馈网"
 			}
 		},
 		"titleLang": {
