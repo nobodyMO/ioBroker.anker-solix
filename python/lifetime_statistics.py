@@ -35,12 +35,26 @@ LIFETIME_STATISTICS_ENTITIES: list[dict[str, Any]] = [
 ]
 
 
+def normalize_statistics_list(data: dict) -> list[dict]:
+    """Return statistics rows from site/scene cache (list from scene_info API)."""
+    stats = data.get("statistics")
+    if isinstance(stats, list):
+        return [item for item in stats if isinstance(item, dict)]
+    if isinstance(stats, dict):
+        rows: list[dict] = []
+        for key in ("1", "2", "3", "energy", "co2", "money"):
+            item = stats.get(key)
+            if isinstance(item, dict):
+                rows.append(item)
+        if rows:
+            return rows
+        return [item for item in stats.values() if isinstance(item, dict)]
+    return []
+
+
 def pick_scene_statistics_total(data: dict, stat_type: str) -> float | None:
     """Read lifetime total from site statistics[] (HA: filter by type)."""
-    stats = data.get("statistics")
-    if not isinstance(stats, list):
-        return None
-    for item in stats:
+    for item in normalize_statistics_list(data):
         if not isinstance(item, dict):
             continue
         if str(item.get("type")) != str(stat_type):

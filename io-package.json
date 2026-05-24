@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.46",
+		"version": "0.10.47",
 		"messagebox": true,
 		"news": {
+			"0.10.47": {
+				"en": "Fix system lifetime stats (total_energy, CO2, money): update every poll under sensors.*",
+				"de": "Fix Lifetime-Statistik (total_energy, CO2, Geld): bei jedem Poll unter sensors.*",
+				"ru": "Fix lifetime stats every poll",
+				"pt": "Fix lifetime stats every poll",
+				"nl": "Fix lifetime stats every poll",
+				"fr": "Fix lifetime stats every poll",
+				"it": "Fix lifetime stats every poll",
+				"es": "Fix lifetime stats every poll",
+				"pl": "Fix lifetime stats every poll",
+				"uk": "Fix lifetime stats every poll",
+				"zh-cn": "修复系统终身统计每轮更新"
+			},
 			"0.10.46": {
 				"en": "Fix bat_charge/discharge type: string on solarbank, number on system and combiner",
 				"de": "Fix Typ bat_charge/discharge: String an Solarbank, Zahl an System und Combiner",
@@ -250,19 +263,6 @@
 				"pl": "Period stats resilient",
 				"uk": "Period stats resilient",
 				"zh-cn": "周期统计更稳健"
-			},
-			"0.10.26": {
-				"en": "Week statistics: fetch on first detail refresh; week interval 1 (was 3); log when updated",
-				"de": "Wochenstatistik: Abruf beim ersten Detail-Refresh; Intervall 1 (statt 3); Log bei Update",
-				"ru": "Week stats sooner",
-				"pt": "Week stats sooner",
-				"nl": "Week stats sooner",
-				"fr": "Week stats sooner",
-				"it": "Week stats sooner",
-				"es": "Week stats sooner",
-				"pl": "Week stats sooner",
-				"uk": "Week stats sooner",
-				"zh-cn": "周统计更快更新"
 			}
 		},
 		"titleLang": {

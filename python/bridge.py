@@ -938,6 +938,11 @@ def _enrich_cache_entry(
     site_id = str(ctx_data.get("site_id") or "")
     if info["type"] in ("site", "system") and not site_id:
         site_id = str(ctx_id)
+    if site_id and info["type"] in ("site", "system"):
+        site = client.api.sites.get(site_id) or {}
+        stats = site.get("statistics")
+        if stats is not None:
+            ctx_data = {**ctx_data, "statistics": stats}
     if not site_id:
         return ctx_data
     if not device_exposes_energy_statistics(

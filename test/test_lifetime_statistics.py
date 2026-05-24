@@ -9,8 +9,21 @@ if str(PYTHON_DIR) not in sys.path:
 
 from lifetime_statistics import (  # noqa: E402
     extract_lifetime_statistics_entities,
+    normalize_statistics_list,
     pick_scene_statistics_total,
 )
+
+
+def test_normalize_statistics_dict_fallback() -> None:
+    data = {
+        "statistics": {
+            "1": {"type": "1", "total": "10.5", "unit": "kwh"},
+            "2": {"type": "2", "total": "5", "unit": "kg"},
+        }
+    }
+    rows = normalize_statistics_list(data)
+    assert len(rows) == 2
+    assert pick_scene_statistics_total(data, "1") == 10.5
 
 
 def test_pick_scene_statistics_total_by_type() -> None:

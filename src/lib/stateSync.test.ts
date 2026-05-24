@@ -1,6 +1,6 @@
 import { expect } from "chai";
 
-import { statisticsStatePath } from "./stateSync";
+import { lifetimeStatisticsStatePath, statisticsStatePath } from "./stateSync";
 
 describe("stateSync statistics paths", () => {
 	it("places period stats in statistics.week|month|year subfolders", () => {
@@ -14,6 +14,14 @@ describe("stateSync statistics paths", () => {
 		const base = "anker-solix.0.system.site-1";
 		expect(statisticsStatePath(base, "daily_solar_production")).to.equal(
 			`${base}.statistics.daily_solar_production`,
+		);
+	});
+
+	it("places lifetime totals under sensors.* on system channel", () => {
+		const base = "anker-solix.0.system.site-1";
+		expect(lifetimeStatisticsStatePath(base, "total_energy")).to.equal(`${base}.sensors.total_energy`);
+		expect(lifetimeStatisticsStatePath(base, "total_co2_savings")).to.equal(
+			`${base}.sensors.total_co2_savings`,
 		);
 	});
 });

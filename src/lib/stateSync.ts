@@ -2,6 +2,7 @@ import {
 	ENTITY_MAP,
 	isWritable,
 	DEVICE_STATISTICS_ENTITY_IDS,
+	LIFETIME_STATISTICS_ENTITY_IDS,
 	STATISTICS_LABELS,
 	USAGE_MODE_STATES,
 	type EntityMeta,
@@ -76,6 +77,18 @@ function coerceStateValue(type: ioBroker.CommonType, value: unknown): ioBroker.S
 
 function sanitizeIdPart(value: string): string {
 	return value.replace(/[^a-zA-Z0-9._-]/g, "_");
+}
+
+/** Lifetime totals on system/site (AnkerSolix2-style under sensors.*). */
+export function lifetimeStatisticsStatePath(channelPath: string, entityId: string): string {
+	return `${channelPath}.sensors.${entityId}`;
+}
+
+function isSystemLifetimeStatistic(entityId: string, devType: string): boolean {
+	return (
+		LIFETIME_STATISTICS_ENTITY_IDS.includes(entityId) &&
+		(devType === "system" || devType === "site")
+	);
 }
 
 /** `week_solar_production` → `statistics.week.solar_production`; daily stays flat under `statistics.*`. */
@@ -208,6 +221,13 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 				}
 			}
 		}
+		if (device.info.type === "system" || device.info.type === "site") {
+			for (const id of LIFETIME_STATISTICS_ENTITY_IDS) {
+				if (isEntityEnabled(id, adapter.config)) {
+					entityIds.add(id);
+				}
+			}
+		}
 
 		for (const entityId of entityIds) {
 			if (!isEntityEnabled(entityId, adapter.config)) {
@@ -217,8 +237,9 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 			const meta = ENTITY_MAP.get(entityId);
 			const writable = meta ? isWritable(entityId, device.writable) : false;
 			const kind = meta?.kind ?? "sensor";
-			const stateId =
-				kind === "statistics"
+			const stateId = isSystemLifetimeStatistic(entityId, device.info.type)
+				? lifetimeStatisticsStatePath(channelPath, entityId)
+				: kind === "statistics"
 					? statisticsStatePath(channelPath, entityId)
 					: `${channelPath}.${kind === "sensor" ? "sensors" : "control"}.${entityId}`;
 			const stateType = resolveStateType(meta, value);
