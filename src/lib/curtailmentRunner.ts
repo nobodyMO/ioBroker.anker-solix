@@ -128,8 +128,11 @@ async function applyCurtailmentSetpoints(
 
 	const prevPhase = lastAppliedPhase.get(device.deviceId);
 	const phaseChanged = prevPhase !== phase;
-	if (phaseChanged || !opts?.modeOnly) {
+	// Combiner: ac_output_limit sets manual + preset in one schedule API call (avoid 2nd set_site_device_param).
+	if ((phaseChanged || !opts?.modeOnly) && device.role !== "combiner") {
 		await applyManualMode(host, device);
+	}
+	if (phaseChanged || !opts?.modeOnly) {
 		lastAppliedPhase.set(device.deviceId, phase);
 	}
 }

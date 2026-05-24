@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.34",
+		"version": "0.10.35",
 		"messagebox": true,
 		"news": {
+			"0.10.35": {
+				"en": "Curtailment: device_sn in schedule API; load schedule before set; no duplicate manual call",
+				"de": "Abregelung: device_sn in Schedule-API; Schedule vor Set laden; kein doppelter Manual-Call",
+				"ru": "Curtailment schedule device_sn",
+				"pt": "Curtailment schedule device_sn",
+				"nl": "Curtailment schedule device_sn",
+				"fr": "Curtailment schedule device_sn",
+				"it": "Curtailment schedule device_sn",
+				"es": "Curtailment schedule device_sn",
+				"pl": "Curtailment schedule device_sn",
+				"uk": "Curtailment schedule device_sn",
+				"zh-cn": "限电计划 API 含 device_sn 并预载 schedule"
+			},
 			"0.10.34": {
 				"en": "Curtailment combiner: arbitrary export W via manual schedule API (not MQTT 1200–4800 steps)",
 				"de": "Abregelung Combiner: beliebige Export-W via Manual-Schedule-API (nicht MQTT-Stufen 1200–4800)",
@@ -237,32 +250,6 @@
 				"pl": "Combiner: set_output_power",
 				"uk": "Combiner: set_output_power",
 				"zh-cn": "Combiner 使用 set_output_power"
-			},
-			"0.10.9": {
-				"en": "Curtailment active: AC output = full PV (not PV−charge); combiner cap 4800 W",
-				"de": "Abregelung active: AC-Ausgang = volle PV (nicht PV−Laden); Combiner max 4800 W",
-				"ru": "Active: полный PV на выход",
-				"pt": "Active: saída AC = PV total",
-				"nl": "Active: AC = volledige PV",
-				"fr": "Active: sortie AC = PV complète",
-				"it": "Active: uscita AC = PV piena",
-				"es": "Active: salida AC = PV completa",
-				"pl": "Active: AC = pełna PV",
-				"uk": "Active: AC = повна PV",
-				"zh-cn": "active：AC 输出=满光伏"
-			},
-			"0.10.8": {
-				"en": "Curtailment: instant PV export in before; active = calculated charge + export surplus",
-				"de": "Abregelung: before sofort Export=PV; active langsam laden + Rest einspeisen",
-				"ru": "Before: экспорт=PV; active: заряд+экспорт",
-				"pt": "Before: exportação=PV; active: carga lenta",
-				"nl": "Before: export=PV; active: langzaam laden",
-				"fr": "Before: export=PV; active: charge lente",
-				"it": "Before: export=PV; active: carica lenta",
-				"es": "Before: exportación=PV; active: carga lenta",
-				"pl": "Before: eksport=PV; active: wolne ładowanie",
-				"uk": "Before: експорт=PV; active: повільний заряд",
-				"zh-cn": "before 即时并网=光伏；active 慢充+余电上网"
 			}
 		},
 		"titleLang": {

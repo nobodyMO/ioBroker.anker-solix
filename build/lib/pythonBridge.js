@@ -43,7 +43,7 @@ function bridgeScriptPath() {
   return path.join(__dirname, "..", "..", "python", "bridge.py");
 }
 function isTransientApiError(message) {
-  return message.includes("26161") || message.includes("429") || message.includes("Too Many Requests") || message.includes("Failed to request") || message.includes("Busy");
+  return message.includes("26161") || message.includes("429") || message.includes("Too Many Requests") || message.includes("Busy");
 }
 function isAuthError(message) {
   const lower = message.toLowerCase();

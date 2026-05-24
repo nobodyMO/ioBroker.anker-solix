@@ -16,11 +16,11 @@ function bridgeScriptPath(): string {
 }
 
 function isTransientApiError(message: string): boolean {
+	// Do not treat Anker 10004 ("Failed to request") as transient — retries worsen rate limits.
 	return (
 		message.includes("26161") ||
 		message.includes("429") ||
 		message.includes("Too Many Requests") ||
-		message.includes("Failed to request") ||
 		message.includes("Busy")
 	);
 }

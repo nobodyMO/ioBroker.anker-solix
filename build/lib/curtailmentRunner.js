@@ -84,8 +84,10 @@ async function applyCurtailmentSetpoints(host, device, phase, exportW, modeAfter
   }
   const prevPhase = lastAppliedPhase.get(device.deviceId);
   const phaseChanged = prevPhase !== phase;
-  if (phaseChanged || !(opts == null ? void 0 : opts.modeOnly)) {
+  if ((phaseChanged || !(opts == null ? void 0 : opts.modeOnly)) && device.role !== "combiner") {
     await applyManualMode(host, device);
+  }
+  if (phaseChanged || !(opts == null ? void 0 : opts.modeOnly)) {
     lastAppliedPhase.set(device.deviceId, phase);
   }
 }

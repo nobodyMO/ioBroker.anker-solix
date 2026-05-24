@@ -48,10 +48,14 @@ from ha_api_client import (  # noqa: E402
 from solixapi.export import AnkerSolixApiExport  # noqa: E402
 from solixapi import errors  # noqa: E402
 from solixapi.api import AnkerSolixApi  # noqa: E402
+from datetime import datetime
+
 from solixapi.apitypes import (  # noqa: E402
     ApiCategories,
     SolixDeviceType,
     SolixParmType,
+    Solarbank2Timeslot,
+    SolarbankRatePlan,
     SolarbankUsageMode,
 )
 from solixapi.mqtt_factory import SolixMqttDeviceFactory  # noqa: E402
@@ -255,6 +259,56 @@ async def _mqtt_command(
 _DEFAULT_PARALLEL_MQTT_OPTIONS = [1200, 2400, 3600, 4800]
 
 
+def _schedule_device_candidates(
+    api: AnkerSolixApi, site_id: str, device_id: str, device: dict
+) -> list[str]:
+    """Device SNs to try for param_type 6 (manual preset); combiner first, then main solarbank."""
+    seen: set[str] = set()
+    order: list[str] = []
+
+    def add(sn: str | None) -> None:
+        if sn and sn not in seen:
+            seen.add(sn)
+            order.append(sn)
+
+    add(device_id)
+    dev_type = str(device.get("type") or "").lower()
+    if dev_type == COMBINER or dev_type == SolixDeviceType.COMBINER_BOX.value:
+        station_sn = str(device.get("station_sn") or "")
+        add(station_sn if station_sn else None)
+        for sn, dev in api.devices.items():
+            if (dev.get("site_id") or "") != site_id:
+                continue
+            if str(dev.get("type") or "").lower() != SOLARBANK:
+                continue
+            if int(dev.get("generation") or 0) < 2:
+                continue
+            sb_station = str(dev.get("station_sn") or "")
+            if not sb_station or sb_station == sn:
+                add(sn)
+    return order
+
+
+async def _ensure_device_schedule(
+    api: AnkerSolixApi, site_id: str, device_sn: str
+) -> None:
+    """Load schedule into API cache before set_sb2_home_load (avoids invalid param_data / 10004)."""
+    dev = api.devices.get(device_sn) or {}
+    if dev.get("schedule"):
+        return
+    try:
+        await api.get_device_parm(
+            siteId=site_id,
+            paramType=SolixParmType.SOLARBANK_2_SCHEDULE.value,
+            deviceSn=device_sn,
+        )
+    except errors.RequestError:
+        pass
+    if not (api.devices.get(device_sn) or {}).get("schedule"):
+        with contextlib.suppress(errors.RequestError):
+            await api.get_device_load(siteId=site_id, deviceSn=device_sn)
+
+
 def _parallel_mqtt_options(api: AnkerSolixApi, control_sn: str, device: dict) -> list[int]:
     dev = api.devices.get(control_sn) or device
     raw = dev.get("max_load_parallel_options")
@@ -269,23 +323,46 @@ async def _set_ac_output_via_schedule(
     api: AnkerSolixApi,
     site_id: str,
     device_id: str,
+    device: dict,
     limit: int,
     *,
     with_manual_mode: bool = True,
 ) -> bool:
-    """Manual schedule export (param_type 6) — works without MQTT on combiners (AnkerSolix2-style)."""
-    kwargs: dict[str, Any] = {
-        "siteId": site_id,
-        "deviceSn": device_id,
-        "preset": limit,
-    }
-    if with_manual_mode:
-        kwargs["usage_mode"] = SolarbankUsageMode.manual.value
-    try:
-        resp = await api.set_sb2_home_load(**kwargs)
-        return isinstance(resp, dict)
-    except errors.ItemNotFoundError:
-        return False
+    """Manual schedule export (param_type 6) — arbitrary W without MQTT (AnkerSolix2 / set_output_power)."""
+    for sn in _schedule_device_candidates(api, site_id, device_id, device):
+        await _ensure_device_schedule(api, site_id, sn)
+        cached = (api.devices.get(sn) or {}).get("schedule") or {}
+        has_plan = bool(
+            cached.get(SolarbankRatePlan.manual) or cached.get("custom_rate_plan")
+        )
+        kwargs: dict[str, Any] = {"siteId": site_id, "deviceSn": sn}
+        if with_manual_mode:
+            kwargs["usage_mode"] = SolarbankUsageMode.manual.value
+        if not has_plan:
+            kwargs["set_slot"] = Solarbank2Timeslot(
+                start_time=datetime.strptime("00:00", "%H:%M"),
+                end_time=datetime.strptime("23:59", "%H:%M"),
+                appliance_load=limit,
+            )
+        else:
+            kwargs["preset"] = limit
+        try:
+            resp = await api.set_sb2_home_load(**kwargs)
+            if isinstance(resp, dict):
+                _LOGGER.info(
+                    "ac_output_limit %sW via schedule API (device_sn=%s)",
+                    limit,
+                    sn,
+                )
+                return True
+        except errors.ItemNotFoundError:
+            continue
+        _LOGGER.debug(
+            "set_sb2_home_load preset=%sW rejected for device_sn=%s",
+            limit,
+            sn,
+        )
+    return False
 
 
 async def _mqtt_max_load_parallel(
@@ -382,7 +459,7 @@ async def _set_ac_output_limit(
 
     if use_schedule_api and not api_only:
         schedule_ok = await _set_ac_output_via_schedule(
-            api, site_id, device_id, limit, with_manual_mode=True
+            api, site_id, device_id, device, limit, with_manual_mode=True
         )
 
     if not api_only and not schedule_ok:
@@ -402,12 +479,14 @@ async def _set_ac_output_limit(
                 ha_client=ha_client,
             )
 
-    api_sn = (
-        control_sn
-        if multisystem or station_sn or generation >= 3
-        else device_id
-    )
-    api_ok = await _api_set_ac_output_only(api, site_id, api_sn, limit, device)
+    api_ok = False
+    if not schedule_ok and not api_only:
+        api_sn = (
+            control_sn
+            if multisystem or station_sn or generation >= 3
+            else device_id
+        )
+        api_ok = await _api_set_ac_output_only(api, site_id, api_sn, limit, device)
 
     if api_only and api_ok:
         return {"api": True, "curtailment_api_only": True}
@@ -896,9 +975,13 @@ async def run_poll(config: dict) -> dict:
 async def run_set_with_client(client: IoBrokerAnkerApiClient, config: dict) -> dict:
     device_id = str(config["deviceId"])
     _seed_device_context(client.api, device_id, config)
-    site_id = str((config.get("deviceContext") or {}).get("site_id") or "")
+    site_id, _, _, device = _control_context(client.api, device_id)
     if site_id and site_id not in client.api.sites:
         await client.api.update_sites(exclude=set(config.get("exclude") or DEFAULT_EXCLUDE))
+    control = str(config.get("control") or "")
+    if control in ("ac_output_limit", "preset_usage_mode", "set_output_power"):
+        for sn in _schedule_device_candidates(client.api, site_id, device_id, device):
+            await _ensure_device_schedule(client.api, site_id, sn)
     if client._mqtt_usage:
         await client.check_mqtt_session()
     await apply_control(

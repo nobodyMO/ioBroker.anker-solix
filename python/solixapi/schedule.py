@@ -236,6 +236,8 @@ async def get_device_parm(
         testSchedule = None
     if testSchedule is None or fromFile:
         data = {"site_id": siteId, "param_type": paramType}
+        if deviceSn:
+            data["device_sn"] = deviceSn
         if fromFile:
             # For file data, verify first if there is a modified schedule to be used for testing
             if not (
@@ -432,6 +434,8 @@ async def set_device_parm(
             paramData, separators=(",", ":")
         ),  # Must be string type
     }
+    if deviceSn:
+        data["device_sn"] = deviceSn
     sb_info = (self.sites.get(siteId) or {}).get("solarbank_info") or {}
     if toFile:
         # Write updated response to file for testing purposes
