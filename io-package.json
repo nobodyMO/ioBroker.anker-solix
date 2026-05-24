@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.32",
+		"version": "0.10.33",
 		"messagebox": true,
 		"news": {
+			"0.10.33": {
+				"en": "Curtailment: apply ac_output_limit via MQTT before manual mode (fixes 4800 W when export_w is correct)",
+				"de": "Abregelung: ac_output_limit per MQTT vor manuell (Fix 4800 W obwohl export_w stimmt)",
+				"ru": "Curtailment MQTT export limit",
+				"pt": "Curtailment MQTT export limit",
+				"nl": "Curtailment MQTT export limit",
+				"fr": "Curtailment MQTT export limit",
+				"it": "Curtailment MQTT export limit",
+				"es": "Curtailment MQTT export limit",
+				"pl": "Curtailment MQTT export limit",
+				"uk": "Curtailment MQTT export limit",
+				"zh-cn": "限电先 MQTT 设置输出限制再切手动"
+			},
 			"0.10.32": {
 				"en": "Fix: poll crash (_period_rotate removed in 0.10.31 save_state)",
 				"de": "Fix: Poll-Absturz (_period_rotate in save_state von 0.10.31)",

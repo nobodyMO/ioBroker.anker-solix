@@ -78,15 +78,21 @@ async function applyAcOutputLimit(
 	host: CurtailmentRunnerHost,
 	device: CurtailmentDeviceConfig,
 	targetW: number,
-): Promise<void> {
+): Promise<boolean> {
 	const acOutputW = clampAcOutputW(targetW, device.role);
 	const last = lastAppliedExportW.get(device.deviceId);
 	if (last === acOutputW) {
-		return;
+		return true;
 	}
 	const ctx = host.getDeviceContext(device.deviceId);
-	await host.applyControl(device.deviceId, "ac_output_limit", acOutputW, ctx, { acOutputApiOnly: true });
-	lastAppliedExportW.set(device.deviceId, acOutputW);
+	try {
+		// MQTT first (HA sb_max_load_parallel); API-only often returns 10004 on combiners.
+		await host.applyControl(device.deviceId, "ac_output_limit", acOutputW, ctx);
+		lastAppliedExportW.set(device.deviceId, acOutputW);
+		return true;
+	} catch {
+		return false;
+	}
 }
 
 async function applyAfterPhase(
@@ -108,24 +114,24 @@ async function applyCurtailmentSetpoints(
 	modeAfter: "smartmeter" | "smart",
 	opts?: { modeOnly?: boolean },
 ): Promise<void> {
-	const prevPhase = lastAppliedPhase.get(device.deviceId);
-	const phaseChanged = prevPhase !== phase;
-
 	if (phase === "after" || phase === "idle") {
 		await applyAfterPhase(host, device, modeAfter);
 		return;
 	}
 
+	const limitOk = await applyAcOutputLimit(host, device, exportW);
+	if (!limitOk) {
+		throw new Error(
+			`ac_output_limit ${exportW}W not applied (enable MQTT in adapter settings; combiner uses sb_max_load_parallel)`,
+		);
+	}
+
+	const prevPhase = lastAppliedPhase.get(device.deviceId);
+	const phaseChanged = prevPhase !== phase;
 	if (phaseChanged || !opts?.modeOnly) {
 		await applyManualMode(host, device);
 		lastAppliedPhase.set(device.deviceId, phase);
 	}
-
-	if (opts?.modeOnly) {
-		return;
-	}
-
-	await applyAcOutputLimit(host, device, exportW);
 }
 
 interface DeviceRunContext {

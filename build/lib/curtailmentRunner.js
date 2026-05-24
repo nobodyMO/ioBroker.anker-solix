@@ -54,11 +54,16 @@ async function applyAcOutputLimit(host, device, targetW) {
   const acOutputW = clampAcOutputW(targetW, device.role);
   const last = lastAppliedExportW.get(device.deviceId);
   if (last === acOutputW) {
-    return;
+    return true;
   }
   const ctx = host.getDeviceContext(device.deviceId);
-  await host.applyControl(device.deviceId, "ac_output_limit", acOutputW, ctx, { acOutputApiOnly: true });
-  lastAppliedExportW.set(device.deviceId, acOutputW);
+  try {
+    await host.applyControl(device.deviceId, "ac_output_limit", acOutputW, ctx);
+    lastAppliedExportW.set(device.deviceId, acOutputW);
+    return true;
+  } catch {
+    return false;
+  }
 }
 async function applyAfterPhase(host, device, modeAfter) {
   lastAppliedExportW.delete(device.deviceId);
@@ -67,20 +72,22 @@ async function applyAfterPhase(host, device, modeAfter) {
   await host.applyControl(device.deviceId, "preset_usage_mode", modeAfter, ctx);
 }
 async function applyCurtailmentSetpoints(host, device, phase, exportW, modeAfter, opts) {
-  const prevPhase = lastAppliedPhase.get(device.deviceId);
-  const phaseChanged = prevPhase !== phase;
   if (phase === "after" || phase === "idle") {
     await applyAfterPhase(host, device, modeAfter);
     return;
   }
+  const limitOk = await applyAcOutputLimit(host, device, exportW);
+  if (!limitOk) {
+    throw new Error(
+      `ac_output_limit ${exportW}W not applied (enable MQTT in adapter settings; combiner uses sb_max_load_parallel)`
+    );
+  }
+  const prevPhase = lastAppliedPhase.get(device.deviceId);
+  const phaseChanged = prevPhase !== phase;
   if (phaseChanged || !(opts == null ? void 0 : opts.modeOnly)) {
     await applyManualMode(host, device);
     lastAppliedPhase.set(device.deviceId, phase);
   }
-  if (opts == null ? void 0 : opts.modeOnly) {
-    return;
-  }
-  await applyAcOutputLimit(host, device, exportW);
 }
 async function buildDeviceContext(host, device, forecast, nowHour, livePvOverride) {
   const limit = (0, import_curtailmentProfiles.acExportLimitW)(device);

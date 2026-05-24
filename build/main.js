@@ -212,7 +212,7 @@ class AnkerSolix extends utils.Adapter {
           );
         } else {
           this.log.warn(
-            `Period fetch ran (${result.periodEnergyUpdated.join(", ")}) but no week values in objects \u2013 Anker API returned empty/errors (10003); retry at next detail refresh (~10 polls)`
+            `Period fetch ran (${result.periodEnergyUpdated.join(", ")}) but no week values in objects \u2013 Anker API returned empty/errors (10003); retry at next scheduled time (week 23:00, month 23:15, year 23:30)`
           );
         }
       }
