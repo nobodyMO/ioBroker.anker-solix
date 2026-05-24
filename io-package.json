@@ -263,19 +263,6 @@
 				"pl": "Fix: curtailment.soc_percent state",
 				"uk": "Fix: curtailment.soc_percent state",
 				"zh-cn": "修复 curtailment.soc_percent 状态对象"
-			},
-			"0.10.24": {
-				"en": "Fix: import needs_daily_energy_poll and period constants (NameError in 0.10.23)",
-				"de": "Fix: Import needs_daily_energy_poll und Perioden-Konstanten (NameError in 0.10.23)",
-				"ru": "Fix: NameError import",
-				"pt": "Fix: NameError import",
-				"nl": "Fix: NameError import",
-				"fr": "Fix: NameError import",
-				"it": "Fix: NameError import",
-				"es": "Fix: NameError import",
-				"pl": "Fix: NameError import",
-				"uk": "Fix: NameError import",
-				"zh-cn": "修复 0.10.23 导入 NameError"
 			}
 		},
 		"titleLang": {
