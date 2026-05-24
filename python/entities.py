@@ -694,9 +694,8 @@ def extract_entities(data: dict, config: dict | None = None) -> dict[str, Any]:
             from battery_power_pick import pick_bat_charge_discharge  # noqa: PLC0415
 
             charge, discharge = pick_bat_charge_discharge(data)
-            entities[spec["id"]] = (
-                charge if spec["id"] == "bat_charge_power" else discharge
-            )
+            watts = charge if spec["id"] == "bat_charge_power" else discharge
+            entities[spec["id"]] = f"{watts:.0f}"
             continue
         val = pick_value(data, spec["keys"], nested=bool(spec.get("nested")))
         if val is not None:

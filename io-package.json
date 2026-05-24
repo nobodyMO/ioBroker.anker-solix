@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.43",
+		"version": "0.10.44",
 		"messagebox": true,
 		"news": {
+			"0.10.44": {
+				"en": "Fix bat_charge_power / bat_discharge_power state type (string, as existing ioBroker objects)",
+				"de": "Fix: bat_charge_power / bat_discharge_power als String (passend zu bestehenden States)",
+				"ru": "Fix bat power state type string",
+				"pt": "Fix bat power state type string",
+				"nl": "Fix bat power state type string",
+				"fr": "Fix bat power state type string",
+				"it": "Fix bat power state type string",
+				"es": "Fix bat power state type string",
+				"pl": "Fix bat power state type string",
+				"uk": "Fix bat power state type string",
+				"zh-cn": "修复 bat_charge/discharge 状态类型为 string"
+			},
 			"0.10.43": {
 				"en": "Battery charge/discharge power from cloud scene API (no MQTT); per-SB and solarbank_info totals",
 				"de": "Lade-/Entladeleistung aus Cloud-Scene-API (ohne MQTT); pro Solarbank und solarbank_info-Summen",
@@ -250,19 +263,6 @@
 				"pl": "Fix: NameError import",
 				"uk": "Fix: NameError import",
 				"zh-cn": "修复 0.10.23 导入 NameError"
-			},
-			"0.10.23": {
-				"en": "Fix daemon crash (_update_energy_periods); year-only skips daily energy poll; less API load",
-				"de": "Fix Daemon-Absturz (_update_energy_periods); nur Jahresstatistik ohne Tages-Poll; weniger API-Last",
-				"ru": "Fix daemon; year-only less API",
-				"pt": "Fix daemon; year-only less API",
-				"nl": "Fix daemon; year-only less API",
-				"fr": "Fix daemon; year-only less API",
-				"it": "Fix daemon; year-only less API",
-				"es": "Fix daemon; year-only less API",
-				"pl": "Fix daemon; year-only less API",
-				"uk": "Fix daemon; year-only less API",
-				"zh-cn": "修复守护进程；仅年统计减少 API"
 			}
 		},
 		"titleLang": {
