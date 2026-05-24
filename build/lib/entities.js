@@ -18,7 +18,9 @@ var __copyProps = (to, from, except, desc) => {
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var entities_exports = {};
 __export(entities_exports, {
+  DEVICE_STATISTICS_ENTITY_IDS: () => DEVICE_STATISTICS_ENTITY_IDS,
   ENTITY_MAP: () => ENTITY_MAP,
+  LIFETIME_STATISTICS_ENTITY_IDS: () => LIFETIME_STATISTICS_ENTITY_IDS,
   STATISTICS_ENTITIES: () => STATISTICS_ENTITIES,
   STATISTICS_ENTITY_IDS: () => STATISTICS_ENTITY_IDS,
   STATISTICS_LABELS: () => STATISTICS_LABELS,
@@ -91,7 +93,6 @@ const SENSOR_ENTITIES = [
   { id: "solarbank_list", kind: "sensor", role: "text" },
   { id: "other_loads_power", kind: "sensor", role: "value.power", unit: "W" },
   { id: "smart_plugs_power", kind: "sensor", role: "value.power", unit: "W" },
-  { id: "total_co2_saving", kind: "sensor", role: "value", unit: "kg" },
   { id: "dynamic_price_total", kind: "sensor", role: "value", unit: "\u20AC/kWh" },
   { id: "spot_price_mwh", kind: "sensor", role: "value", unit: "\u20AC/MWh" },
   { id: "pps_battery_soc", kind: "sensor", role: "value.battery", unit: "%" },
@@ -219,7 +220,13 @@ function buildPeriodStatisticsEntities() {
   return entities;
 }
 const PERIOD_STATISTICS_ENTITIES = buildPeriodStatisticsEntities();
+const LIFETIME_STATISTICS_ENTITIES = [
+  { id: "total_energy", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "total_co2_savings", kind: "statistics", role: "value", unit: "kg" },
+  { id: "total_money_savings", kind: "statistics", role: "value" }
+];
 const STATISTICS_ENTITIES = [
+  ...LIFETIME_STATISTICS_ENTITIES,
   { id: "energy_statistics_date", kind: "statistics", role: "value.date" },
   { id: "daily_solar_production", kind: "statistics", role: "value.energy", unit: "kWh" },
   { id: "daily_charge_energy", kind: "statistics", role: "value.energy", unit: "kWh" },
@@ -252,6 +259,9 @@ const STATISTICS_ENTITIES = [
   { id: "daily_smartplugs_total", kind: "statistics", role: "value.energy", unit: "kWh" }
 ];
 const STATISTICS_LABELS = {
+  total_energy: "Gesamtenergie (Lifetime)",
+  total_co2_savings: "CO\u2082-Einsparung gesamt",
+  total_money_savings: "Geldersparnis gesamt",
   energy_statistics_date: "Statistik-Datum",
   daily_solar_production: "Solarertrag (heute)",
   daily_charge_energy: "Batterieladung (heute)",
@@ -300,6 +310,10 @@ const STATISTICS_LABELS = {
     })
   )
 };
+const LIFETIME_STATISTICS_ENTITY_IDS = LIFETIME_STATISTICS_ENTITIES.map((e) => e.id);
+const DEVICE_STATISTICS_ENTITY_IDS = STATISTICS_ENTITIES.map((e) => e.id).filter(
+  (id) => !LIFETIME_STATISTICS_ENTITY_IDS.includes(id)
+);
 const STATISTICS_ENTITY_IDS = STATISTICS_ENTITIES.map((e) => e.id);
 const ENTITY_MAP = new Map(
   [...SENSOR_ENTITIES, ...CONTROL_ENTITIES, ...STATISTICS_ENTITIES].map((e) => [e.id, e])
@@ -309,7 +323,9 @@ function isWritable(entityId, writable) {
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  DEVICE_STATISTICS_ENTITY_IDS,
   ENTITY_MAP,
+  LIFETIME_STATISTICS_ENTITY_IDS,
   STATISTICS_ENTITIES,
   STATISTICS_ENTITY_IDS,
   STATISTICS_LABELS,

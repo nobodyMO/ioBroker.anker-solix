@@ -1,4 +1,4 @@
-"""bat_charge/discharge entity value types per device kind."""
+"""Tests for API-only battery charge/discharge power picking (solarbank only)."""
 
 import sys
 from pathlib import Path
@@ -11,12 +11,14 @@ if str(PYTHON_DIR) not in sys.path:
 from entities import extract_entities  # noqa: E402
 
 _CFG = {"enablePowerFlows": True}
+_PATCH = (
+    patch("entities.extract_statistics_entities", return_value={}),
+    patch("lifetime_statistics.extract_lifetime_statistics_entities", return_value={}),
+)
 
 
 def _extract(data: dict) -> dict:
-    with patch("entities.extract_statistics_entities", return_value={}), patch(
-        "lifetime_statistics.extract_lifetime_statistics_entities", return_value={}
-    ):
+    with _PATCH[0], _PATCH[1]:
         return extract_entities(data, _CFG)
 
 
@@ -32,23 +34,12 @@ def test_solarbank_bat_power_is_string() -> None:
     assert isinstance(entities["bat_charge_power"], str)
 
 
-def test_system_bat_power_is_number() -> None:
+def test_system_has_no_bat_power_entities() -> None:
     data = {
         "type": "system",
         "charging_power": "1200",
         "bat_charge_power": "0",
     }
     entities = _extract(data)
-    assert entities["bat_charge_power"] == 1200
-    assert isinstance(entities["bat_charge_power"], int)
-
-
-def test_combiner_bat_power_is_number() -> None:
-    data = {
-        "type": "combiner_box",
-        "bat_discharge_power": "800",
-        "charging_power": "-800",
-    }
-    entities = _extract(data)
-    assert entities["bat_discharge_power"] == 800
-    assert isinstance(entities["bat_discharge_power"], int)
+    assert "bat_charge_power" not in entities
+    assert "bat_discharge_power" not in entities

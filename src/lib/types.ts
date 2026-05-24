@@ -36,10 +36,8 @@ export interface SolarbankListEntry {
 	battery_energy?: number;
 }
 
-/** system.{siteId}.solarbank_info — totals + per-solarbank entries. */
+/** system.{siteId}.solarbank_info — per-solarbank battery_energy only. */
 export interface SolarbankInfoPayload {
-	battery_discharge_power?: number;
-	total_charging_power?: number;
 	solarbank_list?: Record<string, SolarbankListEntry>;
 }
 

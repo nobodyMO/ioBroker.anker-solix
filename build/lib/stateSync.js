@@ -18,6 +18,7 @@ var __copyProps = (to, from, except, desc) => {
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var stateSync_exports = {};
 __export(stateSync_exports, {
+  lifetimeStatisticsStatePath: () => lifetimeStatisticsStatePath,
   parseControlStateId: () => parseControlStateId,
   statisticsStatePath: () => statisticsStatePath,
   syncDevices: () => syncDevices
@@ -26,6 +27,10 @@ module.exports = __toCommonJS(stateSync_exports);
 var import_entities = require("./entities");
 var import_entityGroups = require("./entityGroups");
 var import_curtailmentPower = require("./curtailmentPower");
+var import_systemBatPower = require("./systemBatPower");
+const SOLARBANK_INFO_LABELS = {
+  battery_energy: "Batterie-Energie (Wh)"
+};
 function resolveStateType(meta, value) {
   if ((meta == null ? void 0 : meta.kind) === "number") {
     return "number";
@@ -78,6 +83,12 @@ function coerceStateValue(type, value) {
 function sanitizeIdPart(value) {
   return value.replace(/[^a-zA-Z0-9._-]/g, "_");
 }
+function lifetimeStatisticsStatePath(channelPath, entityId) {
+  return `${channelPath}.sensors.${entityId}`;
+}
+function isSystemLifetimeStatistic(entityId, devType) {
+  return import_entities.LIFETIME_STATISTICS_ENTITY_IDS.includes(entityId) && (devType === "system" || devType === "site");
+}
 function statisticsStatePath(channelPath, entityId) {
   const periodMatch = /^(week|month|year)_(.+)$/.exec(entityId);
   if (periodMatch) {
@@ -89,6 +100,60 @@ function channelForDevice(info) {
   const typePart = sanitizeIdPart(info.type || "device");
   const idPart = sanitizeIdPart(info.id);
   return `${typePart}.${idPart}`;
+}
+function solarbankInfoEnabled(config) {
+  return !!config.enableSystemOverview || !!config.enablePowerFlows;
+}
+async function syncSolarbankInfo(adapter, channelPath, info) {
+  if (!info || !solarbankInfoEnabled(adapter.config)) {
+    return;
+  }
+  const base = `${channelPath}.solarbank_info`;
+  await adapter.setObjectNotExistsAsync(base, {
+    type: "channel",
+    common: { name: "Solarbank-Info (Gesamtsystem)" },
+    native: {}
+  });
+  const siteId = channelPath.split(".").pop() || "";
+  if (siteId) {
+    await (0, import_systemBatPower.pruneSolarbankInfoPowerStates)(adapter, siteId);
+  }
+  const list = info.solarbank_list;
+  if (!list || Object.keys(list).length === 0) {
+    return;
+  }
+  const listBase = `${base}.solarbank_list`;
+  await adapter.setObjectNotExistsAsync(listBase, {
+    type: "channel",
+    common: { name: "Solarbank-Liste" },
+    native: {}
+  });
+  for (const [sn, entry] of Object.entries(list)) {
+    const snPart = sanitizeIdPart(sn);
+    const bankBase = `${listBase}.${snPart}`;
+    await adapter.setObjectNotExistsAsync(bankBase, {
+      type: "channel",
+      common: { name: `Solarbank ${sn}` },
+      native: { device_sn: sn }
+    });
+    if (entry.battery_energy === null || entry.battery_energy === void 0) {
+      continue;
+    }
+    const stateId = `${bankBase}.battery_energy`;
+    await adapter.setObjectNotExistsAsync(stateId, {
+      type: "state",
+      common: {
+        name: SOLARBANK_INFO_LABELS.battery_energy,
+        type: "number",
+        role: "value.energy",
+        unit: "Wh",
+        read: true,
+        write: false
+      },
+      native: {}
+    });
+    await adapter.setState(stateId, entry.battery_energy, true);
+  }
 }
 async function syncDevices(adapter, devices) {
   var _a, _b, _c, _d, _e;
@@ -125,7 +190,14 @@ async function syncDevices(adapter, devices) {
       })
     ]);
     if (device.hasStatistics) {
-      for (const id of import_entities.STATISTICS_ENTITY_IDS) {
+      for (const id of import_entities.DEVICE_STATISTICS_ENTITY_IDS) {
+        if ((0, import_entityGroups.isEntityEnabled)(id, adapter.config)) {
+          entityIds.add(id);
+        }
+      }
+    }
+    if (device.info.type === "system" || device.info.type === "site") {
+      for (const id of import_entities.LIFETIME_STATISTICS_ENTITY_IDS) {
         if ((0, import_entityGroups.isEntityEnabled)(id, adapter.config)) {
           entityIds.add(id);
         }
@@ -139,7 +211,7 @@ async function syncDevices(adapter, devices) {
       const meta = import_entities.ENTITY_MAP.get(entityId);
       const writable = meta ? (0, import_entities.isWritable)(entityId, device.writable) : false;
       const kind = (_a = meta == null ? void 0 : meta.kind) != null ? _a : "sensor";
-      const stateId = kind === "statistics" ? statisticsStatePath(channelPath, entityId) : `${channelPath}.${kind === "sensor" ? "sensors" : "control"}.${entityId}`;
+      const stateId = isSystemLifetimeStatistic(entityId, device.info.type) ? lifetimeStatisticsStatePath(channelPath, entityId) : kind === "statistics" ? statisticsStatePath(channelPath, entityId) : `${channelPath}.${kind === "sensor" ? "sensors" : "control"}.${entityId}`;
       const stateType = resolveStateType(meta, value);
       const hasValue = value !== null && value !== void 0;
       const stateVal = hasValue ? coerceStateValue(stateType, value) : (meta == null ? void 0 : meta.kind) === "switch" ? false : (meta == null ? void 0 : meta.kind) === "statistics" ? null : (meta == null ? void 0 : meta.kind) === "number" ? (_b = meta.min) != null ? _b : 0 : "";
@@ -222,6 +294,9 @@ async function syncDevices(adapter, devices) {
       } else if ((meta == null ? void 0 : meta.kind) === "statistics") {
       }
     }
+    if (device.info.type === "system" || device.info.type === "site" || device.solarbankInfo) {
+      await syncSolarbankInfo(adapter, channelPath, device.solarbankInfo);
+    }
   }
 }
 function parseControlStateId(namespace, stateId) {
@@ -240,6 +315,7 @@ function parseControlStateId(namespace, stateId) {
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  lifetimeStatisticsStatePath,
   parseControlStateId,
   statisticsStatePath,
   syncDevices

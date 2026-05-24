@@ -10,10 +10,9 @@ import {
 import { isEntityEnabled } from "./entityGroups";
 import { isPvGenerationSensor, readPvFromEntities } from "./curtailmentPower";
 import type { BridgeDevice, SolarbankInfoPayload } from "./types";
+import { pruneCombinerBatPowerStates, pruneSolarbankInfoPowerStates } from "./systemBatPower";
 
 const SOLARBANK_INFO_LABELS: Record<string, string> = {
-	battery_discharge_power: "Batterie-Entladeleistung gesamt",
-	total_charging_power: "Batterie-Ladeleistung gesamt",
 	battery_energy: "Batterie-Energie (Wh)",
 };
 
@@ -122,22 +121,9 @@ async function syncSolarbankInfo(
 		native: {},
 	});
 
-	for (const key of ["battery_discharge_power", "total_charging_power"] as const) {
-		const val = info[key] ?? 0;
-		const stateId = `${base}.${key}`;
-		await adapter.setObjectNotExistsAsync(stateId, {
-			type: "state",
-			common: {
-				name: SOLARBANK_INFO_LABELS[key] || key,
-				type: "number",
-				role: "value.power",
-				unit: "W",
-				read: true,
-				write: false,
-			},
-			native: {},
-		});
-		await adapter.setState(stateId, val, true);
+	const siteId = channelPath.split(".").pop() || "";
+	if (siteId) {
+		await pruneSolarbankInfoPowerStates(adapter, siteId);
 	}
 
 	const list = info.solarbank_list;
@@ -224,6 +210,9 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 					entityIds.add(id);
 				}
 			}
+		}
+		if (device.info.type === "combiner_box") {
+			await pruneCombinerBatPowerStates(adapter, device.info.id);
 		}
 
 		for (const entityId of entityIds) {

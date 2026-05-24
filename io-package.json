@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.48",
+		"version": "0.10.49",
 		"messagebox": true,
 		"news": {
+			"0.10.49": {
+				"en": "System bat charge/discharge: sum of solarbank sensors (live); remove solarbank_info power totals and combiner bat power",
+				"de": "System Lade-/Entladeleistung: Summe der Solarbank-Sensoren (live); solarbank_info-Summen und Combiner bat_* entfernt",
+				"ru": "System bat power from solarbank sum",
+				"pt": "System bat power from solarbank sum",
+				"nl": "System bat power from solarbank sum",
+				"fr": "System bat power from solarbank sum",
+				"it": "System bat power from solarbank sum",
+				"es": "System bat power from solarbank sum",
+				"pl": "System bat power from solarbank sum",
+				"uk": "System bat power from solarbank sum",
+				"zh-cn": "系统充放电功率由太阳能银行传感器求和"
+			},
 			"0.10.48": {
 				"en": "Fix solarbank_info totals (total_charging_power, battery_discharge_power) update every poll",
 				"de": "Fix solarbank_info-Summen: Lade-/Entladeleistung gesamt bei jedem Poll aktualisiert",
@@ -250,19 +263,6 @@
 				"pl": "Period stats HA-style",
 				"uk": "Period stats HA-style",
 				"zh-cn": "周期统计按 HA 方式获取"
-			},
-			"0.10.28": {
-				"en": "Curtailment: no manual/export limit until live PV ≥50 W (fixes midnight 4800 W feed-in)",
-				"de": "Abregelung: erst bei Live-PV ≥50 W (Fix Mitternacht: kein manuell/4800 W ohne Erzeugung)",
-				"ru": "Curtailment only with live PV",
-				"pt": "Curtailment only with live PV",
-				"nl": "Curtailment only with live PV",
-				"fr": "Curtailment only with live PV",
-				"it": "Curtailment only with live PV",
-				"es": "Curtailment only with live PV",
-				"pl": "Curtailment only with live PV",
-				"uk": "Curtailment only with live PV",
-				"zh-cn": "限电仅在有实时光伏时生效"
 			}
 		},
 		"titleLang": {

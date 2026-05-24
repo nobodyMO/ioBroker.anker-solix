@@ -28,6 +28,12 @@ import { runPythonInstaller } from "./lib/ensurePython";
 import { ensureBridgeDaemon, runBridge, stopBridgeDaemon } from "./lib/pythonBridge";
 import { SERVICE_STATES, setupServiceStates } from "./lib/services";
 import { resolveCurtailmentDevices } from "./lib/curtailmentConfig";
+import {
+	buildSiteSolarbankMap,
+	parseSolarbankBatPowerStateId,
+	refreshAllSystemBatPowerSums,
+	sumSolarbankBatPowerToSystem,
+} from "./lib/systemBatPower";
 import { parseControlStateId, syncDevices, type CurtailmentPvSyncHost } from "./lib/stateSync";
 import type { BridgeConfig, BridgeDevice, BridgeServiceConfig, DeviceControlContext } from "./lib/types";
 
@@ -39,6 +45,7 @@ class AnkerSolix extends utils.Adapter {
 	private readonly deviceWritable = new Map<string, string[]>();
 	private readonly lastNotifiedPvW = new Map<string, number>();
 	private readonly curtailmentDeviceIds = new Set<string>();
+	private siteSolarbanks = new Map<string, string[]>();
 	private pollAfterControlTimer: NodeJS.Timeout | undefined;
 	private pollInFlight = false;
 
@@ -208,7 +215,11 @@ class AnkerSolix extends utils.Adapter {
 			if (pollDevices?.length) {
 				this.rememberDeviceContexts(pollDevices);
 				this.rememberDeviceEntities(pollDevices);
+				this.siteSolarbanks = buildSiteSolarbankMap(pollDevices);
 				await syncDevices(this, pollDevices);
+				if (this.batPowerAggregationEnabled()) {
+					await refreshAllSystemBatPowerSums(this, this.siteSolarbanks);
+				}
 			}
 
 			if (result.nickname) {
@@ -503,6 +514,31 @@ class AnkerSolix extends utils.Adapter {
 		}
 	}
 
+	private batPowerAggregationEnabled(): boolean {
+		return !!this.config.enableSystemOverview || !!this.config.enablePowerFlows;
+	}
+
+	private subscribeSystemBatPowerAggregation(): void {
+		if (!this.batPowerAggregationEnabled()) {
+			return;
+		}
+		const ns = this.namespace;
+		this.subscribeStates(`${ns}.solarbank.*.sensors.bat_charge_power`);
+		this.subscribeStates(`${ns}.solarbank.*.sensors.bat_discharge_power`);
+	}
+
+	private async handleSolarbankBatPowerChanged(deviceSn: string): Promise<void> {
+		const ctx = this.deviceContexts.get(deviceSn);
+		if (!ctx?.site_id) {
+			return;
+		}
+		const sns = this.siteSolarbanks.get(ctx.site_id);
+		if (!sns?.length) {
+			return;
+		}
+		await sumSolarbankBatPowerToSystem(this, ctx.site_id, sns);
+	}
+
 	private subscribeCurtailmentPvStates(): void {
 		if (!this.config.enableCurtailmentAvoidance) {
 			return;
@@ -554,6 +590,14 @@ class AnkerSolix extends utils.Adapter {
 						this.handleCurtailmentPvUpdated(pv.deviceId, n);
 					}
 				}
+			}
+		}
+
+		if (this.batPowerAggregationEnabled()) {
+			const bat = parseSolarbankBatPowerStateId(this.namespace, id);
+			if (bat) {
+				await this.handleSolarbankBatPowerChanged(bat.deviceSn);
+				return;
 			}
 		}
 
@@ -742,6 +786,7 @@ class AnkerSolix extends utils.Adapter {
 		this.subscribeStates(`${this.namespace}.*.control.*`);
 		this.subscribeStates(`${this.namespace}.services.*`);
 		this.subscribeCurtailmentPvStates();
+		this.subscribeSystemBatPowerAggregation();
 
 		await this.pollOnce();
 		this.pollTimer = this.setInterval(() => {

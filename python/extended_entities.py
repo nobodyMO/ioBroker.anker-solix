@@ -123,7 +123,7 @@ EXTENDED_SENSOR_ENTITIES: list[dict[str, Any]] = [
         "keys": ["bat_charge_power", "battery_charge_power"],
         "unit": "W",
         "role": "value.power",
-        "types": [SOLARBANK, SYSTEM, COMBINER],
+        "types": [SOLARBANK],
         "groups": [GROUP_POWER_FLOWS],
     },
     {
@@ -131,7 +131,7 @@ EXTENDED_SENSOR_ENTITIES: list[dict[str, Any]] = [
         "keys": ["bat_discharge_power", "battery_discharge_power"],
         "unit": "W",
         "role": "value.power",
-        "types": [SOLARBANK, SYSTEM, COMBINER],
+        "types": [SOLARBANK],
         "groups": [GROUP_POWER_FLOWS],
     },
     {
