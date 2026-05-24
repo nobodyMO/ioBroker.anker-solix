@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.39",
+		"version": "0.10.40",
 		"messagebox": true,
 		"news": {
+			"0.10.40": {
+				"en": "Lifetime statistics on system channel: total_energy, total_co2_savings, total_money_savings (polled each cycle)",
+				"de": "Lifetime-Statistik am System-Kanal: total_energy, total_co2_savings, total_money_savings (bei jedem Poll)",
+				"ru": "Lifetime statistics system channel",
+				"pt": "Lifetime statistics system channel",
+				"nl": "Lifetime statistics system channel",
+				"fr": "Lifetime statistics system channel",
+				"it": "Lifetime statistics system channel",
+				"es": "Lifetime statistics system channel",
+				"pl": "Lifetime statistics system channel",
+				"uk": "Lifetime statistics system channel",
+				"zh-cn": "系统通道终身统计 total_energy/CO2/省钱"
+			},
 			"0.10.39": {
 				"en": "max_total_ac_output: persist MQTT grid cap across polls (cloud/app legal limit no longer overwrites ioBroker state)",
 				"de": "max_total_ac_output: MQTT-Netzleistungsbegrenzung bleibt nach Poll erhalten (Cloud/App-Legal-Limit überschreibt ioBroker-Wert nicht mehr)",
@@ -250,19 +263,6 @@
 				"pl": "Period stats in subfolders",
 				"uk": "Period stats in subfolders",
 				"zh-cn": "周期统计在 statistics.week|month|year 子目录"
-			},
-			"0.10.14": {
-				"en": "Curtailment: manual + ac_output_limit only; missing_charge_wh; active export = PV − charge",
-				"de": "Abregelung: nur Benutzerdefiniert + ac_output_limit; missing_charge_wh; active: Einspeisung = PV − Laden",
-				"ru": "Abregelung: manual + ac_output_limit",
-				"pt": "Abregelung: manual + ac_output_limit",
-				"nl": "Abregelung: manual + ac_output_limit",
-				"fr": "Abregelung: manual + ac_output_limit",
-				"it": "Abregelung: manual + ac_output_limit",
-				"es": "Abregelung: manual + ac_output_limit",
-				"pl": "Abregelung: manual + ac_output_limit",
-				"uk": "Abregelung: manual + ac_output_limit",
-				"zh-cn": "限电仅 manual + ac_output_limit"
 			}
 		},
 		"titleLang": {

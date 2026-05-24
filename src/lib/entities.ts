@@ -79,7 +79,6 @@ const SENSOR_ENTITIES: EntityMeta[] = [
 	{ id: "solarbank_list", kind: "sensor", role: "text" },
 	{ id: "other_loads_power", kind: "sensor", role: "value.power", unit: "W" },
 	{ id: "smart_plugs_power", kind: "sensor", role: "value.power", unit: "W" },
-	{ id: "total_co2_saving", kind: "sensor", role: "value", unit: "kg" },
 	{ id: "dynamic_price_total", kind: "sensor", role: "value", unit: "€/kWh" },
 	{ id: "spot_price_mwh", kind: "sensor", role: "value", unit: "€/MWh" },
 	{ id: "pps_battery_soc", kind: "sensor", role: "value.battery", unit: "%" },
@@ -214,8 +213,16 @@ function buildPeriodStatisticsEntities(): EntityMeta[] {
 
 const PERIOD_STATISTICS_ENTITIES = buildPeriodStatisticsEntities();
 
+/** Lifetime site totals (Anker statistics[] types 1/2/3), polled via scene info each cycle */
+const LIFETIME_STATISTICS_ENTITIES: EntityMeta[] = [
+	{ id: "total_energy", kind: "statistics", role: "value.energy", unit: "kWh" },
+	{ id: "total_co2_savings", kind: "statistics", role: "value", unit: "kg" },
+	{ id: "total_money_savings", kind: "statistics", role: "value" },
+];
+
 /** Daily energy statistics (kWh), HA energy_details.today / last_period */
 export const STATISTICS_ENTITIES: EntityMeta[] = [
+	...LIFETIME_STATISTICS_ENTITIES,
 	{ id: "energy_statistics_date", kind: "statistics", role: "value.date" },
 	{ id: "daily_solar_production", kind: "statistics", role: "value.energy", unit: "kWh" },
 	{ id: "daily_charge_energy", kind: "statistics", role: "value.energy", unit: "kWh" },
@@ -249,6 +256,9 @@ export const STATISTICS_ENTITIES: EntityMeta[] = [
 ];
 
 export const STATISTICS_LABELS: Record<string, string> = {
+	total_energy: "Gesamtenergie (Lifetime)",
+	total_co2_savings: "CO₂-Einsparung gesamt",
+	total_money_savings: "Geldersparnis gesamt",
 	energy_statistics_date: "Statistik-Datum",
 	daily_solar_production: "Solarertrag (heute)",
 	daily_charge_energy: "Batterieladung (heute)",
@@ -297,6 +307,13 @@ export const STATISTICS_LABELS: Record<string, string> = {
 		}),
 	),
 };
+
+export const LIFETIME_STATISTICS_ENTITY_IDS = LIFETIME_STATISTICS_ENTITIES.map(e => e.id);
+
+/** Daily/period kWh on combiner/solarbank when hasStatistics (excludes system lifetime totals). */
+export const DEVICE_STATISTICS_ENTITY_IDS = STATISTICS_ENTITIES.map(e => e.id).filter(
+	id => !LIFETIME_STATISTICS_ENTITY_IDS.includes(id),
+);
 
 export const STATISTICS_ENTITY_IDS = STATISTICS_ENTITIES.map(e => e.id);
 

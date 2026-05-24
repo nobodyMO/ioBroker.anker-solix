@@ -1,7 +1,7 @@
 import {
 	ENTITY_MAP,
 	isWritable,
-	STATISTICS_ENTITY_IDS,
+	DEVICE_STATISTICS_ENTITY_IDS,
 	STATISTICS_LABELS,
 	USAGE_MODE_STATES,
 	type EntityMeta,
@@ -121,7 +121,7 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 			...device.writable.filter(id => ENTITY_MAP.get(id)?.kind !== "sensor"),
 		]);
 		if (device.hasStatistics) {
-			for (const id of STATISTICS_ENTITY_IDS) {
+			for (const id of DEVICE_STATISTICS_ENTITY_IDS) {
 				if (isEntityEnabled(id, adapter.config)) {
 					entityIds.add(id);
 				}

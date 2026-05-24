@@ -747,4 +747,7 @@ def extract_entities(data: dict, config: dict | None = None) -> dict[str, Any]:
         if val is not None:
             entities[spec["id"]] = val
     entities.update(extract_statistics_entities(data, dev_type, config))
+    from lifetime_statistics import extract_lifetime_statistics_entities  # noqa: PLC0415
+
+    entities.update(extract_lifetime_statistics_entities(data, dev_type, config))
     return entities

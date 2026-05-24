@@ -260,15 +260,6 @@ EXTENDED_SENSOR_ENTITIES: list[dict[str, Any]] = [
         "groups": [GROUP_SYSTEM_OVERVIEW],
         "nested": True,
     },
-    {
-        "id": "total_co2_saving",
-        "keys": ["total_co2_saving", "co2_saved"],
-        "unit": "kg",
-        "role": "value",
-        "types": [SYSTEM, SITE],
-        "groups": [GROUP_SYSTEM_OVERVIEW],
-        "nested": True,
-    },
     # Site price (read-only sensors when enabled)
     {
         "id": "dynamic_price_total",
