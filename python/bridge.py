@@ -1002,6 +1002,13 @@ def _devices_from_caches(
             combiner_site,
             enable_stats=enable_stats,
         )
+        solarbank_info = None
+        if info["type"] in ("system", "site"):
+            from solarbank_info import extract_solarbank_info  # noqa: PLC0415
+
+            solarbank_info = extract_solarbank_info(
+                ctx_data, client.api, config
+            )
         devices.append(
             {
                 "info": info,
@@ -1010,6 +1017,7 @@ def _devices_from_caches(
                 "usage_mode_options": usage_opts,
                 "max_total_ac_output_options": max_ac_opts,
                 "hasStatistics": has_statistics,
+                "solarbankInfo": solarbank_info,
             }
         )
     return devices

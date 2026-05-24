@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.40",
+		"version": "0.10.41",
 		"messagebox": true,
 		"news": {
+			"0.10.41": {
+				"en": "system.solarbank_info: battery_discharge_power, total_charging_power, per-SB battery_energy (AnkerSolix2 layout)",
+				"de": "system.solarbank_info: Ent-/Ladeleistung gesamt, battery_energy pro Solarbank (wie AnkerSolix2)",
+				"ru": "solarbank_info channel",
+				"pt": "solarbank_info channel",
+				"nl": "solarbank_info channel",
+				"fr": "solarbank_info channel",
+				"it": "solarbank_info channel",
+				"es": "solarbank_info channel",
+				"pl": "solarbank_info channel",
+				"uk": "solarbank_info channel",
+				"zh-cn": "system.solarbank_info 通道"
+			},
 			"0.10.40": {
 				"en": "Lifetime statistics on system channel: total_energy, total_co2_savings, total_money_savings (polled each cycle)",
 				"de": "Lifetime-Statistik am System-Kanal: total_energy, total_co2_savings, total_money_savings (bei jedem Poll)",
@@ -250,19 +263,6 @@
 				"pl": "Fix: config + API throttle",
 				"uk": "Fix: config + API throttle",
 				"zh-cn": "修复 config；周期统计 API 分批"
-			},
-			"0.10.20": {
-				"en": "Period energy stats under statistics.week|month|year.* subfolders (enable entity groups)",
-				"de": "Wochen-/Monats-/Jahresstatistik unter statistics.week|month|year.* (Entitätsgruppen aktivieren)",
-				"ru": "Period stats in subfolders",
-				"pt": "Period stats in subfolders",
-				"nl": "Period stats in subfolders",
-				"fr": "Period stats in subfolders",
-				"it": "Period stats in subfolders",
-				"es": "Period stats in subfolders",
-				"pl": "Period stats in subfolders",
-				"uk": "Period stats in subfolders",
-				"zh-cn": "周期统计在 statistics.week|month|year 子目录"
 			}
 		},
 		"titleLang": {

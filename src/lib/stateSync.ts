@@ -8,7 +8,13 @@ import {
 } from "./entities";
 import { isEntityEnabled } from "./entityGroups";
 import { isPvGenerationSensor, readPvFromEntities } from "./curtailmentPower";
-import type { BridgeDevice } from "./types";
+import type { BridgeDevice, SolarbankInfoPayload } from "./types";
+
+const SOLARBANK_INFO_LABELS: Record<string, string> = {
+	battery_discharge_power: "Batterie-Entladeleistung gesamt",
+	total_charging_power: "Batterie-Ladeleistung gesamt",
+	battery_energy: "Batterie-Energie (Wh)",
+};
 
 /** Optional hooks on the adapter instance (see main.ts). */
 export interface CurtailmentPvSyncHost extends ioBroker.Adapter {
@@ -85,6 +91,84 @@ function channelForDevice(info: BridgeDevice["info"]): string {
 	const typePart = sanitizeIdPart(info.type || "device");
 	const idPart = sanitizeIdPart(info.id);
 	return `${typePart}.${idPart}`;
+}
+
+function solarbankInfoEnabled(config: ioBroker.Adapter["config"]): boolean {
+	return !!config.enableSystemOverview || !!config.enablePowerFlows;
+}
+
+async function syncSolarbankInfo(
+	adapter: ioBroker.Adapter,
+	channelPath: string,
+	info: SolarbankInfoPayload | undefined,
+): Promise<void> {
+	if (!info || !solarbankInfoEnabled(adapter.config)) {
+		return;
+	}
+	const base = `${channelPath}.solarbank_info`;
+	await adapter.setObjectNotExistsAsync(base, {
+		type: "channel",
+		common: { name: "Solarbank-Info (Gesamtsystem)" },
+		native: {},
+	});
+
+	for (const key of ["battery_discharge_power", "total_charging_power"] as const) {
+		const val = info[key];
+		if (val === null || val === undefined) {
+			continue;
+		}
+		const stateId = `${base}.${key}`;
+		await adapter.setObjectNotExistsAsync(stateId, {
+			type: "state",
+			common: {
+				name: SOLARBANK_INFO_LABELS[key] || key,
+				type: "number",
+				role: "value.power",
+				unit: "W",
+				read: true,
+				write: false,
+			},
+			native: {},
+		});
+		await adapter.setState(stateId, val, true);
+	}
+
+	const list = info.solarbank_list;
+	if (!list || Object.keys(list).length === 0) {
+		return;
+	}
+	const listBase = `${base}.solarbank_list`;
+	await adapter.setObjectNotExistsAsync(listBase, {
+		type: "channel",
+		common: { name: "Solarbank-Liste" },
+		native: {},
+	});
+	for (const [sn, entry] of Object.entries(list)) {
+		const snPart = sanitizeIdPart(sn);
+		const bankBase = `${listBase}.${snPart}`;
+		await adapter.setObjectNotExistsAsync(bankBase, {
+			type: "channel",
+			common: { name: `Solarbank ${sn}` },
+			native: { device_sn: sn },
+		});
+		if (entry.battery_energy === null || entry.battery_energy === undefined) {
+			continue;
+		}
+		const stateId = `${bankBase}.battery_energy`;
+		await adapter.setObjectNotExistsAsync(stateId, {
+			type: "state",
+			common: {
+				name: SOLARBANK_INFO_LABELS.battery_energy,
+				type: "number",
+				role: "value.energy",
+				unit: "Wh",
+				read: true,
+				write: false,
+			},
+			native: {},
+		});
+		await adapter.setState(stateId, entry.battery_energy, true);
+	}
 }
 
 export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevice[]): Promise<void> {
@@ -240,6 +324,8 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 				// Object exists; values arrive after first energy poll (detail refresh)
 			}
 		}
+
+		await syncSolarbankInfo(adapter, channelPath, device.solarbankInfo);
 	}
 }
 

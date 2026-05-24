@@ -28,6 +28,19 @@ export interface BridgeDevice {
 	max_total_ac_output_options?: number[];
 	/** Site/device has energy_details from API (statistics channel). */
 	hasStatistics?: boolean;
+	/** system.{siteId}.solarbank_info.* (AnkerSolix2-compatible layout). */
+	solarbankInfo?: SolarbankInfoPayload;
+}
+
+export interface SolarbankListEntry {
+	battery_energy?: number;
+}
+
+/** system.{siteId}.solarbank_info — totals + per-solarbank entries. */
+export interface SolarbankInfoPayload {
+	battery_discharge_power?: number;
+	total_charging_power?: number;
+	solarbank_list?: Record<string, SolarbankListEntry>;
 }
 
 export interface DeviceListEntry {
