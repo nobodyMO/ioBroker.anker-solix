@@ -210,9 +210,11 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 				common,
 				native: { control: entityId },
 			});
-			// Fix objects created with wrong type (e.g. grid_export_limit as string)
-			if (meta?.kind === "number" || meta?.kind === "switch") {
+			// Refresh name/type when labels change (e.g. renamed controls)
+			if (meta?.kind === "number" || meta?.kind === "switch" || meta?.kind === "list") {
 				await adapter.extendObject(stateId, { common });
+			} else if (STATISTICS_LABELS[entityId]) {
+				await adapter.extendObject(stateId, { common: { name: common.name } });
 			}
 			if (hasValue || writable) {
 				await adapter.setState(stateId, stateVal, true);

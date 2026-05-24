@@ -281,7 +281,15 @@ const STATISTICS_LABELS = {
   daily_grid_share: "Netz-Anteil (heute)",
   daily_ac_socket: "AC-Steckdose (heute)",
   daily_smartplugs_total: "Steckdosen gesamt (heute)",
-  max_total_ac_output: "Max. Gesamtausgangsleistung",
+  ac_output_limit: "Einspeisevorgabe Manual (Abregelung)",
+  set_output_power: "Ausgangs-Preset Zeitplan (W)",
+  max_total_ac_output: "Max. Gesamtausgangsleistung (Netzleistungsbegrenzung)",
+  grid_export_limit: "Netz-Einspeiselimit Station (Cloud, 0=aus)",
+  all_ac_input_limit: "AC-Eingangslimit gesamt (Info)",
+  allow_grid_export: "Einspeisung ins Netz erlauben",
+  preset_allow_export: "Export erlauben (Zeitplan)",
+  min_soc: "Mindest-SOC Reserve (%)",
+  preset_usage_mode: "Nutzungsmodus",
   ...Object.fromEntries(
     ["week", "month", "year"].flatMap((period) => {
       const rows = [[`${period}_energy_period`, PERIOD_NAMES_DE[period]]];

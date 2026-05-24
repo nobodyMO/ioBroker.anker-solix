@@ -198,8 +198,10 @@ async function syncDevices(adapter, devices) {
         common,
         native: { control: entityId }
       });
-      if ((meta == null ? void 0 : meta.kind) === "number" || (meta == null ? void 0 : meta.kind) === "switch") {
+      if ((meta == null ? void 0 : meta.kind) === "number" || (meta == null ? void 0 : meta.kind) === "switch" || (meta == null ? void 0 : meta.kind) === "list") {
         await adapter.extendObject(stateId, { common });
+      } else if (import_entities.STATISTICS_LABELS[entityId]) {
+        await adapter.extendObject(stateId, { common: { name: common.name } });
       }
       if (hasValue || writable) {
         await adapter.setState(stateId, stateVal, true);

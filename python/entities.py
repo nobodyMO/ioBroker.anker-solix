@@ -407,6 +407,62 @@ def pick_max_total_ac_output_value(data: dict, dev_type: str) -> Any:
     return None
 
 
+def pick_grid_export_limit_value(data: dict, api=None, site_id: str = "") -> Any:
+    """Station feed-in cap from device cache or site station_settings (0 = not set in cloud)."""
+    for key in ("grid_export_limit", "feed-in_power_limit"):
+        parsed = _parse_power_value(data.get(key))
+        if isinstance(parsed, int):
+            return parsed
+    if api and site_id:
+        site = (api.sites or {}).get(site_id) or {}
+        settings = (site.get("site_details") or {}).get("station_settings") or {}
+        parsed = _parse_power_value(settings.get("feed-in_power_limit"))
+        if isinstance(parsed, int):
+            return parsed
+        station_sn = str(
+            data.get("station_sn")
+            or site.get("station_sn")
+            or (site.get("site_details") or {}).get("station_sn")
+            or ""
+        )
+        if station_sn:
+            dev = api.devices.get(station_sn) or {}
+            for key in ("grid_export_limit", "feed-in_power_limit"):
+                parsed = _parse_power_value(dev.get(key))
+                if isinstance(parsed, int):
+                    return parsed
+    return None
+
+
+def enrich_combiner_station_fields(
+    api: Any, ctx_id: str, ctx_data: dict
+) -> dict:
+    """Merge station/site power-limit fields onto combiner poll cache."""
+    if str(ctx_data.get("type") or "").lower() != COMBINER:
+        return ctx_data
+    site_id = str(ctx_data.get("site_id") or "")
+    out = dict(ctx_data)
+    feed = pick_grid_export_limit_value(out, api=api, site_id=site_id)
+    if feed is not None:
+        out["grid_export_limit"] = feed
+        out["feed-in_power_limit"] = feed
+    site = (api.sites or {}).get(site_id) or {} if api else {}
+    station_sn = str(
+        out.get("station_sn")
+        or site.get("station_sn")
+        or (site.get("site_details") or {}).get("station_sn")
+        or ctx_id
+    )
+    station_dev = (api.devices.get(station_sn) if api else None) or {}
+    ac_in = pick_value(
+        {**out, **station_dev},
+        ["all_ac_input_limit", "ac_input_power_unit"],
+    )
+    if isinstance(ac_in, int):
+        out["all_ac_input_limit"] = ac_in
+    return out
+
+
 def pick_value(data: dict, keys: list[str], nested: bool = False) -> Any:
     mqtt = data.get("mqtt_data")
     if isinstance(mqtt, dict):

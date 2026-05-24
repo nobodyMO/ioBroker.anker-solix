@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.37",
+		"version": "0.10.38",
 		"messagebox": true,
 		"news": {
+			"0.10.38": {
+				"en": "Clearer control labels; combiner reads station grid feed-in limit + AC input from cloud",
+				"de": "Klarere Bezeichnungen; Combiner liest Station Einspeise-Limit + AC-Eingang aus Cloud",
+				"ru": "Clearer labels + station limits",
+				"pt": "Clearer labels + station limits",
+				"nl": "Clearer labels + station limits",
+				"fr": "Clearer labels + station limits",
+				"it": "Clearer labels + station limits",
+				"es": "Clearer labels + station limits",
+				"pl": "Clearer labels + station limits",
+				"uk": "Clearer labels + station limits",
+				"zh-cn": "更清晰命名；Combiner 读取站点限值"
+			},
 			"0.10.37": {
 				"en": "max_total_ac_output: keep MQTT-applied W in state (cloud/app may still show legal limit)",
 				"de": "max_total_ac_output: gesetzter MQTT-Wert bleibt im Datenpunkt (Cloud/App zeigt ggf. weiter Legal-Limit)",
@@ -250,19 +263,6 @@
 				"pl": "Combiner: ac_output_limit do eksportu",
 				"uk": "Combiner: ac_output_limit для експорту",
 				"zh-cn": "Combiner 通过 ac_output_limit 馈网"
-			},
-			"0.10.11": {
-				"en": "Curtailment: live PV from system.{siteId}.sensors.total_pv_power (priority)",
-				"de": "Abregelung: live PV aus system.{siteId}.sensors.total_pv_power (Priorität)",
-				"ru": "PV из system.total_pv_power",
-				"pt": "PV de system.total_pv_power",
-				"nl": "PV van system.total_pv_power",
-				"fr": "PV depuis system.total_pv_power",
-				"it": "PV da system.total_pv_power",
-				"es": "PV desde system.total_pv_power",
-				"pl": "PV z system.total_pv_power",
-				"uk": "PV з system.total_pv_power",
-				"zh-cn": "优先使用 system.total_pv_power"
 			}
 		},
 		"titleLang": {

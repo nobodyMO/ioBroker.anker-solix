@@ -35,6 +35,7 @@ from entities import (  # noqa: E402
     MAX_TOTAL_AC_OUTPUT_APPLIED,
     SOLARBANK,
     controls_for_type,
+    enrich_combiner_station_fields,
     extract_entities,
     max_total_ac_output_options,
     parse_usage_mode_set_value,
@@ -1001,6 +1002,7 @@ def _devices_from_caches(
         )
         if info["type"] == "combiner_box":
             ctx_data = enrich_combiner_soc(client.api, str(ctx_id), ctx_data)
+            ctx_data = enrich_combiner_station_fields(client.api, str(ctx_id), ctx_data)
         entities = extract_entities(ctx_data, config)
         writable = writable_controls_for_device(ctx_data, info["type"], config)
         if not entities and not writable:
