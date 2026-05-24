@@ -23,6 +23,7 @@ __export(systemBatPower_exports, {
   ensureSystemBatPowerStates: () => ensureSystemBatPowerStates,
   parsePowerW: () => parsePowerW,
   parseSolarbankBatPowerStateId: () => parseSolarbankBatPowerStateId,
+  pruneCombinerBatPowerStates: () => pruneCombinerBatPowerStates,
   pruneSolarbankInfoPowerStates: () => pruneSolarbankInfoPowerStates,
   refreshAllSystemBatPowerSums: () => refreshAllSystemBatPowerSums,
   sumSolarbankBatPowerToSystem: () => sumSolarbankBatPowerToSystem,
@@ -50,8 +51,14 @@ function parsePowerW(val) {
   if (val === null || val === void 0 || val === "") {
     return 0;
   }
-  const n = typeof val === "number" ? val : Number.parseFloat(String(val));
-  return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
+  if (typeof val === "number") {
+    return Number.isFinite(val) && val > 0 ? Math.round(val) : 0;
+  }
+  if (typeof val === "string") {
+    const n = Number.parseFloat(val);
+    return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
+  }
+  return 0;
 }
 function systemChannelPath(namespace, siteId) {
   return `${namespace}.system.${siteId}`;
@@ -115,13 +122,30 @@ async function refreshAllSystemBatPowerSums(adapter, siteSolarbanks) {
   }
 }
 const OBSOLETE_SOLARBANK_INFO_POWER = ["battery_discharge_power", "total_charging_power"];
+async function deleteObjectIfExists(adapter, objectId) {
+  if (!await adapter.objectExists(objectId)) {
+    return;
+  }
+  await new Promise((resolve, reject) => {
+    adapter.delObject(objectId, (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+}
 async function pruneSolarbankInfoPowerStates(adapter, siteId) {
   const base = `${adapter.namespace}.system.${siteId}.solarbank_info`;
   for (const key of OBSOLETE_SOLARBANK_INFO_POWER) {
-    const stateId = `${base}.${key}`;
-    if (await adapter.objectExists(stateId)) {
-      await adapter.delObject(stateId);
-    }
+    await deleteObjectIfExists(adapter, `${base}.${key}`);
+  }
+}
+async function pruneCombinerBatPowerStates(adapter, combinerSn) {
+  const base = `${adapter.namespace}.combiner_box.${combinerSn}.sensors`;
+  for (const entityId of SYSTEM_BAT_POWER_IDS) {
+    await deleteObjectIfExists(adapter, `${base}.${entityId}`);
   }
 }
 // Annotate the CommonJS export names for ESM import in node:
@@ -131,6 +155,7 @@ async function pruneSolarbankInfoPowerStates(adapter, siteId) {
   ensureSystemBatPowerStates,
   parsePowerW,
   parseSolarbankBatPowerStateId,
+  pruneCombinerBatPowerStates,
   pruneSolarbankInfoPowerStates,
   refreshAllSystemBatPowerSums,
   sumSolarbankBatPowerToSystem,

@@ -203,6 +203,9 @@ async function syncDevices(adapter, devices) {
         }
       }
     }
+    if (device.info.type === "combiner_box") {
+      await (0, import_systemBatPower.pruneCombinerBatPowerStates)(adapter, device.info.id);
+    }
     for (const entityId of entityIds) {
       if (!(0, import_entityGroups.isEntityEnabled)(entityId, adapter.config)) {
         continue;

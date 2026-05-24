@@ -28,8 +28,14 @@ export function parsePowerW(val: unknown): number {
 	if (val === null || val === undefined || val === "") {
 		return 0;
 	}
-	const n = typeof val === "number" ? val : Number.parseFloat(String(val));
-	return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
+	if (typeof val === "number") {
+		return Number.isFinite(val) && val > 0 ? Math.round(val) : 0;
+	}
+	if (typeof val === "string") {
+		const n = Number.parseFloat(val);
+		return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
+	}
+	return 0;
 }
 
 export function systemChannelPath(namespace: string, siteId: string): string {
@@ -78,10 +84,9 @@ export async function sumSolarbankBatPowerToSystem(
 	await adapter.setState(`${base}.sensors.bat_discharge_power`, discharge, true);
 }
 
-export function buildSiteSolarbankMap(devices: { info: { type: string; id: string; site_id?: string } }[]): Map<
-	string,
-	string[]
-> {
+export function buildSiteSolarbankMap(
+	devices: { info: { type: string; id: string; site_id?: string } }[],
+): Map<string, string[]> {
 	const map = new Map<string, string[]>();
 	for (const device of devices) {
 		if (device.info.type !== "solarbank") {
@@ -109,14 +114,26 @@ export async function refreshAllSystemBatPowerSums(
 
 const OBSOLETE_SOLARBANK_INFO_POWER = ["battery_discharge_power", "total_charging_power"] as const;
 
+async function deleteObjectIfExists(adapter: ioBroker.Adapter, objectId: string): Promise<void> {
+	if (!(await adapter.objectExists(objectId))) {
+		return;
+	}
+	await new Promise<void>((resolve, reject) => {
+		adapter.delObject(objectId, (err?: Error | null) => {
+			if (err) {
+				reject(err);
+			} else {
+				resolve();
+			}
+		});
+	});
+}
+
 /** Drop legacy solarbank_info power totals (replaced by system.sensors.bat_* sum). */
 export async function pruneSolarbankInfoPowerStates(adapter: ioBroker.Adapter, siteId: string): Promise<void> {
 	const base = `${adapter.namespace}.system.${siteId}.solarbank_info`;
 	for (const key of OBSOLETE_SOLARBANK_INFO_POWER) {
-		const stateId = `${base}.${key}`;
-		if (await adapter.objectExists(stateId)) {
-			await adapter.delObject(stateId);
-		}
+		await deleteObjectIfExists(adapter, `${base}.${key}`);
 	}
 }
 
@@ -124,9 +141,6 @@ export async function pruneSolarbankInfoPowerStates(adapter: ioBroker.Adapter, s
 export async function pruneCombinerBatPowerStates(adapter: ioBroker.Adapter, combinerSn: string): Promise<void> {
 	const base = `${adapter.namespace}.combiner_box.${combinerSn}.sensors`;
 	for (const entityId of SYSTEM_BAT_POWER_IDS) {
-		const stateId = `${base}.${entityId}`;
-		if (await adapter.objectExists(stateId)) {
-			await adapter.delObject(stateId);
-		}
+		await deleteObjectIfExists(adapter, `${base}.${entityId}`);
 	}
 }
