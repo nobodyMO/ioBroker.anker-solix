@@ -23,6 +23,9 @@ SOLARBANK = "solarbank"
 SYSTEM = "system"
 SITE = "site"
 COMBINER = "combiner_box"  # includes Power Dock (same device type in API)
+
+# Set via adapter MQTT control; cloud all_power_limit may stay at app/legal limit (e.g. 4800 W).
+MAX_TOTAL_AC_OUTPUT_APPLIED = "max_total_ac_output_applied"
 SMARTMETER = "smartmeter"
 SMARTPLUG = "smartplug"
 
@@ -376,6 +379,34 @@ def _nested_get(data: dict, key: str, nested: bool = False) -> Any:
     return None
 
 
+def pick_max_total_ac_output_value(data: dict, dev_type: str) -> Any:
+    """Read max total AC (grid limit): adapter-applied MQTT value beats cloud all_power_limit."""
+    applied = data.get(MAX_TOTAL_AC_OUTPUT_APPLIED)
+    if applied is not None and str(applied).replace(".", "", 1).isdigit():
+        return int(float(applied))
+    mqtt = data.get("mqtt_data") or {}
+    if dev_type == COMBINER:
+        if data.get("mqtt_overlay"):
+            keys = ("max_load_total", "all_power_limit")
+        else:
+            keys = ("all_power_limit", "max_load_total")
+        for key in keys:
+            for src in (data, mqtt):
+                val = src.get(key)
+                if val is not None and val != "":
+                    parsed = _parse_power_value(val)
+                    if isinstance(parsed, int):
+                        return parsed
+    elif dev_type == SOLARBANK:
+        for src in (data, mqtt):
+            val = src.get("max_load")
+            if val is not None and val != "":
+                parsed = _parse_power_value(val)
+                if isinstance(parsed, int):
+                    return parsed
+    return None
+
+
 def pick_value(data: dict, keys: list[str], nested: bool = False) -> Any:
     mqtt = data.get("mqtt_data")
     if isinstance(mqtt, dict):
@@ -649,11 +680,9 @@ def extract_entities(data: dict, config: dict | None = None) -> dict[str, Any]:
                 or (data.get("schedule") or {}).get("mode_type")
             )
         elif spec.get("kind") == "list" and spec["id"] == "max_total_ac_output":
-            val = pick_value(data, spec["keys"])
+            val = pick_max_total_ac_output_value(data, dev_type)
             if val is not None:
-                entities[spec["id"]] = (
-                    str(int(val)) if str(val).isdigit() else str(val)
-                )
+                entities[spec["id"]] = str(int(val))
             continue
         else:
             val = pick_value(data, spec["keys"])

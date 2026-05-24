@@ -32,6 +32,7 @@ from energy_statistics import (
 )
 from entities import (  # noqa: E402
     COMBINER,
+    MAX_TOTAL_AC_OUTPUT_APPLIED,
     SOLARBANK,
     controls_for_type,
     extract_entities,
@@ -366,6 +367,58 @@ async def _set_ac_output_via_schedule(
     return False
 
 
+def _stamp_max_total_ac_output_cache(
+    api: AnkerSolixApi,
+    site_id: str,
+    device_id: str,
+    device: dict,
+    limit: int,
+) -> list[str]:
+    """Persist MQTT-applied grid max AC in bridge cache (cloud all_power_limit may differ)."""
+    dev_type = str(device.get("type") or "").lower()
+    sns = [device_id]
+    if dev_type == COMBINER:
+        for sn, dev in list(api.devices.items()):
+            if (dev.get("site_id") or "") != site_id:
+                continue
+            if str(dev.get("type") or "").lower() != SOLARBANK:
+                continue
+            if sn not in sns:
+                sns.append(sn)
+    for sn in sns:
+        dev = dict(api.devices.get(sn) or {})
+        dev[MAX_TOTAL_AC_OUTPUT_APPLIED] = limit
+        dev["max_load_total"] = limit
+        if sn == device_id and dev_type == SOLARBANK:
+            dev["max_load"] = limit
+        mqtt_data = dict(dev.get("mqtt_data") or {})
+        mqtt_data["max_load_total"] = str(limit)
+        if sn == device_id and dev_type == SOLARBANK:
+            mqtt_data["max_load"] = str(limit)
+        dev["mqtt_data"] = mqtt_data
+        dev["mqtt_overlay"] = True
+        api.devices[sn] = dev
+    return sns
+
+
+async def _refresh_max_load_mqtt_status(
+    api: AnkerSolixApi,
+    ha_client: IoBrokerAnkerApiClient | None,
+    device_sns: list[str],
+) -> None:
+    """Ask devices for fresh MQTT status after max-load change."""
+    if not ha_client:
+        return
+    for sn in device_sns:
+        mdev = ha_client.get_mqtt_device(sn)
+        if not mdev:
+            continue
+        with contextlib.suppress(Exception):
+            await mdev.status_request()
+    with contextlib.suppress(Exception):
+        api.update_device_mqtt()
+
+
 async def _mqtt_max_load_parallel(
     api: AnkerSolixApi,
     site_id: str,
@@ -685,6 +738,14 @@ async def apply_control(
                 raise RuntimeError(
                     "max_total_ac_output rejected (enable MQTT in adapter settings)"
                 )
+            stamped = _stamp_max_total_ac_output_cache(
+                api, site_id, device_id, device, limit
+            )
+            await _refresh_max_load_mqtt_status(api, ha_client, stamped)
+            _LOGGER.info(
+                "max_total_ac_output %sW applied via MQTT (cloud all_power_limit may still show app limit)",
+                limit,
+            )
             result = {"mqtt": True, "max_total_ac_output": limit}
         elif dev_type == SOLARBANK:
             opts = max_total_ac_output_options(device, SOLARBANK, api, device_id)
@@ -702,6 +763,11 @@ async def apply_control(
                 raise RuntimeError(
                     "max_total_ac_output rejected (enable MQTT in adapter settings)"
                 )
+            stamped = _stamp_max_total_ac_output_cache(
+                api, site_id, device_id, device, limit
+            )
+            await _refresh_max_load_mqtt_status(api, ha_client, stamped)
+            _LOGGER.info("max_total_ac_output %sW applied via MQTT on solarbank", limit)
             result = {"mqtt": True, "max_total_ac_output": limit}
         else:
             raise ValueError("max_total_ac_output not supported for this device type")
