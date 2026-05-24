@@ -105,6 +105,12 @@ const CONTROL_ENTITIES: EntityMeta[] = [
 		min: 0,
 		max: 4800,
 	},
+	{
+		id: "max_total_ac_output",
+		kind: "list",
+		role: "level.power",
+		unit: "W",
+	},
 	{ id: "min_soc", kind: "number", role: "level.battery", unit: "%", min: 0, max: 100 },
 	{
 		id: "pv_input_limit",
@@ -272,6 +278,7 @@ export const STATISTICS_LABELS: Record<string, string> = {
 	daily_grid_share: "Netz-Anteil (heute)",
 	daily_ac_socket: "AC-Steckdose (heute)",
 	daily_smartplugs_total: "Steckdosen gesamt (heute)",
+	max_total_ac_output: "Max. Gesamtausgangsleistung",
 	...Object.fromEntries(
 		(["week", "month", "year"] as const).flatMap(period => {
 			const rows: [string, string][] = [[`${period}_energy_period`, PERIOD_NAMES_DE[period]]];

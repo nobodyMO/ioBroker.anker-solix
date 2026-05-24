@@ -35,6 +35,7 @@ from entities import (  # noqa: E402
     SOLARBANK,
     controls_for_type,
     extract_entities,
+    max_total_ac_output_options,
     parse_usage_mode_set_value,
     should_include_device,
     usage_mode_name,
@@ -446,7 +447,7 @@ async def _set_ac_output_limit(
     ha_client: IoBrokerAnkerApiClient | None = None,
     api_only: bool = False,
 ) -> Any:
-    """Set AC export/output limit: schedule API for arbitrary W on combiners; MQTT only for exact option match."""
+    """Set AC export/output limit via schedule API (arbitrary W). Never uses MQTT max total AC."""
     dev_type = str(device.get("type") or "").lower()
     station_sn = device.get("station_sn")
     generation = int(device.get("generation") or 0)
@@ -454,30 +455,12 @@ async def _set_ac_output_limit(
     use_schedule_api = (
         multisystem or bool(station_sn) or generation >= 3
     )
-    mqtt_ok = False
     schedule_ok = False
 
     if use_schedule_api and not api_only:
         schedule_ok = await _set_ac_output_via_schedule(
             api, site_id, device_id, device, limit, with_manual_mode=True
         )
-
-    if not api_only and not schedule_ok:
-        if multisystem:
-            mqtt_options = _parallel_mqtt_options(api, control_sn, device)
-            if limit in mqtt_options:
-                mqtt_ok = await _mqtt_max_load_parallel(
-                    api, site_id, limit, control_sn, ha_client=ha_client
-                )
-        elif dev_type == SOLARBANK and not station_sn:
-            mqtt_ok = await _mqtt_command(
-                api,
-                device_id,
-                SolixMqttCommands.sb_max_load,
-                limit,
-                "set_max_load",
-                ha_client=ha_client,
-            )
 
     api_ok = False
     if not schedule_ok and not api_only:
@@ -491,15 +474,13 @@ async def _set_ac_output_limit(
     if api_only and api_ok:
         return {"api": True, "curtailment_api_only": True}
     if schedule_ok:
-        return {"schedule": True, "preset": limit, "api": api_ok, "mqtt": mqtt_ok}
-    if mqtt_ok:
-        return {"mqtt": True, "api": api_ok}
+        return {"schedule": True, "preset": limit, "api": api_ok}
     if api_ok:
         return {"api": True}
     hint = (
-        "schedule/MQTT/API failed for ac_output_limit"
+        "schedule/API failed for ac_output_limit"
         if use_schedule_api
-        else "ac_output_limit rejected (enable MQTT or check device online)"
+        else "ac_output_limit rejected (check device online)"
     )
     raise RuntimeError(hint)
 
@@ -690,6 +671,40 @@ async def apply_control(
             ha_client=ha_client,
             api_only=bool(config.get("acOutputApiOnly")),
         )
+    elif control == "max_total_ac_output":
+        limit = int(value)
+        multisystem = dev_type == COMBINER or "all_power_limit" in device
+        if multisystem:
+            opts = _parallel_mqtt_options(api, control_sn, device)
+            if limit not in opts:
+                raise ValueError(f"max_total_ac_output must be one of {opts}")
+            mqtt_ok = await _mqtt_max_load_parallel(
+                api, site_id, limit, control_sn, ha_client=ha_client
+            )
+            if not mqtt_ok:
+                raise RuntimeError(
+                    "max_total_ac_output rejected (enable MQTT in adapter settings)"
+                )
+            result = {"mqtt": True, "max_total_ac_output": limit}
+        elif dev_type == SOLARBANK:
+            opts = max_total_ac_output_options(device, SOLARBANK, api, device_id)
+            if limit not in opts:
+                raise ValueError(f"max_total_ac_output must be one of {opts}")
+            mqtt_ok = await _mqtt_command(
+                api,
+                device_id,
+                SolixMqttCommands.sb_max_load,
+                limit,
+                "set_max_load",
+                ha_client=ha_client,
+            )
+            if not mqtt_ok:
+                raise RuntimeError(
+                    "max_total_ac_output rejected (enable MQTT in adapter settings)"
+                )
+            result = {"mqtt": True, "max_total_ac_output": limit}
+        else:
+            raise ValueError("max_total_ac_output not supported for this device type")
     elif control == "pv_input_limit":
         result = await api.set_power_limit(
             siteId=site_id,
@@ -927,6 +942,9 @@ def _devices_from_caches(
         usage_opts = sorted(
             client.api.solarbank_usage_mode_options(deviceSn=str(ctx_id))
         )
+        max_ac_opts = max_total_ac_output_options(
+            ctx_data, str(info.get("type") or ""), client.api, str(ctx_id)
+        )
         has_statistics = device_exposes_energy_statistics(
             str(info.get("type") or ""),
             combiner_site,
@@ -938,6 +956,7 @@ def _devices_from_caches(
                 "entities": _json_safe(entities),
                 "writable": writable,
                 "usage_mode_options": usage_opts,
+                "max_total_ac_output_options": max_ac_opts,
                 "hasStatistics": has_statistics,
             }
         )

@@ -163,19 +163,27 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 				common.unit = meta.unit;
 			}
 			if (meta?.kind === "list") {
-				const opts = device.usage_mode_options?.length
-					? device.usage_mode_options
-					: Object.keys(USAGE_MODE_STATES);
-				const states: Record<string, string> = {};
-				for (const key of opts) {
-					if (USAGE_MODE_STATES[key]) {
-						states[key] = USAGE_MODE_STATES[key];
+				if (entityId === "max_total_ac_output" && device.max_total_ac_output_options?.length) {
+					const states: Record<string, string> = {};
+					for (const w of device.max_total_ac_output_options) {
+						states[String(w)] = `${w} W`;
 					}
-				}
-				if (Object.keys(states).length > 0) {
 					common.states = states;
-				} else if (meta.states) {
-					common.states = meta.states;
+				} else {
+					const opts = device.usage_mode_options?.length
+						? device.usage_mode_options
+						: Object.keys(USAGE_MODE_STATES);
+					const states: Record<string, string> = {};
+					for (const key of opts) {
+						if (USAGE_MODE_STATES[key]) {
+							states[key] = USAGE_MODE_STATES[key];
+						}
+					}
+					if (Object.keys(states).length > 0) {
+						common.states = states;
+					} else if (meta.states) {
+						common.states = meta.states;
+					}
 				}
 			}
 			if (stateType === "number" || stateType === "mixed") {

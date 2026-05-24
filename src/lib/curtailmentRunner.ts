@@ -86,7 +86,7 @@ async function applyAcOutputLimit(
 	}
 	const ctx = host.getDeviceContext(device.deviceId);
 	try {
-		// Bridge: manual schedule preset (API param 6) for arbitrary W; MQTT only for discrete parallel steps.
+		// Bridge: manual schedule preset (API param 6) for arbitrary W; not MQTT max_load_parallel (grid max AC steps).
 		await host.applyControl(device.deviceId, "ac_output_limit", acOutputW, ctx);
 		lastAppliedExportW.set(device.deviceId, acOutputW);
 		return true;
@@ -122,7 +122,7 @@ async function applyCurtailmentSetpoints(
 	const limitOk = await applyAcOutputLimit(host, device, exportW);
 	if (!limitOk) {
 		throw new Error(
-			`ac_output_limit ${exportW}W not applied (combiner: manual schedule export via API; MQTT only supports 1200/2400/3600/4800 W)`,
+			`ac_output_limit ${exportW}W not applied (combiner: use manual schedule API; not MQTT max total AC 1200–4800 W)`,
 		);
 	}
 

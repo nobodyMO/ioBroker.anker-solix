@@ -91,7 +91,7 @@ function channelForDevice(info) {
   return `${typePart}.${idPart}`;
 }
 async function syncDevices(adapter, devices) {
-  var _a, _b, _c, _d;
+  var _a, _b, _c, _d, _e;
   const curtailmentHost = adapter;
   for (const device of devices) {
     const base = channelForDevice(device.info);
@@ -154,17 +154,25 @@ async function syncDevices(adapter, devices) {
         common.unit = meta.unit;
       }
       if ((meta == null ? void 0 : meta.kind) === "list") {
-        const opts = ((_d = device.usage_mode_options) == null ? void 0 : _d.length) ? device.usage_mode_options : Object.keys(import_entities.USAGE_MODE_STATES);
-        const states = {};
-        for (const key of opts) {
-          if (import_entities.USAGE_MODE_STATES[key]) {
-            states[key] = import_entities.USAGE_MODE_STATES[key];
+        if (entityId === "max_total_ac_output" && ((_d = device.max_total_ac_output_options) == null ? void 0 : _d.length)) {
+          const states = {};
+          for (const w of device.max_total_ac_output_options) {
+            states[String(w)] = `${w} W`;
           }
-        }
-        if (Object.keys(states).length > 0) {
           common.states = states;
-        } else if (meta.states) {
-          common.states = meta.states;
+        } else {
+          const opts = ((_e = device.usage_mode_options) == null ? void 0 : _e.length) ? device.usage_mode_options : Object.keys(import_entities.USAGE_MODE_STATES);
+          const states = {};
+          for (const key of opts) {
+            if (import_entities.USAGE_MODE_STATES[key]) {
+              states[key] = import_entities.USAGE_MODE_STATES[key];
+            }
+          }
+          if (Object.keys(states).length > 0) {
+            common.states = states;
+          } else if (meta.states) {
+            common.states = meta.states;
+          }
         }
       }
       if (stateType === "number" || stateType === "mixed") {

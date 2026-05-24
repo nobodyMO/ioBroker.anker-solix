@@ -9,6 +9,7 @@ describe("curtailmentBuild", () => {
 		expect(js).not.to.include("allow_grid_export");
 		expect(js).not.to.include("preset_allow_export");
 		expect(js).not.to.include("set_output_power");
+		expect(js).not.to.include("max_total_ac_output");
 		expect(js).not.to.include("acOutputApiOnly");
 		expect(js.indexOf("const limitOk = await applyAcOutputLimit")).to.be.lessThan(
 			js.indexOf("await applyManualMode(host, device)"),

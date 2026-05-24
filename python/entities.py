@@ -219,6 +219,16 @@ _BASE_CONTROL_ENTITIES: list[dict[str, Any]] = [
         "require_types": [COMBINER, SYSTEM],
     },
     {
+        "id": "max_total_ac_output",
+        "keys": ["max_load_total", "max_load"],
+        "role": "level.power",
+        "types": [SOLARBANK, COMBINER],
+        "control": "max_total_ac_output",
+        "kind": "list",
+        # MQTT sb_max_load_parallel (combiner) / sb_max_load (standalone SB) — not manual preset
+        "require_any_keys": ["max_load_total", "max_load", "max_load_parallel_options", "max_load_options"],
+    },
+    {
         "id": "min_soc",
         "keys": ["min_soc", "soc_reserve", "power_cutoff"],
         "role": "level.battery",
@@ -462,6 +472,34 @@ def controls_for_type(dev_type: str, config: dict | None = None) -> list[str]:
     ]
 
 
+_DEFAULT_PARALLEL_MQTT_OPTIONS = [1200, 2400, 3600, 4800]
+_DEFAULT_SOLARBANK_MAX_LOAD_OPTIONS = [350, 600, 800, 1000, 1200]
+
+
+def max_total_ac_output_options(
+    data: dict, dev_type: str, api=None, device_sn: str = ""
+) -> list[int]:
+    """Valid MQTT steps for max total AC output (grid power limit in Anker app)."""
+    dev = (api.devices.get(device_sn) if api and device_sn else None) or data
+    if dev_type == COMBINER:
+        raw = dev.get("max_load_parallel_options")
+        if isinstance(raw, list) and raw:
+            opts = sorted({int(x) for x in raw if str(x).isdigit()})
+            if opts:
+                return opts
+        return list(_DEFAULT_PARALLEL_MQTT_OPTIONS)
+    if dev_type == SOLARBANK:
+        if data.get("station_sn") or "all_power_limit" in data:
+            return []
+        raw = dev.get("max_load_options")
+        if isinstance(raw, list) and raw:
+            opts = sorted({int(x) for x in raw if str(x).isdigit()})
+            if opts:
+                return opts
+        return list(_DEFAULT_SOLARBANK_MAX_LOAD_OPTIONS)
+    return []
+
+
 def _is_main_usage_mode_device(data: dict, dev_type: str) -> bool:
     """HA: usage mode only on main device (combiner or standalone SB)."""
     station_sn = str(data.get("station_sn") or "")
@@ -506,6 +544,11 @@ def writable_controls_for_device(
     if "ac_fast_charge_switch" in controls:
         if dev_type != SOLARBANK or int(data.get("generation") or 0) < 2:
             controls = [c for c in controls if c != "ac_fast_charge_switch"]
+    if "max_total_ac_output" in controls:
+        if not (config or {}).get("mqttUsage"):
+            controls = [c for c in controls if c != "max_total_ac_output"]
+        elif not max_total_ac_output_options(data, dev_type):
+            controls = [c for c in controls if c != "max_total_ac_output"]
     return controls
 
 
@@ -589,11 +632,29 @@ def extract_entities(data: dict, config: dict | None = None) -> dict[str, Any]:
         if spec["id"] == "ac_output_limit" and dev_type == SOLARBANK:
             if data.get("station_sn") or "all_power_limit" in data:
                 continue
+        if spec["id"] == "max_total_ac_output":
+            if dev_type == COMBINER:
+                if not pick_value(data, ["max_load_total", "max_load_parallel_options"]):
+                    continue
+            elif dev_type == SOLARBANK:
+                if data.get("station_sn") or "all_power_limit" in data:
+                    continue
+                if not pick_value(data, ["max_load", "max_load_options"]):
+                    continue
+            else:
+                continue
         if spec.get("kind") == "list" and spec["id"] == "preset_usage_mode":
             val = usage_mode_name(
                 pick_value(data, spec["keys"])
                 or (data.get("schedule") or {}).get("mode_type")
             )
+        elif spec.get("kind") == "list" and spec["id"] == "max_total_ac_output":
+            val = pick_value(data, spec["keys"])
+            if val is not None:
+                entities[spec["id"]] = (
+                    str(int(val)) if str(val).isdigit() else str(val)
+                )
+            continue
         else:
             val = pick_value(data, spec["keys"])
         if val is not None:
