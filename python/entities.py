@@ -695,7 +695,11 @@ def extract_entities(data: dict, config: dict | None = None) -> dict[str, Any]:
 
             charge, discharge = pick_bat_charge_discharge(data)
             watts = charge if spec["id"] == "bat_charge_power" else discharge
-            entities[spec["id"]] = f"{watts:.0f}"
+            # Solarbank states are string (API/legacy); system/combiner use number.
+            if dev_type == SOLARBANK:
+                entities[spec["id"]] = f"{watts:.0f}"
+            else:
+                entities[spec["id"]] = watts
             continue
         val = pick_value(data, spec["keys"], nested=bool(spec.get("nested")))
         if val is not None:

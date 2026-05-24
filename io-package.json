@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.45",
+		"version": "0.10.46",
 		"messagebox": true,
 		"news": {
+			"0.10.46": {
+				"en": "Fix bat_charge/discharge type: string on solarbank, number on system and combiner",
+				"de": "Fix Typ bat_charge/discharge: String an Solarbank, Zahl an System und Combiner",
+				"ru": "Fix bat power state types per device",
+				"pt": "Fix bat power state types per device",
+				"nl": "Fix bat power state types per device",
+				"fr": "Fix bat power state types per device",
+				"it": "Fix bat power state types per device",
+				"es": "Fix bat power state types per device",
+				"pl": "Fix bat power state types per device",
+				"uk": "Fix bat power state types per device",
+				"zh-cn": "修复各设备 bat_charge/discharge 状态类型"
+			},
 			"0.10.45": {
 				"en": "Fix system solarbank_info totals: sum per-SB power from device cache + scene API (same as solarbank sensors)",
 				"de": "Fix solarbank_info-Summen: Lade-/Entladeleistung aus Device-Cache + Scene-API (wie pro Solarbank)",
@@ -250,19 +263,6 @@
 				"pl": "Week stats sooner",
 				"uk": "Week stats sooner",
 				"zh-cn": "周统计更快更新"
-			},
-			"0.10.25": {
-				"en": "Fix: create curtailment.soc_percent state object on adapter start",
-				"de": "Fix: State-Objekt curtailment.soc_percent wird beim Start angelegt",
-				"ru": "Fix: curtailment.soc_percent state",
-				"pt": "Fix: curtailment.soc_percent state",
-				"nl": "Fix: curtailment.soc_percent state",
-				"fr": "Fix: curtailment.soc_percent state",
-				"it": "Fix: curtailment.soc_percent state",
-				"es": "Fix: curtailment.soc_percent state",
-				"pl": "Fix: curtailment.soc_percent state",
-				"uk": "Fix: curtailment.soc_percent state",
-				"zh-cn": "修复 curtailment.soc_percent 状态对象"
 			}
 		},
 		"titleLang": {
