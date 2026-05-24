@@ -112,17 +112,52 @@ def enrich_solarbank_scene(api: Any, sn: str, ctx_data: dict) -> dict:
     return out
 
 
+def _site_solarbank_sns(
+    sb_list: list, api: Any | None, site_id: str
+) -> list[str]:
+    """Device SNs for site banks (scene list + device cache)."""
+    seen: set[str] = set()
+    for item in sb_list or []:
+        if isinstance(item, dict):
+            sn = str(item.get("device_sn") or "").strip()
+            if sn:
+                seen.add(sn)
+    if api and site_id:
+        for sn, dev in (api.devices or {}).items():
+            if not isinstance(dev, dict):
+                continue
+            if str(dev.get("site_id") or "") != site_id:
+                continue
+            dtype = str(dev.get("type") or dev.get("device_type") or "").lower()
+            if dtype in ("solarbank", "solarbank_pps"):
+                seen.add(str(sn))
+    return sorted(seen)
+
+
 def sum_bank_charge_discharge(
     sb_list: list, api: Any | None, site_id: str = ""
 ) -> tuple[int, int]:
+    """Sum charge/discharge W — same source path as per-solarbank sensors."""
     charge = 0
     discharge = 0
-    for item in sb_list:
-        if not isinstance(item, dict):
+    if not api:
+        for item in sb_list or []:
+            if not isinstance(item, dict):
+                continue
+            c, d = pick_bat_charge_discharge(item)
+            charge += c
+            discharge += d
+        return charge, discharge
+
+    for sn in _site_solarbank_sns(sb_list, api, site_id):
+        dev = (api.devices or {}).get(sn) or {}
+        if not isinstance(dev, dict):
             continue
-        c, d = pick_bat_charge_discharge(
-            merge_bank_cache(item, api, site_id=site_id)
-        )
+        ctx = dict(dev)
+        if site_id:
+            ctx["site_id"] = site_id
+        data = enrich_solarbank_scene(api, sn, ctx)
+        c, d = pick_bat_charge_discharge(data)
         charge += c
         discharge += d
     return charge, discharge

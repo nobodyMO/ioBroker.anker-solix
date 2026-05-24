@@ -75,20 +75,52 @@ def test_enrich_solarbank_from_site_scene() -> None:
 
 def test_sum_banks_from_scene_list() -> None:
     api = MagicMock()
-    api.devices = {}
-    api.sites = {}
-    sb_list = [
-        {
-            "device_sn": "SB1",
+    api.devices = {
+        "SB1": {
+            "type": "solarbank",
+            "site_id": "site1",
             "charging_power": "300",
             "bat_charge_power": "300",
         },
-        {
-            "device_sn": "SB2",
+        "SB2": {
+            "type": "solarbank",
+            "site_id": "site1",
             "charging_power": "-200",
             "bat_discharge_power": "200",
         },
-    ]
-    charge, discharge = sum_bank_charge_discharge(sb_list, api)
+    }
+    api.sites = {}
+    sb_list = [{"device_sn": "SB1"}, {"device_sn": "SB2"}]
+    charge, discharge = sum_bank_charge_discharge(sb_list, api, site_id="site1")
     assert charge == 300
     assert discharge == 200
+
+
+def test_sum_uses_device_cache_when_list_rows_are_sparse() -> None:
+    api = MagicMock()
+    api.devices = {
+        "SB1": {
+            "type": "solarbank",
+            "site_id": "site1",
+            "bat_charge_power": "0",
+            "charging_power": "640",
+        },
+    }
+    api.sites = {
+        "site1": {
+            "solarbank_info": {
+                "solarbank_list": [
+                    {
+                        "device_sn": "SB1",
+                        "bat_charge_power": "0",
+                        "bat_discharge_power": "0",
+                    }
+                ]
+            }
+        }
+    }
+    charge, discharge = sum_bank_charge_discharge(
+        [{"device_sn": "SB1"}], api, site_id="site1"
+    )
+    assert charge == 640
+    assert discharge == 0

@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.44",
+		"version": "0.10.45",
 		"messagebox": true,
 		"news": {
+			"0.10.45": {
+				"en": "Fix system solarbank_info totals: sum per-SB power from device cache + scene API (same as solarbank sensors)",
+				"de": "Fix solarbank_info-Summen: Lade-/Entladeleistung aus Device-Cache + Scene-API (wie pro Solarbank)",
+				"ru": "Fix solarbank_info totals sum",
+				"pt": "Fix solarbank_info totals sum",
+				"nl": "Fix solarbank_info totals sum",
+				"fr": "Fix solarbank_info totals sum",
+				"it": "Fix solarbank_info totals sum",
+				"es": "Fix solarbank_info totals sum",
+				"pl": "Fix solarbank_info totals sum",
+				"uk": "Fix solarbank_info totals sum",
+				"zh-cn": "修复 solarbank_info 总充放电功率汇总"
+			},
 			"0.10.44": {
 				"en": "Fix bat_charge_power / bat_discharge_power state type (string, as existing ioBroker objects)",
 				"de": "Fix: bat_charge_power / bat_discharge_power als String (passend zu bestehenden States)",

@@ -39,23 +39,29 @@ def test_extract_system_totals_and_per_bank_energy() -> None:
 
 def test_extract_multisystem_fallback_sums_per_bank() -> None:
     api = MagicMock()
-    api.devices = {}
+    api.devices = {
+        "SB1": {
+            "type": "solarbank",
+            "site_id": "site1",
+            "bat_discharge_power": "350",
+            "charging_power": "-350",
+        },
+        "SB2": {
+            "type": "solarbank",
+            "site_id": "site1",
+            "bat_discharge_power": "420",
+            "charging_power": "-420",
+        },
+    }
+    api.sites = {}
     data = {
         "type": "system",
         "site_id": "site1",
         "solarbank_info": {
             "total_charging_power": "0",
             "solarbank_list": [
-                {
-                    "device_sn": "SB1",
-                    "bat_discharge_power": "350",
-                    "charging_power": "-350",
-                },
-                {
-                    "device_sn": "SB2",
-                    "bat_discharge_power": "420",
-                    "charging_power": "-420",
-                },
+                {"device_sn": "SB1"},
+                {"device_sn": "SB2"},
             ],
         },
     }
