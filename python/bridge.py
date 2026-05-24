@@ -32,7 +32,6 @@ from energy_statistics import (
 )
 from entities import (  # noqa: E402
     COMBINER,
-    MAX_TOTAL_AC_OUTPUT_APPLIED,
     SOLARBANK,
     controls_for_type,
     enrich_combiner_station_fields,
@@ -374,31 +373,14 @@ def _stamp_max_total_ac_output_cache(
     device_id: str,
     device: dict,
     limit: int,
+    ha_client: IoBrokerAnkerApiClient | None = None,
 ) -> list[str]:
     """Persist MQTT-applied grid max AC in bridge cache (cloud all_power_limit may differ)."""
-    dev_type = str(device.get("type") or "").lower()
-    sns = [device_id]
-    if dev_type == COMBINER:
-        for sn, dev in list(api.devices.items()):
-            if (dev.get("site_id") or "") != site_id:
-                continue
-            if str(dev.get("type") or "").lower() != SOLARBANK:
-                continue
-            if sn not in sns:
-                sns.append(sn)
-    for sn in sns:
-        dev = dict(api.devices.get(sn) or {})
-        dev[MAX_TOTAL_AC_OUTPUT_APPLIED] = limit
-        dev["max_load_total"] = limit
-        if sn == device_id and dev_type == SOLARBANK:
-            dev["max_load"] = limit
-        mqtt_data = dict(dev.get("mqtt_data") or {})
-        mqtt_data["max_load_total"] = str(limit)
-        if sn == device_id and dev_type == SOLARBANK:
-            mqtt_data["max_load"] = str(limit)
-        dev["mqtt_data"] = mqtt_data
-        dev["mqtt_overlay"] = True
-        api.devices[sn] = dev
+    from max_total_ac_cache import stamp_max_total_ac_for_site  # noqa: PLC0415
+
+    sns = stamp_max_total_ac_for_site(api, site_id, device_id, device, limit)
+    if ha_client:
+        ha_client.record_max_total_ac_applied(sns, limit)
     return sns
 
 
@@ -418,6 +400,8 @@ async def _refresh_max_load_mqtt_status(
             await mdev.status_request()
     with contextlib.suppress(Exception):
         api.update_device_mqtt()
+    if ha_client:
+        ha_client.reapply_max_total_ac_stamps()
 
 
 async def _mqtt_max_load_parallel(
@@ -740,7 +724,7 @@ async def apply_control(
                     "max_total_ac_output rejected (enable MQTT in adapter settings)"
                 )
             stamped = _stamp_max_total_ac_output_cache(
-                api, site_id, device_id, device, limit
+                api, site_id, device_id, device, limit, ha_client=ha_client
             )
             await _refresh_max_load_mqtt_status(api, ha_client, stamped)
             _LOGGER.info(
@@ -765,7 +749,7 @@ async def apply_control(
                     "max_total_ac_output rejected (enable MQTT in adapter settings)"
                 )
             stamped = _stamp_max_total_ac_output_cache(
-                api, site_id, device_id, device, limit
+                api, site_id, device_id, device, limit, ha_client=ha_client
             )
             await _refresh_max_load_mqtt_status(api, ha_client, stamped)
             _LOGGER.info("max_total_ac_output %sW applied via MQTT on solarbank", limit)

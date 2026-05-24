@@ -381,9 +381,11 @@ def _nested_get(data: dict, key: str, nested: bool = False) -> Any:
 
 def pick_max_total_ac_output_value(data: dict, dev_type: str) -> Any:
     """Read max total AC (grid limit): adapter-applied MQTT value beats cloud all_power_limit."""
-    applied = data.get(MAX_TOTAL_AC_OUTPUT_APPLIED)
-    if applied is not None and str(applied).replace(".", "", 1).isdigit():
-        return int(float(applied))
+    from max_total_ac_cache import read_applied_from_device  # noqa: PLC0415
+
+    applied = read_applied_from_device(data)
+    if isinstance(applied, int):
+        return applied
     mqtt = data.get("mqtt_data") or {}
     if dev_type == COMBINER:
         if data.get("mqtt_overlay"):

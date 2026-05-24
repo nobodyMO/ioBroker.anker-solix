@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.38",
+		"version": "0.10.39",
 		"messagebox": true,
 		"news": {
+			"0.10.39": {
+				"en": "max_total_ac_output: persist MQTT grid cap across polls (cloud/app legal limit no longer overwrites ioBroker state)",
+				"de": "max_total_ac_output: MQTT-Netzleistungsbegrenzung bleibt nach Poll erhalten (Cloud/App-Legal-Limit überschreibt ioBroker-Wert nicht mehr)",
+				"ru": "max_total_ac_output persist",
+				"pt": "max_total_ac_output persist",
+				"nl": "max_total_ac_output persist",
+				"fr": "max_total_ac_output persist",
+				"it": "max_total_ac_output persist",
+				"es": "max_total_ac_output persist",
+				"pl": "max_total_ac_output persist",
+				"uk": "max_total_ac_output persist",
+				"zh-cn": "max_total_ac_output 轮询后保持"
+			},
 			"0.10.38": {
 				"en": "Clearer control labels; combiner reads station grid feed-in limit + AC input from cloud",
 				"de": "Klarere Bezeichnungen; Combiner liest Station Einspeise-Limit + AC-Eingang aus Cloud",

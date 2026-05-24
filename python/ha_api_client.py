@@ -82,6 +82,7 @@ class IoBrokerAnkerApiClient:
         self.mqtt_devices: dict[str, SolixMqttDevice] = {}
         self._state_path = cache_dir / "poll_client_state.json"
         self._logger = logger
+        self._max_total_ac_applied: dict[str, int] = {}
         self._load_state()
 
     def _load_state(self) -> None:
@@ -97,6 +98,13 @@ class IoBrokerAnkerApiClient:
             self._period_backoff_until = float(data.get("period_backoff_until", 0))
             self._startup = bool(data.get("startup", True))
             self.deferred_data = bool(data.get("deferred_data", False))
+            raw_applied = data.get("max_total_ac_applied")
+            if isinstance(raw_applied, dict):
+                self._max_total_ac_applied = {
+                    str(sn): int(limit)
+                    for sn, limit in raw_applied.items()
+                    if str(sn) and str(limit).replace(".", "", 1).isdigit()
+                }
         except (OSError, ValueError, TypeError) as exc:
             self._logger.warning("Could not load poll state: %s", exc)
 
@@ -110,6 +118,7 @@ class IoBrokerAnkerApiClient:
                         "period_backoff_until": self._period_backoff_until,
                         "startup": self._startup,
                         "deferred_data": self.deferred_data,
+                        "max_total_ac_applied": self._max_total_ac_applied,
                     },
                     indent=2,
                 ),
@@ -117,6 +126,28 @@ class IoBrokerAnkerApiClient:
             )
         except OSError as exc:
             self._logger.warning("Could not save poll state: %s", exc)
+
+    def record_max_total_ac_applied(self, device_sns: list[str], limit: int) -> None:
+        """Persist MQTT grid cap per device (survives poll/cloud refresh and daemon restart)."""
+        value = int(limit)
+        changed = False
+        for sn in device_sns:
+            sn = str(sn)
+            if not sn:
+                continue
+            if self._max_total_ac_applied.get(sn) != value:
+                self._max_total_ac_applied[sn] = value
+                changed = True
+        if changed:
+            self._save_state()
+
+    def reapply_max_total_ac_stamps(self) -> None:
+        """Restore adapter-applied max total AC after cloud/MQTT overwrote device cache."""
+        if not self._max_total_ac_applied:
+            return
+        from max_total_ac_cache import reapply_max_total_ac_stamps  # noqa: PLC0415
+
+        reapply_max_total_ac_stamps(self.api, self._max_total_ac_applied)
 
     async def _refresh_power_limits(self) -> None:
         """Fetch site power limits (ac_input_limit per SB, all_ac_input_limit on combiner)."""
@@ -133,6 +164,7 @@ class IoBrokerAnkerApiClient:
                 self._logger.debug(
                     "get_power_limit skipped for site %s: %s", site_id, exc
                 )
+        self.reapply_max_total_ac_stamps()
 
     async def authenticate(self) -> None:
         await safe_authenticate(self.api, self._logger)
@@ -140,6 +172,7 @@ class IoBrokerAnkerApiClient:
     async def async_get_data(self) -> dict[str, Any]:
         """Same sequence as HA AnkerSolixApiClient.async_get_data (normal poll path)."""
         self._last_period_energy_updated = []
+        self.reapply_max_total_ac_stamps()
         await self.api.update_sites(exclude=set(self.exclude_categories))
 
         self._intervalcount -= 1
@@ -173,6 +206,7 @@ class IoBrokerAnkerApiClient:
             await self.check_mqtt_session()
             if self.api.mqttsession and self.api.mqttsession.is_connected():
                 self.api.update_device_mqtt()
+                self.reapply_max_total_ac_stamps()
         elif self._startup and not self.deferred_data:
             self.active_device_refresh = True
             self._logger.info("Updating deferred energy data")
@@ -187,6 +221,7 @@ class IoBrokerAnkerApiClient:
 
         if self._mqtt_usage and self.api.mqttsession and self.api.mqttsession.is_connected():
             self.api.update_device_mqtt()
+            self.reapply_max_total_ac_stamps()
 
         self._save_state()
         return {
