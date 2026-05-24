@@ -113,10 +113,7 @@ async function syncSolarbankInfo(
 	});
 
 	for (const key of ["battery_discharge_power", "total_charging_power"] as const) {
-		const val = info[key];
-		if (val === null || val === undefined) {
-			continue;
-		}
+		const val = info[key] ?? 0;
 		const stateId = `${base}.${key}`;
 		await adapter.setObjectNotExistsAsync(stateId, {
 			type: "state",

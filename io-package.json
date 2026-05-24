@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.41",
+		"version": "0.10.42",
 		"messagebox": true,
 		"news": {
+			"0.10.42": {
+				"en": "Fix multisystem solarbank_info: total_charging_power and battery_discharge_power (sum per SB, no null)",
+				"de": "Fix Multisystem solarbank_info: Lade-/Entladeleistung gesamt korrekt (Summe pro SB, nicht mehr null)",
+				"ru": "Fix solarbank_info multisystem totals",
+				"pt": "Fix solarbank_info multisystem totals",
+				"nl": "Fix solarbank_info multisystem totals",
+				"fr": "Fix solarbank_info multisystem totals",
+				"it": "Fix solarbank_info multisystem totals",
+				"es": "Fix solarbank_info multisystem totals",
+				"pl": "Fix solarbank_info multisystem totals",
+				"uk": "Fix solarbank_info multisystem totals",
+				"zh-cn": "修复 Multisystem solarbank_info 总功率"
+			},
 			"0.10.41": {
 				"en": "system.solarbank_info: battery_discharge_power, total_charging_power, per-SB battery_energy (AnkerSolix2 layout)",
 				"de": "system.solarbank_info: Ent-/Ladeleistung gesamt, battery_energy pro Solarbank (wie AnkerSolix2)",
@@ -250,19 +263,6 @@
 				"pl": "Stats only on combiner or solarbank",
 				"uk": "Stats only on combiner or solarbank",
 				"zh-cn": "统计仅在 Combiner 或各 Solarbank"
-			},
-			"0.10.21": {
-				"en": "Fix: API client config attribute (daemon crash); stagger week/month/year API calls",
-				"de": "Fix: API-Client config (Daemon-Absturz); Wochen/Monat/Jahr-API nacheinander statt parallel",
-				"ru": "Fix: config + API throttle",
-				"pt": "Fix: config + API throttle",
-				"nl": "Fix: config + API throttle",
-				"fr": "Fix: config + API throttle",
-				"it": "Fix: config + API throttle",
-				"es": "Fix: config + API throttle",
-				"pl": "Fix: config + API throttle",
-				"uk": "Fix: config + API throttle",
-				"zh-cn": "修复 config；周期统计 API 分批"
 			}
 		},
 		"titleLang": {

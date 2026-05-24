@@ -37,6 +37,42 @@ def test_extract_system_totals_and_per_bank_energy() -> None:
     assert result["solarbank_list"]["APCDJQD0F25100213"]["battery_energy"] == 4000
 
 
+def test_extract_multisystem_fallback_sums_per_bank() -> None:
+    api = MagicMock()
+    api.devices = {}
+    data = {
+        "type": "system",
+        "solarbank_info": {
+            "total_charging_power": "0",
+            "solarbank_list": [
+                {"device_sn": "SB1", "bat_charge_power": "0", "bat_discharge_power": "350"},
+                {"device_sn": "SB2", "bat_charge_power": "0", "bat_discharge_power": "420"},
+            ],
+        },
+    }
+    config = {"enableCoreEntities": True, "enablePowerFlows": True}
+    result = extract_solarbank_info(data, api, config)
+    assert result is not None
+    assert result["total_charging_power"] == 0
+    assert result["battery_discharge_power"] == 770
+
+
+def test_extract_negative_cloud_charge_clamped_and_discharge_from_banks() -> None:
+    data = {
+        "type": "system",
+        "solarbank_info": {
+            "total_charging_power": "-600",
+            "solarbank_list": [
+                {"device_sn": "SB1", "bat_discharge_power": "600"},
+            ],
+        },
+    }
+    result = extract_solarbank_info(data, None, {"enableSystemOverview": True})
+    assert result is not None
+    assert result["total_charging_power"] == 0
+    assert result["battery_discharge_power"] == 600
+
+
 def test_extract_disabled_without_overview_or_power_flows() -> None:
     data = {
         "type": "system",

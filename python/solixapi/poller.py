@@ -541,7 +541,10 @@ async def poll_sites(  # noqa: C901
                     # use calculated overall battery power like in cascaded systems
                     # In multisystem there should not be parallel charge and discharge of batteries, therefore (calculated) device values should reflect net total
                     mysite["solarbank_info"]["total_charging_power"] = (
-                        f"{sb_total_charge_calc:.0f}"
+                        f"{sb_total_battery_charge_calc:.0f}"
+                    )
+                    mysite["solarbank_info"]["battery_discharge_power"] = (
+                        f"{sb_total_battery_discharge_calc:.0f}"
                     )
                     # Correct home load, since that reflects only first solarbank home load value
                     mysite["solarbank_info"]["to_home_load"] = (
