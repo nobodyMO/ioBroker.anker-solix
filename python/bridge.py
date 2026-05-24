@@ -251,6 +251,43 @@ async def _mqtt_command(
     return bool(resp)
 
 
+# Combiner parallel max load via MQTT (discrete steps only; arbitrary watts need schedule API).
+_DEFAULT_PARALLEL_MQTT_OPTIONS = [1200, 2400, 3600, 4800]
+
+
+def _parallel_mqtt_options(api: AnkerSolixApi, control_sn: str, device: dict) -> list[int]:
+    dev = api.devices.get(control_sn) or device
+    raw = dev.get("max_load_parallel_options")
+    if isinstance(raw, list) and raw:
+        opts = sorted({int(x) for x in raw if str(x).isdigit()})
+        if opts:
+            return opts
+    return list(_DEFAULT_PARALLEL_MQTT_OPTIONS)
+
+
+async def _set_ac_output_via_schedule(
+    api: AnkerSolixApi,
+    site_id: str,
+    device_id: str,
+    limit: int,
+    *,
+    with_manual_mode: bool = True,
+) -> bool:
+    """Manual schedule export (param_type 6) — works without MQTT on combiners (AnkerSolix2-style)."""
+    kwargs: dict[str, Any] = {
+        "siteId": site_id,
+        "deviceSn": device_id,
+        "preset": limit,
+    }
+    if with_manual_mode:
+        kwargs["usage_mode"] = SolarbankUsageMode.manual.value
+    try:
+        resp = await api.set_sb2_home_load(**kwargs)
+        return isinstance(resp, dict)
+    except errors.ItemNotFoundError:
+        return False
+
+
 async def _mqtt_max_load_parallel(
     api: AnkerSolixApi,
     site_id: str,
@@ -332,17 +369,29 @@ async def _set_ac_output_limit(
     ha_client: IoBrokerAnkerApiClient | None = None,
     api_only: bool = False,
 ) -> Any:
-    """HA max_load / max_load_total: MQTT first, optional API cache sync without get_power_limit."""
+    """Set AC export/output limit: schedule API for arbitrary W on combiners; MQTT only for exact option match."""
     dev_type = str(device.get("type") or "").lower()
     station_sn = device.get("station_sn")
+    generation = int(device.get("generation") or 0)
     multisystem = dev_type == COMBINER or "all_power_limit" in device
+    use_schedule_api = (
+        multisystem or bool(station_sn) or generation >= 3
+    )
     mqtt_ok = False
+    schedule_ok = False
 
-    if not api_only:
+    if use_schedule_api and not api_only:
+        schedule_ok = await _set_ac_output_via_schedule(
+            api, site_id, device_id, limit, with_manual_mode=True
+        )
+
+    if not api_only and not schedule_ok:
         if multisystem:
-            mqtt_ok = await _mqtt_max_load_parallel(
-                api, site_id, limit, control_sn, ha_client=ha_client
-            )
+            mqtt_options = _parallel_mqtt_options(api, control_sn, device)
+            if limit in mqtt_options:
+                mqtt_ok = await _mqtt_max_load_parallel(
+                    api, site_id, limit, control_sn, ha_client=ha_client
+                )
         elif dev_type == SOLARBANK and not station_sn:
             mqtt_ok = await _mqtt_command(
                 api,
@@ -355,20 +404,25 @@ async def _set_ac_output_limit(
 
     api_sn = (
         control_sn
-        if multisystem or station_sn or int(device.get("generation") or 0) >= 3
+        if multisystem or station_sn or generation >= 3
         else device_id
     )
     api_ok = await _api_set_ac_output_only(api, site_id, api_sn, limit, device)
 
     if api_only and api_ok:
         return {"api": True, "curtailment_api_only": True}
+    if schedule_ok:
+        return {"schedule": True, "preset": limit, "api": api_ok, "mqtt": mqtt_ok}
     if mqtt_ok:
         return {"mqtt": True, "api": api_ok}
     if api_ok:
         return {"api": True}
-    raise RuntimeError(
-        "ac_output_limit rejected (enable MQTT in adapter settings; API returned 10004)"
+    hint = (
+        "schedule/MQTT/API failed for ac_output_limit"
+        if use_schedule_api
+        else "ac_output_limit rejected (enable MQTT or check device online)"
     )
+    raise RuntimeError(hint)
 
 
 async def _api_set_ac_input_only(

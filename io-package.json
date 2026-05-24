@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.33",
+		"version": "0.10.34",
 		"messagebox": true,
 		"news": {
+			"0.10.34": {
+				"en": "Curtailment combiner: arbitrary export W via manual schedule API (not MQTT 1200–4800 steps)",
+				"de": "Abregelung Combiner: beliebige Export-W via Manual-Schedule-API (nicht MQTT-Stufen 1200–4800)",
+				"ru": "Curtailment schedule API export",
+				"pt": "Curtailment schedule API export",
+				"nl": "Curtailment schedule API export",
+				"fr": "Curtailment schedule API export",
+				"it": "Curtailment schedule API export",
+				"es": "Curtailment schedule API export",
+				"pl": "Curtailment schedule API export",
+				"uk": "Curtailment schedule API export",
+				"zh-cn": "限电组合器通过计划 API 设置任意导出功率"
+			},
 			"0.10.33": {
 				"en": "Curtailment: apply ac_output_limit via MQTT before manual mode (fixes 4800 W when export_w is correct)",
 				"de": "Abregelung: ac_output_limit per MQTT vor manuell (Fix 4800 W obwohl export_w stimmt)",
@@ -250,19 +263,6 @@
 				"pl": "Before: eksport=PV; active: wolne ładowanie",
 				"uk": "Before: експорт=PV; active: повільний заряд",
 				"zh-cn": "before 即时并网=光伏；active 慢充+余电上网"
-			},
-			"0.10.5": {
-				"en": "Curtailment: read solarprognose kW (11h.power), convert to W",
-				"de": "Abregelung: solarprognose kW (11h.power) lesen, in W umrechnen",
-				"ru": "Прогноз kW → W",
-				"pt": "Previsão kW → W",
-				"nl": "Prognose kW → W",
-				"fr": "Prévision kW → W",
-				"it": "Previsione kW → W",
-				"es": "Pronóstico kW → W",
-				"pl": "Prognoza kW → W",
-				"uk": "Прогноз kW → W",
-				"zh-cn": "预测 kW 转 W"
 			}
 		},
 		"titleLang": {

@@ -79,7 +79,7 @@ async function applyCurtailmentSetpoints(host, device, phase, exportW, modeAfter
   const limitOk = await applyAcOutputLimit(host, device, exportW);
   if (!limitOk) {
     throw new Error(
-      `ac_output_limit ${exportW}W not applied (enable MQTT in adapter settings; combiner uses sb_max_load_parallel)`
+      `ac_output_limit ${exportW}W not applied (combiner: manual schedule export via API; MQTT only supports 1200/2400/3600/4800 W)`
     );
   }
   const prevPhase = lastAppliedPhase.get(device.deviceId);
