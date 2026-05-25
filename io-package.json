@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.65",
+		"version": "0.10.66",
 		"messagebox": true,
 		"news": {
+			"0.10.66": {
+				"en": "Fix admin: device list and login-cache status display (useNative response)",
+				"de": "Fix Admin: Geräteliste und Login-Cache-Status werden wieder angezeigt (useNative)",
+				"ru": "Fix admin device list and auth cache status display",
+				"pt": "Fix admin device list and auth cache status display",
+				"nl": "Fix admin device list and auth cache status display",
+				"fr": "Fix admin device list and auth cache status display",
+				"it": "Fix admin device list and auth cache status display",
+				"es": "Fix admin device list and auth cache status display",
+				"pl": "Fix admin device list and auth cache status display",
+				"uk": "Fix admin device list and auth cache status display",
+				"zh-cn": "修复管理界面设备列表与登录缓存状态显示"
+			},
 			"0.10.65": {
 				"en": "Login cache tab with backup/restore; auto-backup after first login; fix device list display in admin",
 				"de": "Reiter Login-Cache mit Sicherung/Wiederherstellung; Auto-Backup nach erstem Login; Geräteliste in Admin wieder sichtbar",
@@ -250,19 +263,6 @@
 				"pl": "Fix lifetime stats every poll",
 				"uk": "Fix lifetime stats every poll",
 				"zh-cn": "修复系统终身统计每轮更新"
-			},
-			"0.10.46": {
-				"en": "Fix bat_charge/discharge type: string on solarbank, number on system and combiner",
-				"de": "Fix Typ bat_charge/discharge: String an Solarbank, Zahl an System und Combiner",
-				"ru": "Fix bat power state types per device",
-				"pt": "Fix bat power state types per device",
-				"nl": "Fix bat power state types per device",
-				"fr": "Fix bat power state types per device",
-				"it": "Fix bat power state types per device",
-				"es": "Fix bat power state types per device",
-				"pl": "Fix bat power state types per device",
-				"uk": "Fix bat power state types per device",
-				"zh-cn": "修复各设备 bat_charge/discharge 状态类型"
 			}
 		},
 		"titleLang": {
@@ -363,6 +363,7 @@
 		"selectedSiteId": "",
 		"selectedDeviceIds": "",
 		"deviceListJson": "",
+		"authCacheStatusLine": "",
 		"enableCurtailmentAvoidance": false,
 		"curtailmentMinPvW": 50,
 		"curtailmentForecastPath": "solarprognose.0.forecast.00.hourly",

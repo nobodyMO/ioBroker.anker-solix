@@ -705,18 +705,22 @@ class AnkerSolix extends utils.Adapter {
 			}
 		};
 
+		const respondNative = (native: Record<string, unknown>, extra?: Record<string, unknown>): void => {
+			respond({ ok: true, ...extra, native });
+		};
+
+		const formatAuthCacheStatusLine = (paths: AuthCachePaths): string => {
+			const status = authCacheStatus(paths);
+			if (!paths.email) {
+				return "Enter e-mail in Account tab first.";
+			}
+			return `Cache: ${status.cacheValid ? "OK" : status.cacheExists ? "invalid" : "missing"} | Backup: ${status.backupValid ? "OK" : status.backupExists ? "invalid" : "none"}`;
+		};
+
 		try {
 			if (obj.command === "authCacheStatus") {
 				const paths = this.getAuthCachePaths();
-				const status = authCacheStatus(paths);
-				const authCacheStatusLine = paths.email
-					? `Cache: ${status.cacheValid ? "OK" : status.cacheExists ? "invalid" : "missing"} | Backup: ${status.backupValid ? "OK" : status.backupExists ? "invalid" : "none"}`
-					: "Enter e-mail in Account tab first.";
-				respond({
-					ok: true,
-					...status,
-					authCacheStatusLine,
-				});
+				respondNative({ authCacheStatusLine: formatAuthCacheStatusLine(paths) });
 				return;
 			}
 
@@ -724,16 +728,14 @@ class AnkerSolix extends utils.Adapter {
 				const paths = this.getAuthCachePaths();
 				const result = restoreAuthCacheFromBackup(paths);
 				if (!result.ok) {
-					respond({ ok: false, error: result.error });
+					respond({ error: result.error });
 					return;
 				}
 				await stopBridgeDaemon();
 				await ensureBridgeDaemon(this.getBridgeConfig(), this.config.pythonPath || "", this.log);
 				this.log.info(`Anker login cache restored from backup: ${paths.backupFile}`);
 				const st = authCacheStatus(paths);
-				respond({
-					ok: true,
-					...st,
+				respondNative({
 					authCacheStatusLine: `Restored from backup. Cache: ${st.cacheValid ? "OK" : "invalid"}`,
 				});
 				return;
@@ -759,12 +761,12 @@ class AnkerSolix extends utils.Adapter {
 						}`,
 					);
 				}
-				respond({
-					ok: true,
-					cleared,
-					...st,
-					authCacheStatusLine: `Active cache cleared (${cleared} file(s)). Backup: ${st.backupValid ? "OK" : st.backupExists ? "invalid" : "none"}`,
-				});
+				respondNative(
+					{
+						authCacheStatusLine: `Active cache cleared (${cleared} file(s)). Backup: ${st.backupValid ? "OK" : st.backupExists ? "invalid" : "none"}`,
+					},
+					{ cleared },
+				);
 				return;
 			}
 
@@ -792,7 +794,7 @@ class AnkerSolix extends utils.Adapter {
 				};
 				this.ensureAuthCacheBackedUp();
 				const deviceListJson = JSON.stringify(payload, null, 2);
-				respond({ ok: true, deviceListJson, ...payload });
+				respondNative({ deviceListJson });
 				return;
 			}
 

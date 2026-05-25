@@ -52,6 +52,8 @@ declare global {
 			selectedDeviceIds: string | string[];
 			/** Populated by admin sendTo – device list JSON */
 			deviceListJson?: string;
+			/** Populated by admin sendTo – login cache status line */
+			authCacheStatusLine?: string;
 			/** Optional curtailment avoidance (solarprognose forecast). */
 			enableCurtailmentAvoidance?: boolean;
 			/** Minimum live PV (W) before curtailment controls apply (default 50). */

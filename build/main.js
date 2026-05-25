@@ -611,32 +611,34 @@ class AnkerSolix extends utils.Adapter {
         this.sendTo(obj.from, obj.command, response, obj.callback);
       }
     };
+    const respondNative = (native, extra) => {
+      respond({ ok: true, ...extra, native });
+    };
+    const formatAuthCacheStatusLine = (paths) => {
+      const status = (0, import_authCacheBackup.authCacheStatus)(paths);
+      if (!paths.email) {
+        return "Enter e-mail in Account tab first.";
+      }
+      return `Cache: ${status.cacheValid ? "OK" : status.cacheExists ? "invalid" : "missing"} | Backup: ${status.backupValid ? "OK" : status.backupExists ? "invalid" : "none"}`;
+    };
     try {
       if (obj.command === "authCacheStatus") {
         const paths = this.getAuthCachePaths();
-        const status = (0, import_authCacheBackup.authCacheStatus)(paths);
-        const authCacheStatusLine = paths.email ? `Cache: ${status.cacheValid ? "OK" : status.cacheExists ? "invalid" : "missing"} | Backup: ${status.backupValid ? "OK" : status.backupExists ? "invalid" : "none"}` : "Enter e-mail in Account tab first.";
-        respond({
-          ok: true,
-          ...status,
-          authCacheStatusLine
-        });
+        respondNative({ authCacheStatusLine: formatAuthCacheStatusLine(paths) });
         return;
       }
       if (obj.command === "restoreAuthCache") {
         const paths = this.getAuthCachePaths();
         const result = (0, import_authCacheBackup.restoreAuthCacheFromBackup)(paths);
         if (!result.ok) {
-          respond({ ok: false, error: result.error });
+          respond({ error: result.error });
           return;
         }
         await (0, import_pythonBridge.stopBridgeDaemon)();
         await (0, import_pythonBridge.ensureBridgeDaemon)(this.getBridgeConfig(), this.config.pythonPath || "", this.log);
         this.log.info(`Anker login cache restored from backup: ${paths.backupFile}`);
         const st = (0, import_authCacheBackup.authCacheStatus)(paths);
-        respond({
-          ok: true,
-          ...st,
+        respondNative({
           authCacheStatusLine: `Restored from backup. Cache: ${st.cacheValid ? "OK" : "invalid"}`
         });
         return;
@@ -656,12 +658,12 @@ class AnkerSolix extends utils.Adapter {
             `No active login cache in ${paths.cacheDir}. ${st.backupExists ? "Use \u201CRestore from backup\u201D to restore the saved login." : "Complete a successful login first to create cache and backup."}`
           );
         }
-        respond({
-          ok: true,
-          cleared,
-          ...st,
-          authCacheStatusLine: `Active cache cleared (${cleared} file(s)). Backup: ${st.backupValid ? "OK" : st.backupExists ? "invalid" : "none"}`
-        });
+        respondNative(
+          {
+            authCacheStatusLine: `Active cache cleared (${cleared} file(s)). Backup: ${st.backupValid ? "OK" : st.backupExists ? "invalid" : "none"}`
+          },
+          { cleared }
+        );
         return;
       }
       if (obj.command === "installPython") {
@@ -687,7 +689,7 @@ class AnkerSolix extends utils.Adapter {
         };
         this.ensureAuthCacheBackedUp();
         const deviceListJson = JSON.stringify(payload, null, 2);
-        respond({ ok: true, deviceListJson, ...payload });
+        respondNative({ deviceListJson });
         return;
       }
       respond({ error: `Unknown command ${obj.command}` });
