@@ -126,6 +126,67 @@ def test_power_flow_fields_when_idle() -> None:
     assert discharge == 0
 
 
+def test_night_discharge_from_output_balance() -> None:
+    """No PV, charging_power 0 in cloud, output_power shows AC from battery."""
+    data = {
+        "type": "solarbank",
+        "photovoltaic_power": "0",
+        "photovoltaic_to_grid_power": "0",
+        "output_power": "720",
+        "charging_power": "0",
+        "bat_charge_power": "0",
+        "bat_discharge_power": "0",
+    }
+    charge, discharge = pick_bat_charge_discharge(data)
+    assert charge == 0
+    assert discharge == 720
+
+
+def test_scene_zero_does_not_clear_negative_charging_power() -> None:
+    api = MagicMock()
+    api.sites = {
+        "site1": {
+            "solarbank_info": {
+                "solarbank_list": [
+                    {
+                        "device_sn": "SB1",
+                        "charging_power": "0",
+                        "bat_discharge_power": "0",
+                    }
+                ]
+            }
+        }
+    }
+    ctx = {
+        "type": "solarbank",
+        "device_sn": "SB1",
+        "site_id": "site1",
+        "charging_power": "-650",
+        "bat_discharge_power": "650",
+    }
+    enriched = enrich_solarbank_scene(api, "SB1", ctx)
+    assert enriched["charging_power"] == "-650"
+    charge, discharge = pick_bat_charge_discharge(enriched)
+    assert discharge == 650
+
+
+def test_discharge_to_home_when_no_grid_export() -> None:
+    """Full pack / charging_power 0: discharge to home must not be cleared via output_power."""
+    data = {
+        "type": "solarbank",
+        "photovoltaic_power": "200",
+        "photovoltaic_to_grid_power": "0",
+        "output_power": "650",
+        "charging_power": "0",
+        "bat_charge_power": "0",
+        "bat_discharge_power": "450",
+        "battery_to_home_power": "450",
+    }
+    charge, discharge = pick_bat_charge_discharge(data)
+    assert charge == 0
+    assert discharge == 450
+
+
 def test_charging_with_grid_export_fields_present() -> None:
     """pv_to_home / photovoltaic_to_grid must not hide bat_charge while charging."""
     data = {

@@ -24,6 +24,67 @@ def _max_positive(*values: int | None) -> int:
     return max(nums) if nums else 0
 
 
+_BATTERY_POWER_KEYS: frozenset[str] = frozenset(
+    {
+        "charging_power",
+        "bat_charge_power",
+        "bat_discharge_power",
+        "battery_charge_power",
+        "battery_discharge_power",
+        "battery_to_home_power",
+        "bat_to_home_power",
+        "pv_to_battery_power",
+        "solar_to_battery_power",
+        "grid_to_battery_power",
+        "battery_to_grid_power",
+        "output_power",
+        "dc_output_power",
+        "photovoltaic_power",
+        "input_power",
+    }
+)
+
+
+def _coalesce_power_field(key: str, device_val: Any, scene_val: Any) -> Any:
+    """Prefer device cache; scene often sends 0 for bat_* while discharging."""
+    p = _parse_signed(device_val)
+    s = _parse_signed(scene_val)
+    if key == "charging_power":
+        if p is not None and p != 0:
+            return device_val
+        if s is not None and s != 0:
+            return scene_val
+        return device_val if device_val not in (None, "") else scene_val
+    if p is not None and p > 0:
+        return device_val
+    if s is not None and s > 0:
+        return scene_val
+    return device_val if device_val not in (None, "") else scene_val
+
+
+def _pick_from_output_balance(data: dict) -> tuple[int, int]:
+    """Infer charge/discharge when cloud bat_* are 0 but AC output differs from PV."""
+    pv = _parse_signed(data.get("photovoltaic_power")) or _parse_signed(
+        data.get("input_power")
+    )
+    out = _parse_signed(data.get("output_power")) or _parse_signed(
+        data.get("dc_output_power")
+    )
+    if out is None:
+        return 0, 0
+    grid = _parse_signed(data.get("grid_to_battery_power")) or 0
+    pv_val = pv if pv is not None else 0
+    calc = pv_val + grid - out
+    if calc > 0:
+        return calc, 0
+    if calc < 0:
+        discharge = abs(calc)
+        if _looks_like_export_not_battery_discharge(data, discharge):
+            return 0, 0
+        return 0, discharge
+    return 0, 0
+
+
 def _has_battery_flow_fields(data: dict) -> bool:
     """True when a battery-related flow sensor reports active power (W > 0)."""
     keys = (
@@ -55,25 +116,28 @@ def _pick_from_power_flows(data: dict) -> tuple[int, int]:
 
 
 def _looks_like_export_not_battery_discharge(data: dict, discharge_w: int) -> bool:
-    """Cloud bat_discharge_power often mirrors PV→grid when the pack is idle."""
+    """Cloud bat_discharge_power often mirrors PV→grid when the pack is idle (not home load)."""
     if discharge_w <= 0:
+        return False
+    pv_grid = _parse_signed(data.get("photovoltaic_to_grid_power"))
+    bat_grid = _parse_signed(data.get("battery_to_grid_power"))
+    # output_power tracks AC to home while discharging — do not treat as grid export
+    if not (
+        (isinstance(pv_grid, int) and pv_grid > 0)
+        or (isinstance(bat_grid, int) and bat_grid > 0)
+    ):
         return False
     pv = _parse_signed(data.get("photovoltaic_power")) or _parse_signed(
         data.get("input_power")
     )
     if pv is None:
-        return False
-    pv_grid = _parse_signed(data.get("photovoltaic_to_grid_power"))
-    if isinstance(pv_grid, int) and pv_grid > 0 and abs(discharge_w - pv_grid) <= max(
-        150, int(pv * 0.08)
-    ):
+        pv = 0
+    tol = max(150, int(pv * 0.08))
+    if isinstance(pv_grid, int) and abs(discharge_w - pv_grid) <= tol:
         return True
-    out = _parse_signed(data.get("output_power")) or _parse_signed(
-        data.get("dc_output_power")
-    )
-    if isinstance(out, int) and out > 0 and abs(discharge_w - out) <= max(150, int(pv * 0.08)):
+    if isinstance(bat_grid, int) and abs(discharge_w - bat_grid) <= tol:
         return True
-    return abs(discharge_w - pv) <= max(150, int(pv * 0.08))
+    return False
 
 
 def _pick_from_api_totals(data: dict) -> tuple[int, int]:
@@ -93,9 +157,16 @@ def _pick_from_api_totals(data: dict) -> tuple[int, int]:
             return max(charge_api, signed), 0
         if signed < 0:
             return 0, max(discharge_api, abs(signed))
-        # signed == 0: pack idle — ignore bat_discharge mirroring inverter export
+        # signed == 0: ignore bat_discharge only when it mirrors grid export
         if charge_api > 0:
             return charge_api, 0
+        if discharge_api > 0 and not _looks_like_export_not_battery_discharge(
+            data, discharge_api
+        ):
+            return 0, discharge_api
+        balance = _pick_from_output_balance(data)
+        if balance[0] > 0 or balance[1] > 0:
+            return balance
         return 0, 0
 
     if charge_api or discharge_api:
@@ -105,24 +176,7 @@ def _pick_from_api_totals(data: dict) -> tuple[int, int]:
             return 0, 0
         return charge_api, discharge_api
 
-    pv = _parse_signed(data.get("photovoltaic_power")) or _parse_signed(
-        data.get("input_power")
-    )
-    out = _parse_signed(data.get("output_power")) or _parse_signed(
-        data.get("dc_output_power")
-    )
-    grid = _parse_signed(data.get("grid_to_battery_power")) or 0
-    if pv is not None and out is not None:
-        calc = pv + grid - out
-        if calc > 0:
-            return calc, 0
-        if calc < 0:
-            discharge = abs(calc)
-            if _looks_like_export_not_battery_discharge(data, discharge):
-                return 0, 0
-            return 0, discharge
-
-    return 0, 0
+    return _pick_from_output_balance(data)
 
 
 def pick_bat_charge_discharge(data: dict) -> tuple[int, int]:
@@ -174,7 +228,11 @@ def merge_bank_cache(item: dict, api: Any | None, site_id: str = "") -> dict:
         site_id = str(merged.get("site_id") or dev.get("site_id") or "")
     scene = scene_bank_entry(api, site_id, sn)
     for key, val in scene.items():
-        if val is not None and val != "":
+        if val is None or val == "":
+            continue
+        if key in _BATTERY_POWER_KEYS:
+            merged[key] = _coalesce_power_field(key, merged.get(key), val)
+        else:
             merged[key] = val
     if sn:
         merged["device_sn"] = sn
@@ -189,7 +247,11 @@ def enrich_solarbank_scene(api: Any, sn: str, ctx_data: dict) -> dict:
         return ctx_data
     out = dict(ctx_data)
     for key, val in scene.items():
-        if val is not None and val != "":
+        if val is None or val == "":
+            continue
+        if key in _BATTERY_POWER_KEYS:
+            out[key] = _coalesce_power_field(key, out.get(key), val)
+        else:
             out[key] = val
     return out
 
