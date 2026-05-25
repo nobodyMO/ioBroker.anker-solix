@@ -33,6 +33,24 @@
 					"md": 4,
 					"lg": 4,
 					"xl": 4
+				},
+				"acceptTerms": {
+					"type": "checkbox",
+					"label": "acceptTerms",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+				"_terms_hint": {
+					"type": "staticText",
+					"text": "terms_hint",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				}
 			}
 		},
@@ -225,11 +243,29 @@
 		},
 		"_tab_entities": {
 			"type": "panel",
-			"label": "Entities",
+			"label": "Objects",
 			"items": {
 				"_entities_hint": {
 					"type": "staticText",
 					"text": "entities_hint",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+				"_services_hint": {
+					"type": "staticText",
+					"text": "services_hint",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+				"_service_note": {
+					"type": "staticText",
+					"text": "services_note",
 					"xs": 12,
 					"sm": 12,
 					"md": 12,
@@ -475,30 +511,6 @@
 					"md": 4,
 					"lg": 4,
 					"xl": 4
-				}
-			}
-		},
-		"_tab_services": {
-			"type": "panel",
-			"label": "Services",
-			"items": {
-				"_services_hint": {
-					"type": "staticText",
-					"text": "services_hint",
-					"xs": 12,
-					"sm": 12,
-					"md": 12,
-					"lg": 12,
-					"xl": 12
-				},
-				"_service_note": {
-					"type": "staticText",
-					"text": "services_note",
-					"xs": 12,
-					"sm": 12,
-					"md": 12,
-					"lg": 12,
-					"xl": 12
 				}
 			}
 		},
@@ -763,30 +775,6 @@
 					"style": {
 						"fontSize": "0.85em"
 					},
-					"xs": 12,
-					"sm": 12,
-					"md": 12,
-					"lg": 12,
-					"xl": 12
-				}
-			}
-		},
-		"_tab_terms": {
-			"type": "panel",
-			"label": "Terms",
-			"items": {
-				"acceptTerms": {
-					"type": "checkbox",
-					"label": "acceptTerms",
-					"xs": 12,
-					"sm": 12,
-					"md": 12,
-					"lg": 12,
-					"xl": 12
-				},
-				"_terms_hint": {
-					"type": "staticText",
-					"text": "terms_hint",
 					"xs": 12,
 					"sm": 12,
 					"md": 12,

@@ -30,7 +30,7 @@ A small **Python bridge** (persistent daemon, like HA) polls the Anker cloud and
 
 This adapter is **not** affiliated with Anker. Trademarks and product names belong to their respective owners.
 
-The adapter uses an **unofficial** Python library to talk to the Anker Power **cloud API** (same as the mobile app). That API can change or break at any time. Improper settings may affect devices; the user accepts these risks when enabling the instance (**Terms** tab). Future adapter updates may extend monitoring or controls.
+The adapter uses an **unofficial** Python library to talk to the Anker Power **cloud API** (same as the mobile app). That API can change or break at any time. Improper settings may affect devices; the user accepts these risks when enabling the instance (**Account** tab). Future adapter updates may extend monitoring or controls.
 
 ---
 
@@ -86,10 +86,10 @@ python3 -m venv python/.venv && python/.venv/bin/pip install -r python/requireme
 
 1. Create instance: `iobroker add anker-solix`
 2. **Account:** Anker e-mail, password, country code (e.g. `DE`) — **save after entering password**
-3. **Terms:** accept unofficial API usage
+3. **Account:** accept unofficial API usage (checkbox at bottom of tab)
 4. **Options:** poll interval 60–180 s, **MQTT** if needed, `deviceDetailMultiplier` (HA default: 10)
 5. **Devices:** **Load devices**, optional site ID / device SN filter
-6. **Entities** (v0.9.0+): enable optional groups; only **Core** on by default → **restart adapter** after changes
+6. **Objects** (v0.9.0+): enable optional groups; only **Core** on by default → **restart adapter** after changes
 
 Do **not** use **Clear Anker login cache** unless you need a deliberate re-login (wrong account, corrupted file). Clearing forces a new cloud login and often triggers captcha on server hosts — see [Troubleshooting](#troubleshooting-login--poll).
 
@@ -154,14 +154,14 @@ Typical paths (instance `anker-solix.0`):
 
 - `anker-solix.0.solarbank.<deviceId>.sensors.*` — power, SOC, etc.
 - `anker-solix.0.solarbank.<deviceId>.control.*` — writable controls where supported
-- `anker-solix.0.<device>.<id>.statistics.*` — daily kWh (enable **Entities** → energy statistics)
+- `anker-solix.0.<device>.<id>.statistics.*` — daily kWh (enable **Objects** → energy statistics)
 - `…statistics.week.*` / `statistics.month.*` / `statistics.year.*` — calendar week, month, year totals in kWh (separate entity groups; polled on detail refresh, not every cycle)
 - **Combiner site:** statistics only under `combiner_box.<id>.statistics.*` (not duplicated on `system.*` or each `solarbank.*`). **Without combiner:** per `solarbank.*` (and `smartmeter.*` for grid metrics). API queries remain **once per site**.
 - `anker-solix.0.smartmeter.<deviceId>.sensors.*`
 - `anker-solix.0.services.*` — export, schedule, refresh (button states)
 - `anker-solix.0.info.connection`, `anker-solix.0.info.pythonReady`
 
-**Entity groups** (Admin → **Entities**): map to HA feature sets — power flows, diagnostics, PPS, EV charger, HES, site price, account info, etc. Disabled groups are excluded from API polls to reduce load.
+**Entity groups** (Admin → **Objects**): map to HA feature sets — power flows, diagnostics, PPS, EV charger, HES, site price, account info, etc. Disabled groups are excluded from API polls to reduce load.
 
 ---
 
@@ -228,7 +228,7 @@ Virtual devices per account EV; no creation via adapter — discovered on refres
 
 ### Power Panel & HES (X1)
 
-Limited API power; workaround uses **~5 min averages** from energy stats (**~80 MB/day** extra traffic per system if enabled). Disable heavy categories in **Entities** if needed. X1: consider local **Modbus** ([Anker spec](https://support.ankersolix.com/de/s/download-preview?urlname=Anker-SOLIX-X1-Series-Modbus-Protocol)) — not part of this adapter.
+Limited API power; workaround uses **~5 min averages** from energy stats (**~80 MB/day** extra traffic per system if enabled). Disable heavy categories in **Objects** if needed. X1: consider local **Modbus** ([Anker spec](https://support.ankersolix.com/de/s/download-preview?urlname=Anker-SOLIX-X1-Series-Modbus-Protocol)) — not part of this adapter.
 
 ### Home Backup (E10, AX170)
 
@@ -260,7 +260,7 @@ Log shows exact cache path from **0.9.4+**.
 
 ### Rate limits (26161 / 429)
 
-Increase poll interval; reduce enabled **Entities** groups; adapter retries and may fall back to one-shot bridge briefly.
+Increase poll interval; reduce enabled **Objects** groups; adapter retries and may fall back to one-shot bridge briefly.
 
 ---
 
@@ -270,7 +270,7 @@ States under `anker-solix.0.services.*` (set to `true` to trigger):
 
 - `get_schedule`, `clear_schedule`, `export_systems`, `get_system_info`, `refresh_devices`
 
-Uses `selectedDeviceId` / `selectedSiteId` from config. See Admin **Services** tab.
+Uses `selectedDeviceId` / `selectedSiteId` from config. See Admin **Objects** tab (services hint).
 
 ---
 
