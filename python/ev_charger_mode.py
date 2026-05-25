@@ -112,6 +112,8 @@ def ev_charger_mode_writable(data: dict, config: dict | None) -> bool:
     """True when MQTT mode control is available for this device cache entry."""
     if not (config or {}).get("mqttUsage"):
         return False
+    if data.get("is_passive"):
+        return False
     if not (data.get("mqtt_supported") or data.get("mqtt_data")):
         return False
     return bool(ev_charger_action_options(data))

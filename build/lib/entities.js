@@ -20,6 +20,7 @@ var entities_exports = {};
 __export(entities_exports, {
   DEVICE_STATISTICS_ENTITY_IDS: () => DEVICE_STATISTICS_ENTITY_IDS,
   ENTITY_MAP: () => ENTITY_MAP,
+  EV_CHARGER_MODE_ACTION_STATES: () => EV_CHARGER_MODE_ACTION_STATES,
   EV_CHARGER_MODE_STATES: () => EV_CHARGER_MODE_STATES,
   LIFETIME_STATISTICS_ENTITY_IDS: () => LIFETIME_STATISTICS_ENTITY_IDS,
   STATISTICS_ENTITIES: () => STATISTICS_ENTITIES,
@@ -36,6 +37,12 @@ const EV_CHARGER_MODE_STATES = {
   boost_charge: "Boost",
   wait_plug: "Warte auf Stecker",
   wait_start: "Warte auf Start"
+};
+const EV_CHARGER_MODE_ACTION_STATES = {
+  start_charge: EV_CHARGER_MODE_STATES.start_charge,
+  stop_charge: EV_CHARGER_MODE_STATES.stop_charge,
+  skip_delay: EV_CHARGER_MODE_STATES.skip_delay,
+  boost_charge: EV_CHARGER_MODE_STATES.boost_charge
 };
 const USAGE_MODE_STATES = {
   manual: "Benutzerdefiniert",
@@ -111,6 +118,12 @@ const SENSOR_ENTITIES = [
   { id: "smartplug_energy_today", kind: "sensor", role: "value.energy", unit: "kWh" },
   { id: "evcharger_power", kind: "sensor", role: "value.power", unit: "W" },
   { id: "evcharger_status_desc", kind: "sensor", role: "text" },
+  {
+    id: "ev_charger_mode_status",
+    kind: "sensor",
+    role: "value.mode",
+    states: EV_CHARGER_MODE_STATES
+  },
   { id: "hes_grid_power", kind: "sensor", role: "value.power", unit: "W" },
   { id: "powerpanel_avg_power", kind: "sensor", role: "value.power", unit: "W" }
 ];
@@ -164,7 +177,7 @@ const CONTROL_ENTITIES = [
     states: USAGE_MODE_STATES
   },
   { id: "ac_fast_charge_switch", kind: "switch", role: "switch" },
-  { id: "ev_charger_mode", kind: "list", role: "value.mode", states: EV_CHARGER_MODE_STATES },
+  { id: "ev_charger_mode", kind: "list", role: "value.mode", states: EV_CHARGER_MODE_ACTION_STATES },
   { id: "preset_discharge_priority", kind: "switch", role: "switch" },
   { id: "preset_backup_option", kind: "switch", role: "switch" },
   { id: "preset_charge_priority", kind: "number", role: "level", unit: "%", min: 0, max: 100 },
@@ -311,6 +324,7 @@ const STATISTICS_LABELS = {
   min_soc: "Mindest-SOC Reserve (%)",
   preset_usage_mode: "Nutzungsmodus",
   ev_charger_mode: "Ladebetrieb (EV-Lader)",
+  ev_charger_mode_status: "Ladebetrieb Status (EV-Lader)",
   ...Object.fromEntries(
     ["week", "month", "year"].flatMap((period) => {
       const rows = [[`${period}_energy_period`, PERIOD_NAMES_DE[period]]];
@@ -336,6 +350,7 @@ function isWritable(entityId, writable) {
 0 && (module.exports = {
   DEVICE_STATISTICS_ENTITY_IDS,
   ENTITY_MAP,
+  EV_CHARGER_MODE_ACTION_STATES,
   EV_CHARGER_MODE_STATES,
   LIFETIME_STATISTICS_ENTITY_IDS,
   STATISTICS_ENTITIES,

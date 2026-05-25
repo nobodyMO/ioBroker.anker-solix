@@ -12,7 +12,7 @@ export interface EntityMeta {
 	states?: Record<string, string>;
 }
 
-/** HA-aligned labels for ev_charger_mode (V1 wallbox, MQTT). */
+/** All EV charger mode keys (status sensor + labels). */
 export const EV_CHARGER_MODE_STATES: Record<string, string> = {
 	start_charge: "Laden starten",
 	stop_charge: "Laden stoppen",
@@ -20,6 +20,14 @@ export const EV_CHARGER_MODE_STATES: Record<string, string> = {
 	boost_charge: "Boost",
 	wait_plug: "Warte auf Stecker",
 	wait_start: "Warte auf Start",
+};
+
+/** MQTT-sendable modes only (control dropdown). */
+export const EV_CHARGER_MODE_ACTION_STATES: Record<string, string> = {
+	start_charge: EV_CHARGER_MODE_STATES.start_charge,
+	stop_charge: EV_CHARGER_MODE_STATES.stop_charge,
+	skip_delay: EV_CHARGER_MODE_STATES.skip_delay,
+	boost_charge: EV_CHARGER_MODE_STATES.boost_charge,
 };
 
 /** HA de.json labels for preset_usage_mode */
@@ -98,6 +106,12 @@ const SENSOR_ENTITIES: EntityMeta[] = [
 	{ id: "smartplug_energy_today", kind: "sensor", role: "value.energy", unit: "kWh" },
 	{ id: "evcharger_power", kind: "sensor", role: "value.power", unit: "W" },
 	{ id: "evcharger_status_desc", kind: "sensor", role: "text" },
+	{
+		id: "ev_charger_mode_status",
+		kind: "sensor",
+		role: "value.mode",
+		states: EV_CHARGER_MODE_STATES,
+	},
 	{ id: "hes_grid_power", kind: "sensor", role: "value.power", unit: "W" },
 	{ id: "powerpanel_avg_power", kind: "sensor", role: "value.power", unit: "W" },
 ];
@@ -152,7 +166,7 @@ const CONTROL_ENTITIES: EntityMeta[] = [
 		states: USAGE_MODE_STATES,
 	},
 	{ id: "ac_fast_charge_switch", kind: "switch", role: "switch" },
-	{ id: "ev_charger_mode", kind: "list", role: "value.mode", states: EV_CHARGER_MODE_STATES },
+	{ id: "ev_charger_mode", kind: "list", role: "value.mode", states: EV_CHARGER_MODE_ACTION_STATES },
 	{ id: "preset_discharge_priority", kind: "switch", role: "switch" },
 	{ id: "preset_backup_option", kind: "switch", role: "switch" },
 	{ id: "preset_charge_priority", kind: "number", role: "level", unit: "%", min: 0, max: 100 },
@@ -309,6 +323,7 @@ export const STATISTICS_LABELS: Record<string, string> = {
 	min_soc: "Mindest-SOC Reserve (%)",
 	preset_usage_mode: "Nutzungsmodus",
 	ev_charger_mode: "Ladebetrieb (EV-Lader)",
+	ev_charger_mode_status: "Ladebetrieb Status (EV-Lader)",
 	...Object.fromEntries(
 		(["week", "month", "year"] as const).flatMap(period => {
 			const rows: [string, string][] = [[`${period}_energy_period`, PERIOD_NAMES_DE[period]]];

@@ -337,6 +337,13 @@ EXTENDED_SENSOR_ENTITIES: list[dict[str, Any]] = [
         "types": ["ev_charger"],
         "groups": [GROUP_EV_CHARGER],
     },
+    {
+        "id": "ev_charger_mode_status",
+        "keys": ["ev_charger_mode_status"],
+        "role": "value.mode",
+        "types": ["ev_charger"],
+        "groups": [GROUP_EV_CHARGER],
+    },
     # HES / power panel (minimal)
     {
         "id": "hes_grid_power",

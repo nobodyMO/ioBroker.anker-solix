@@ -4,6 +4,7 @@ import {
 	DEVICE_STATISTICS_ENTITY_IDS,
 	LIFETIME_STATISTICS_ENTITY_IDS,
 	STATISTICS_LABELS,
+	EV_CHARGER_MODE_ACTION_STATES,
 	EV_CHARGER_MODE_STATES,
 	USAGE_MODE_STATES,
 	type EntityMeta,
@@ -251,6 +252,9 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 			if (meta?.unit) {
 				common.unit = meta.unit;
 			}
+			if (entityId === "ev_charger_mode_status") {
+				common.states = EV_CHARGER_MODE_STATES;
+			}
 			if (meta?.kind === "list") {
 				if (entityId === "max_total_ac_output" && device.max_total_ac_output_options?.length) {
 					const states: Record<string, string> = {};
@@ -261,11 +265,11 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 				} else if (entityId === "ev_charger_mode") {
 					const opts = device.ev_charger_mode_options?.length
 						? device.ev_charger_mode_options
-						: Object.keys(EV_CHARGER_MODE_STATES);
+						: Object.keys(EV_CHARGER_MODE_ACTION_STATES);
 					const states: Record<string, string> = {};
 					for (const key of opts) {
-						if (EV_CHARGER_MODE_STATES[key]) {
-							states[key] = EV_CHARGER_MODE_STATES[key];
+						if (EV_CHARGER_MODE_ACTION_STATES[key]) {
+							states[key] = EV_CHARGER_MODE_ACTION_STATES[key];
 						}
 					}
 					if (Object.keys(states).length > 0) {
@@ -315,7 +319,12 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 				native: { control: entityId },
 			});
 			// Refresh name/type when labels change (e.g. renamed controls)
-			if (meta?.kind === "number" || meta?.kind === "switch" || meta?.kind === "list") {
+			if (
+				meta?.kind === "number" ||
+				meta?.kind === "switch" ||
+				meta?.kind === "list" ||
+				entityId === "ev_charger_mode_status"
+			) {
 				await adapter.extendObject(stateId, { common });
 			} else if (STATISTICS_LABELS[entityId]) {
 				await adapter.extendObject(stateId, { common: { name: common.name } });

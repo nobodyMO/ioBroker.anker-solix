@@ -50,7 +50,17 @@ def test_boost_flag_zero_is_off() -> None:
     assert current_ev_charger_mode(data) == "start_charge"
 
 
+def test_status_includes_wait_plug() -> None:
+    data = {"ev_charger_status": "1", "plug_countdown_seconds": "120"}
+    assert current_ev_charger_mode(data) == "wait_plug"
+
+
 def test_writable_requires_mqtt() -> None:
     data = {"ev_charger_status": "0", "mqtt_supported": True}
     assert ev_charger_mode_writable(data, {"mqttUsage": True}) is True
     assert ev_charger_mode_writable(data, {"mqttUsage": False}) is False
+
+
+def test_writable_false_when_passive() -> None:
+    data = {"ev_charger_status": "0", "mqtt_supported": True, "is_passive": True}
+    assert ev_charger_mode_writable(data, {"mqttUsage": True}) is False

@@ -702,6 +702,13 @@ def extract_entities(data: dict, config: dict | None = None) -> dict[str, Any]:
             watts = charge if spec["id"] == "bat_charge_power" else discharge
             entities[spec["id"]] = f"{watts:.0f}"
             continue
+        if spec["id"] == "ev_charger_mode_status":
+            from ev_charger_mode import current_ev_charger_mode  # noqa: PLC0415
+
+            val = current_ev_charger_mode(data)
+            if val is not None:
+                entities[spec["id"]] = val
+            continue
         val = pick_value(data, spec["keys"], nested=bool(spec.get("nested")))
         if val is not None:
             if spec.get("kind") == "boolean":
@@ -750,9 +757,13 @@ def extract_entities(data: dict, config: dict | None = None) -> dict[str, Any]:
                 or (data.get("schedule") or {}).get("mode_type")
             )
         elif spec.get("kind") == "list" and spec["id"] == "ev_charger_mode":
-            from ev_charger_mode import current_ev_charger_mode  # noqa: PLC0415
+            from ev_charger_mode import (  # noqa: PLC0415
+                current_ev_charger_mode,
+                is_ev_charger_action_mode,
+            )
 
-            val = current_ev_charger_mode(data)
+            cur = current_ev_charger_mode(data)
+            val = cur if is_ev_charger_action_mode(cur) else None
         elif spec.get("kind") == "list" and spec["id"] == "max_total_ac_output":
             val = pick_max_total_ac_output_value(data, dev_type)
             if val is not None:

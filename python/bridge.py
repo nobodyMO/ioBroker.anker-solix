@@ -229,6 +229,38 @@ async def _ensure_mqtt(api: AnkerSolixApi) -> bool:
         return False
 
 
+def _mqtt_command_reject_reason(
+    api: AnkerSolixApi,
+    device_sn: str,
+    cmd: str,
+    ha_client: IoBrokerAnkerApiClient | None,
+    *,
+    require_live_data: bool = False,
+) -> str | None:
+    """Return a short reason when MQTT command cannot be sent, else None."""
+    dev = api.devices.get(device_sn) or {}
+    if dev.get("is_passive"):
+        return (
+            "charger is passive/local (Anker app: cloud control active, device online)"
+        )
+    if not dev.get("mqtt_supported") and not dev.get("mqtt_data"):
+        return "no MQTT data for device (enable MQTT in adapter, wait for poll)"
+    mdev = (ha_client.get_mqtt_device(device_sn) if ha_client else None) or (
+        SolixMqttDeviceFactory(api, device_sn).create_device()
+    )
+    if not mdev:
+        return "MQTT device unknown (model not in map or SN missing in account)"
+    if cmd not in (mdev.controls or {}):
+        return f"command not supported for model {mdev.pn}"
+    if mdev.is_passive():
+        return "charger is in passive/local mode (MQTT control blocked)"
+    if not api.mqttsession or not api.mqttsession.is_connected():
+        return "MQTT session not connected"
+    if require_live_data and not mdev.mqttdata and not mdev.is_subscribed():
+        return "no live MQTT status from charger yet (device offline or not subscribed)"
+    return None
+
+
 async def _mqtt_command(
     api: AnkerSolixApi,
     device_sn: str,
@@ -242,6 +274,8 @@ async def _mqtt_command(
         SolixMqttDeviceFactory(api, device_sn).create_device()
     )
     if not mdev or cmd not in (mdev.controls or {}):
+        return False
+    if mdev.is_passive():
         return False
     if ha_client:
         if not api.mqttsession or not api.mqttsession.is_connected():
@@ -610,6 +644,15 @@ async def _set_ev_charger_mode(
             f"ev_charger_mode: please wait {wait}s before the next command (MQTT rate limit)"
         )
     mode_val = parse_ev_charger_mode_set(value)
+    reject = _mqtt_command_reject_reason(
+        api,
+        device_id,
+        SolixMqttCommands.ev_charger_mode_select,
+        ha_client,
+        require_live_data=True,
+    )
+    if reject:
+        raise RuntimeError(f"ev_charger_mode rejected: {reject}")
     if not await _mqtt_command(
         api,
         device_id,
@@ -618,8 +661,15 @@ async def _set_ev_charger_mode(
         "set_ev_charger_mode",
         ha_client=ha_client,
     ):
+        reject = _mqtt_command_reject_reason(
+            api,
+            device_id,
+            SolixMqttCommands.ev_charger_mode_select,
+            ha_client,
+            require_live_data=True,
+        )
         raise RuntimeError(
-            "ev_charger_mode rejected (enable MQTT, local charger mode, device online)"
+            f"ev_charger_mode rejected: {reject or 'MQTT publish failed (see log)'}"
         )
     _ev_charger_mode_last[device_id] = now
     with contextlib.suppress(Exception):

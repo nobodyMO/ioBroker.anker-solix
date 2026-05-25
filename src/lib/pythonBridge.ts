@@ -25,6 +25,17 @@ function isTransientApiError(message: string): boolean {
 	);
 }
 
+/** Expected control failures — do not tear down the persistent bridge daemon. */
+function isBridgeControlError(message: string): boolean {
+	return (
+		message.includes("rejected") ||
+		message.includes("requires MQTT") ||
+		message.includes("please wait") ||
+		message.includes("Unsupported control") ||
+		message.includes("Invalid ev_charger_mode")
+	);
+}
+
 function isAuthError(message: string): boolean {
 	const lower = message.toLowerCase();
 	return (
@@ -179,7 +190,7 @@ export async function runBridge(
 			throw error;
 		}
 
-		if (isTransientApiError(msg)) {
+		if (isTransientApiError(msg) || isBridgeControlError(msg)) {
 			throw error;
 		}
 

@@ -45,6 +45,9 @@ function bridgeScriptPath() {
 function isTransientApiError(message) {
   return message.includes("26161") || message.includes("429") || message.includes("Too Many Requests") || message.includes("Busy");
 }
+function isBridgeControlError(message) {
+  return message.includes("rejected") || message.includes("requires MQTT") || message.includes("please wait") || message.includes("Unsupported control") || message.includes("Invalid ev_charger_mode");
+}
 function isAuthError(message) {
   const lower = message.toLowerCase();
   return message.includes("CaptchaRequired") || message.includes("100032") || lower.includes("captcha") || message.includes("InvalidCredentials") || message.includes("Authentication failed") || message.includes("Cached Anker login is invalid");
@@ -152,7 +155,7 @@ async function runBridge(action, config, pythonPath, log, options) {
     if (isAuthError(msg)) {
       throw error;
     }
-    if (isTransientApiError(msg)) {
+    if (isTransientApiError(msg) || isBridgeControlError(msg)) {
       throw error;
     }
     await daemon.stop().catch(() => void 0);

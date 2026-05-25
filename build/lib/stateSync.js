@@ -228,6 +228,9 @@ async function syncDevices(adapter, devices) {
       if (meta == null ? void 0 : meta.unit) {
         common.unit = meta.unit;
       }
+      if (entityId === "ev_charger_mode_status") {
+        common.states = import_entities.EV_CHARGER_MODE_STATES;
+      }
       if ((meta == null ? void 0 : meta.kind) === "list") {
         if (entityId === "max_total_ac_output" && ((_d = device.max_total_ac_output_options) == null ? void 0 : _d.length)) {
           const states = {};
@@ -236,11 +239,11 @@ async function syncDevices(adapter, devices) {
           }
           common.states = states;
         } else if (entityId === "ev_charger_mode") {
-          const opts = ((_e = device.ev_charger_mode_options) == null ? void 0 : _e.length) ? device.ev_charger_mode_options : Object.keys(import_entities.EV_CHARGER_MODE_STATES);
+          const opts = ((_e = device.ev_charger_mode_options) == null ? void 0 : _e.length) ? device.ev_charger_mode_options : Object.keys(import_entities.EV_CHARGER_MODE_ACTION_STATES);
           const states = {};
           for (const key of opts) {
-            if (import_entities.EV_CHARGER_MODE_STATES[key]) {
-              states[key] = import_entities.EV_CHARGER_MODE_STATES[key];
+            if (import_entities.EV_CHARGER_MODE_ACTION_STATES[key]) {
+              states[key] = import_entities.EV_CHARGER_MODE_ACTION_STATES[key];
             }
           }
           if (Object.keys(states).length > 0) {
@@ -286,7 +289,7 @@ async function syncDevices(adapter, devices) {
         common,
         native: { control: entityId }
       });
-      if ((meta == null ? void 0 : meta.kind) === "number" || (meta == null ? void 0 : meta.kind) === "switch" || (meta == null ? void 0 : meta.kind) === "list") {
+      if ((meta == null ? void 0 : meta.kind) === "number" || (meta == null ? void 0 : meta.kind) === "switch" || (meta == null ? void 0 : meta.kind) === "list" || entityId === "ev_charger_mode_status") {
         await adapter.extendObject(stateId, { common });
       } else if (import_entities.STATISTICS_LABELS[entityId]) {
         await adapter.extendObject(stateId, { common: { name: common.name } });
