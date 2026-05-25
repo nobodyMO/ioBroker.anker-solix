@@ -246,6 +246,10 @@ async function syncDevices(adapter, devices) {
           common.states = import_entities.EV_CHARGER_SOLAR_MODE_STATES;
         } else if (entityId === "ev_charger_phase_mode") {
           common.states = import_entities.EV_CHARGER_PHASE_MODE_STATES;
+        } else if (entityId === "ev_charger_smart_touch_mode") {
+          common.states = import_entities.EV_CHARGER_SMART_TOUCH_MODE_STATES;
+        } else if (entityId === "ev_charger_wipe_up_mode" || entityId === "ev_charger_wipe_down_mode") {
+          common.states = import_entities.EV_CHARGER_SWIPE_MODE_STATES;
         } else if (entityId === "ev_charger_status") {
           common.states = import_entities.EV_CHARGER_STATUS_STATES;
         } else if (entityId === "ev_charger_ocpp_connect_status") {

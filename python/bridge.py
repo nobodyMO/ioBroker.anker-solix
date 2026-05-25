@@ -724,6 +724,10 @@ async def _set_ev_charger_schedule_control(
         if await mdev.set_ev_charger_schedule(**kwargs) is None:
             raise RuntimeError(f"{control} rejected: MQTT schedule update failed")
     else:
+        from ev_charger_comfort import (  # noqa: PLC0415
+            build_ev_light_off_schedule_parm_map,
+            is_ev_light_off_schedule_command,
+        )
         from ev_charger_load import (  # noqa: PLC0415
             build_ev_load_balancing_parm_map,
             is_ev_load_balancing_command,
@@ -737,11 +741,20 @@ async def _set_ev_charger_schedule_control(
         reject = _mqtt_command_reject_reason(api, device_id, cmd, ha_client)
         if reject:
             raise RuntimeError(f"{control} rejected: {reject}")
-        if (is_ev_solar_charging_command(cmd) or is_ev_load_balancing_command(cmd)) and mdev:
+        multi_parm = (
+            is_ev_solar_charging_command(cmd)
+            or is_ev_load_balancing_command(cmd)
+            or is_ev_light_off_schedule_command(cmd)
+        )
+        if multi_parm and mdev:
             if is_ev_solar_charging_command(cmd):
                 parm_map = build_ev_solar_charging_parm_map(parm, mqtt_val, device, mdev)
-            else:
+            elif is_ev_load_balancing_command(cmd):
                 parm_map = build_ev_load_balancing_parm_map(parm, mqtt_val, device, mdev)
+            else:
+                parm_map = build_ev_light_off_schedule_parm_map(
+                    parm, mqtt_val, device, mdev
+                )
             if ha_client:
                 if not api.mqttsession or not api.mqttsession.is_connected():
                     await ha_client.check_mqtt_session()

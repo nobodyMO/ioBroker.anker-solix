@@ -50,6 +50,18 @@ export const EV_CHARGER_PHASE_MODE_STATES: Record<string, string> = {
 	one_phase: "1-phasig",
 };
 
+export const EV_CHARGER_SMART_TOUCH_MODE_STATES: Record<string, string> = {
+	simple: "Einfach",
+	anti_mistouch: "Fehlbedienungsschutz",
+};
+
+export const EV_CHARGER_SWIPE_MODE_STATES: Record<string, string> = {
+	off: "Aus",
+	start_charge: "Laden starten",
+	stop_charge: "Laden stoppen",
+	boost_charge: "Boost",
+};
+
 export const EV_CHARGER_STATUS_STATES: Record<string, string> = {
 	0: "Standby",
 	1: "Vorbereitung",
@@ -282,6 +294,38 @@ const CONTROL_ENTITIES: EntityMeta[] = [
 	{ id: "ev_charger_load_balance_monitor_device", kind: "text", role: "text" },
 	{ id: "ev_charger_solar_monitor_switch", kind: "switch", role: "switch" },
 	{ id: "ev_charger_solar_monitor_device", kind: "text", role: "text" },
+	{ id: "ev_charger_restart", kind: "switch", role: "switch" },
+	{ id: "ev_charger_plug_lock_switch", kind: "switch", role: "switch" },
+	{
+		id: "ev_charger_light_brightness",
+		kind: "number",
+		role: "level",
+		unit: "%",
+		min: 0,
+		max: 100,
+	},
+	{ id: "ev_charger_light_off_schedule_switch", kind: "switch", role: "switch" },
+	{ id: "ev_charger_light_off_start_time", kind: "text", role: "text" },
+	{ id: "ev_charger_light_off_end_time", kind: "text", role: "text" },
+	{
+		id: "ev_charger_smart_touch_mode",
+		kind: "list",
+		role: "value.mode",
+		states: EV_CHARGER_SMART_TOUCH_MODE_STATES,
+	},
+	{ id: "ev_charger_modbus_switch", kind: "switch", role: "switch" },
+	{
+		id: "ev_charger_wipe_up_mode",
+		kind: "list",
+		role: "value.mode",
+		states: EV_CHARGER_SWIPE_MODE_STATES,
+	},
+	{
+		id: "ev_charger_wipe_down_mode",
+		kind: "list",
+		role: "value.mode",
+		states: EV_CHARGER_SWIPE_MODE_STATES,
+	},
 	{ id: "preset_discharge_priority", kind: "switch", role: "switch" },
 	{ id: "preset_backup_option", kind: "switch", role: "switch" },
 	{ id: "preset_charge_priority", kind: "number", role: "level", unit: "%", min: 0, max: 100 },
@@ -460,6 +504,16 @@ export const STATISTICS_LABELS: Record<string, string> = {
 	ev_charger_load_balance_monitor_device: "Lastausgleich Monitor-SN (EV-Lader)",
 	ev_charger_solar_monitor_switch: "Solar-Monitoring (EV-Lader)",
 	ev_charger_solar_monitor_device: "Solar-Monitor-SN (EV-Lader)",
+	ev_charger_restart: "Neustart (EV-Lader)",
+	ev_charger_plug_lock_switch: "Kabelverriegelung (EV-Lader)",
+	ev_charger_light_brightness: "LED-Helligkeit (EV-Lader)",
+	ev_charger_light_off_schedule_switch: "LED nachts aus (EV-Lader)",
+	ev_charger_light_off_start_time: "LED aus Start (EV-Lader)",
+	ev_charger_light_off_end_time: "LED aus Ende (EV-Lader)",
+	ev_charger_smart_touch_mode: "Touch-Modus (EV-Lader)",
+	ev_charger_modbus_switch: "Modbus TCP (EV-Lader)",
+	ev_charger_wipe_up_mode: "Swipe hoch (EV-Lader)",
+	ev_charger_wipe_down_mode: "Swipe runter (EV-Lader)",
 	ev_charger_plug_status: "Stecker verbunden (EV-Lader)",
 	ev_charger_status: "Ladestatus (EV-Lader)",
 	ev_charger_boost_status: "Boost aktiv (EV-Lader)",

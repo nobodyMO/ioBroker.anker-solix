@@ -10,6 +10,8 @@ import {
 	EV_CHARGER_WEEKEND_MODE_STATES,
 	EV_CHARGER_SOLAR_MODE_STATES,
 	EV_CHARGER_PHASE_MODE_STATES,
+	EV_CHARGER_SMART_TOUCH_MODE_STATES,
+	EV_CHARGER_SWIPE_MODE_STATES,
 	EV_CHARGER_STATUS_STATES,
 	EV_CHARGER_OCPP_STATES,
 	USAGE_MODE_STATES,
@@ -276,6 +278,13 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 					common.states = EV_CHARGER_SOLAR_MODE_STATES;
 				} else if (entityId === "ev_charger_phase_mode") {
 					common.states = EV_CHARGER_PHASE_MODE_STATES;
+				} else if (entityId === "ev_charger_smart_touch_mode") {
+					common.states = EV_CHARGER_SMART_TOUCH_MODE_STATES;
+				} else if (
+					entityId === "ev_charger_wipe_up_mode" ||
+					entityId === "ev_charger_wipe_down_mode"
+				) {
+					common.states = EV_CHARGER_SWIPE_MODE_STATES;
 				} else if (entityId === "ev_charger_status") {
 					common.states = EV_CHARGER_STATUS_STATES;
 				} else if (entityId === "ev_charger_ocpp_connect_status") {
