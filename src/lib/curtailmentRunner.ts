@@ -1,3 +1,10 @@
+import {
+	berlinDateString,
+	enterAwaitingForecastIfNewDay,
+	isAwaitingForecastRefresh,
+	markControlsReleasedForAwaiting,
+	shouldReleaseControlsForAwaiting,
+} from "./curtailmentDayCycle";
 import { acExportLimitW } from "./curtailmentProfiles";
 import { resolveCurtailmentDevices, type CurtailmentStructuredNative } from "./curtailmentConfig";
 import {
@@ -114,7 +121,7 @@ async function applyCurtailmentSetpoints(
 	modeAfter: "smartmeter" | "smart",
 	opts?: { modeOnly?: boolean },
 ): Promise<void> {
-	if (phase === "after" || phase === "idle") {
+	if (phase === "after" || phase === "idle" || phase === "inactive") {
 		await applyAfterPhase(host, device, modeAfter);
 		return;
 	}
@@ -177,6 +184,40 @@ async function buildDeviceContext(
 		window.today && phase === "active" && soc !== undefined ? calcMaxChargeW(missingChargeWh, remaining) : 0;
 	const { exportW, chargeW } = resolveCurtailmentSetpoints(phase, livePvW, maxChargeW, forecast, nowHour, window);
 	return { limit, window, phase, livePvW, missingChargeWh, maxChargeW, exportW, chargeW, remaining, soc };
+}
+
+async function publishInactiveCurtailmentStates(host: CurtailmentRunnerHost): Promise<void> {
+	await host.setState(CURTAILMENT_STATE_IDS.today, false, true);
+	await host.setState(CURTAILMENT_STATE_IDS.start, "", true);
+	await host.setState(CURTAILMENT_STATE_IDS.end, "", true);
+	await host.setState(CURTAILMENT_STATE_IDS.remainingHours, 0, true);
+	await host.setState(CURTAILMENT_STATE_IDS.phase, "inactive", true);
+}
+
+async function handleAwaitingForecastRefresh(
+	host: CurtailmentRunnerHost,
+	devices: CurtailmentDeviceConfig[],
+	config: CurtailmentRunnerConfig,
+	forecast: Awaited<ReturnType<typeof readHourlyForecast>>,
+): Promise<boolean> {
+	const berlinDate = berlinDateString();
+	enterAwaitingForecastIfNewDay(berlinDate, forecast);
+	if (!isAwaitingForecastRefresh(forecast)) {
+		return false;
+	}
+	await publishInactiveCurtailmentStates(host);
+	if (shouldReleaseControlsForAwaiting()) {
+		for (const device of devices) {
+			try {
+				await applyAfterPhase(host, device, config.modeAfter);
+			} catch (err) {
+				host.log.warn(`Curtailment midnight release failed for ${device.deviceId}: ${(err as Error).message}`);
+			}
+		}
+		markControlsReleasedForAwaiting();
+		host.log.debug("Curtailment: inactive until PV forecast refresh (midnight reset, modeAfter restored)");
+	}
+	return true;
 }
 
 async function publishDeviceStates(host: CurtailmentRunnerHost, ctx: DeviceRunContext): Promise<void> {
@@ -280,6 +321,9 @@ export async function runCurtailmentOnPvChange(
 		id => host.getForeignStateAsync(id),
 		host.getForeignObjectAsync ? id => host.getForeignObjectAsync!(id) : undefined,
 	);
+	if (await handleAwaitingForecastRefresh(host, devices, config, forecast)) {
+		return;
+	}
 	const nowHour = berlinHour();
 	for (const device of devices) {
 		const ctx = await buildDeviceContext(host, device, forecast, nowHour, livePvW);
@@ -331,6 +375,9 @@ export async function runCurtailmentAvoidance(
 		id => host.getForeignStateAsync(id),
 		host.getForeignObjectAsync ? id => host.getForeignObjectAsync!(id) : undefined,
 	);
+	if (await handleAwaitingForecastRefresh(host, devices, config, forecast)) {
+		return;
+	}
 	const nowHour = berlinHour();
 
 	for (const device of devices) {

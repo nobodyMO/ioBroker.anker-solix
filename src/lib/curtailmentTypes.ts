@@ -23,7 +23,7 @@ export interface CurtailmentDeviceConfig {
 	unitCount?: number;
 }
 
-export type CurtailmentPhase = "idle" | "before" | "active" | "after";
+export type CurtailmentPhase = "idle" | "inactive" | "before" | "active" | "after";
 
 export interface CurtailmentWindow {
 	today: boolean;

@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.68",
+		"version": "0.10.69",
 		"messagebox": true,
 		"news": {
+			"0.10.69": {
+				"en": "Curtailment: midnight inactive reset until solarprognose forecast refresh; safe modeAfter release",
+				"de": "Abregelung: Mitternacht inactive bis Prognose-Update; Nutzungsmodus wird sicher zurückgesetzt",
+				"ru": "Curtailment midnight inactive reset",
+				"pt": "Curtailment midnight inactive reset",
+				"nl": "Curtailment midnight inactive reset",
+				"fr": "Curtailment midnight inactive reset",
+				"it": "Curtailment midnight inactive reset",
+				"es": "Curtailment midnight inactive reset",
+				"pl": "Curtailment midnight inactive reset",
+				"uk": "Curtailment midnight inactive reset",
+				"zh-cn": "Abregelung 午夜 inactive 直至预报更新"
+			},
 			"0.10.68": {
 				"en": "Admin: move Install Python dependencies to bottom of Options tab",
 				"de": "Admin: Python-Abhängigkeiten installieren ans Ende des Tabs Optionen",
@@ -250,19 +263,6 @@
 				"pl": "EV charger MQTT mode control",
 				"uk": "EV charger MQTT mode control",
 				"zh-cn": "EV 充电桩 MQTT 充电模式控制"
-			},
-			"0.10.49": {
-				"en": "System bat charge/discharge: sum of solarbank sensors (live); remove solarbank_info power totals and combiner bat power",
-				"de": "System Lade-/Entladeleistung: Summe der Solarbank-Sensoren (live); solarbank_info-Summen und Combiner bat_* entfernt",
-				"ru": "System bat power from solarbank sum",
-				"pt": "System bat power from solarbank sum",
-				"nl": "System bat power from solarbank sum",
-				"fr": "System bat power from solarbank sum",
-				"it": "System bat power from solarbank sum",
-				"es": "System bat power from solarbank sum",
-				"pl": "System bat power from solarbank sum",
-				"uk": "System bat power from solarbank sum",
-				"zh-cn": "系统充放电功率由太阳能银行传感器求和"
 			}
 		},
 		"titleLang": {
