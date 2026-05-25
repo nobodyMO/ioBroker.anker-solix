@@ -54,6 +54,84 @@
 				}
 			}
 		},
+		"_tab_auth_cache": {
+			"type": "panel",
+			"label": "AuthCache",
+			"items": {
+				"_auth_cache_hint": {
+					"type": "staticText",
+					"text": "auth_cache_hint",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+				"authCacheStatusLine": {
+					"type": "text",
+					"label": "authCacheStatusLabel",
+					"readOnly": true,
+					"minRows": 2,
+					"maxRows": 4,
+					"default": "",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+				"authCacheStatus": {
+					"type": "sendTo",
+					"command": "authCacheStatus",
+					"label": "authCacheStatus",
+					"variant": "outlined",
+					"onLoaded": true,
+					"showProcess": true,
+					"xs": 12,
+					"sm": 6,
+					"md": 4,
+					"lg": 4,
+					"xl": 4
+				},
+				"restoreAuthCache": {
+					"type": "sendTo",
+					"label": "restoreAuthCache",
+					"command": "restoreAuthCache",
+					"variant": "contained",
+					"showProcess": true,
+					"xs": 12,
+					"sm": 6,
+					"md": 4,
+					"lg": 4,
+					"xl": 4
+				},
+				"_clearAuthCache_warn": {
+					"type": "staticText",
+					"text": "clearAuthCache_warn",
+					"style": {
+						"fontSize": "0.9em",
+						"color": "#b45309"
+					},
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+				"clearAuthCache": {
+					"type": "sendTo",
+					"label": "clearAuthCache",
+					"command": "clearAuthCache",
+					"variant": "outlined",
+					"showProcess": true,
+					"xs": 12,
+					"sm": 6,
+					"md": 4,
+					"lg": 4,
+					"xl": 4
+				}
+			}
+		},
 		"_tab_devices": {
 			"type": "panel",
 			"label": "Devices",
@@ -83,31 +161,6 @@
 					"type": "sendTo",
 					"label": "installPython",
 					"command": "installPython",
-					"variant": "outlined",
-					"showProcess": true,
-					"xs": 12,
-					"sm": 6,
-					"md": 4,
-					"lg": 4,
-					"xl": 4
-				},
-				"_clearAuthCache_warn": {
-					"type": "staticText",
-					"text": "clearAuthCache_warn",
-					"style": {
-						"fontSize": "0.9em",
-						"color": "#b45309"
-					},
-					"xs": 12,
-					"sm": 12,
-					"md": 12,
-					"lg": 12,
-					"xl": 12
-				},
-				"clearAuthCache": {
-					"type": "sendTo",
-					"label": "clearAuthCache",
-					"command": "clearAuthCache",
 					"variant": "outlined",
 					"showProcess": true,
 					"xs": 12,
@@ -148,7 +201,8 @@
 					"type": "text",
 					"label": "deviceListJson",
 					"readOnly": true,
-					"disabled": "true",
+					"minRows": 14,
+					"maxRows": 24,
 					"xs": 12,
 					"sm": 12,
 					"md": 12,

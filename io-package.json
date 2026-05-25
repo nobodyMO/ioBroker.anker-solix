@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.64",
+		"version": "0.10.65",
 		"messagebox": true,
 		"news": {
+			"0.10.65": {
+				"en": "Login cache tab with backup/restore; auto-backup after first login; fix device list display in admin",
+				"de": "Reiter Login-Cache mit Sicherung/Wiederherstellung; Auto-Backup nach erstem Login; Geräteliste in Admin wieder sichtbar",
+				"ru": "Login cache backup tab and device list admin fix",
+				"pt": "Login cache backup tab and device list admin fix",
+				"nl": "Login cache backup tab and device list admin fix",
+				"fr": "Login cache backup tab and device list admin fix",
+				"it": "Login cache backup tab and device list admin fix",
+				"es": "Login cache backup tab and device list admin fix",
+				"pl": "Login cache backup tab and device list admin fix",
+				"uk": "Login cache backup tab and device list admin fix",
+				"zh-cn": "登录缓存备份标签页；修复设备列表显示"
+			},
 			"0.10.64": {
 				"en": "Curtailment admin: corrected hint text; combiner vs standalone fields toggle fixed",
 				"de": "Abregelung Admin: Hinweistext korrigiert; Combiner/Einzel-Solarbank-Umschaltung repariert",
@@ -250,19 +263,6 @@
 				"pl": "Fix bat power state types per device",
 				"uk": "Fix bat power state types per device",
 				"zh-cn": "修复各设备 bat_charge/discharge 状态类型"
-			},
-			"0.10.45": {
-				"en": "Fix system solarbank_info totals: sum per-SB power from device cache + scene API (same as solarbank sensors)",
-				"de": "Fix solarbank_info-Summen: Lade-/Entladeleistung aus Device-Cache + Scene-API (wie pro Solarbank)",
-				"ru": "Fix solarbank_info totals sum",
-				"pt": "Fix solarbank_info totals sum",
-				"nl": "Fix solarbank_info totals sum",
-				"fr": "Fix solarbank_info totals sum",
-				"it": "Fix solarbank_info totals sum",
-				"es": "Fix solarbank_info totals sum",
-				"pl": "Fix solarbank_info totals sum",
-				"uk": "Fix solarbank_info totals sum",
-				"zh-cn": "修复 solarbank_info 总充放电功率汇总"
 			}
 		},
 		"titleLang": {

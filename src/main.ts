@@ -8,6 +8,13 @@ import * as path from "node:path";
 
 import * as utils from "@iobroker/adapter-core";
 
+import {
+	authCacheStatus,
+	backupAuthCacheOnce,
+	clearActiveAuthCacheFiles,
+	resolveAuthCachePaths,
+	restoreAuthCacheFromBackup,
+} from "./lib/authCacheBackup";
 import { parseSelectedDeviceIds } from "./lib/configHelpers";
 import { ControlQueue } from "./lib/controlQueue";
 import {
@@ -64,9 +71,19 @@ class AnkerSolix extends utils.Adapter {
 		return path.join(utils.getAbsoluteInstanceDataDir(this), "authcache");
 	}
 
+	private getAuthCachePaths() {
+		return resolveAuthCachePaths(
+			utils.getAbsoluteInstanceDataDir(this),
+			(this.config.username || "").trim(),
+		);
+	}
+
 	private getAuthCacheFile(): string {
-		const email = (this.config.username || "").trim();
-		return path.join(this.getAuthCacheDir(), `${email}.json`);
+		return this.getAuthCachePaths().cacheFile;
+	}
+
+	private ensureAuthCacheBackedUp(): void {
+		backupAuthCacheOnce(this.getAuthCachePaths(), this.log);
 	}
 
 	private logAuthCacheStatus(): void {
@@ -252,6 +269,7 @@ class AnkerSolix extends utils.Adapter {
 				}
 			}
 
+			this.ensureAuthCacheBackedUp();
 			await this.runCurtailmentAvoidanceIfEnabled();
 		} catch (error) {
 			await this.setState("info.connection", false, true);
@@ -690,27 +708,64 @@ class AnkerSolix extends utils.Adapter {
 		};
 
 		try {
-			if (obj.command === "clearAuthCache") {
-				const cacheDir = this.getAuthCacheDir();
-				const fs = await import("node:fs/promises");
-				try {
-					const files = await fs.readdir(cacheDir);
-					await Promise.all(files.map(f => fs.unlink(path.join(cacheDir, f)).catch(() => undefined)));
-					await stopBridgeDaemon();
-					await ensureBridgeDaemon(this.getBridgeConfig(), this.config.pythonPath || "", this.log);
-					this.log.warn(
-						`Anker login cache cleared (${files.length} file(s) in ${cacheDir}). ` +
-							"Next poll requires a new API login; on many hosts Anker returns captcha (100032). " +
-							`Restore authcache/${(this.config.username || "").trim()}.json from HA or retry login when cloud allows it.`,
-					);
-					respond({ ok: true, cleared: files.length });
-				} catch {
-					this.log.warn(
-						`Anker login cache clear requested but folder empty or missing (${cacheDir}). ` +
-							"Adapter must complete a successful API login to create authcache/<email>.json.",
-					);
-					respond({ ok: true, cleared: 0 });
+			if (obj.command === "authCacheStatus") {
+				const paths = this.getAuthCachePaths();
+				const status = authCacheStatus(paths);
+				const authCacheStatusLine = paths.email
+					? `Cache: ${status.cacheValid ? "OK" : status.cacheExists ? "invalid" : "missing"} | Backup: ${status.backupValid ? "OK" : status.backupExists ? "invalid" : "none"}`
+					: "Enter e-mail in Account tab first.";
+				respond({
+					ok: true,
+					...status,
+					authCacheStatusLine,
+				});
+				return;
+			}
+
+			if (obj.command === "restoreAuthCache") {
+				const paths = this.getAuthCachePaths();
+				const result = restoreAuthCacheFromBackup(paths);
+				if (!result.ok) {
+					respond({ ok: false, error: result.error });
+					return;
 				}
+				await stopBridgeDaemon();
+				await ensureBridgeDaemon(this.getBridgeConfig(), this.config.pythonPath || "", this.log);
+				this.log.info(`Anker login cache restored from backup: ${paths.backupFile}`);
+				const st = authCacheStatus(paths);
+				respond({
+					ok: true,
+					...st,
+					authCacheStatusLine: `Restored from backup. Cache: ${st.cacheValid ? "OK" : "invalid"}`,
+				});
+				return;
+			}
+
+			if (obj.command === "clearAuthCache") {
+				const paths = this.getAuthCachePaths();
+				const cleared = clearActiveAuthCacheFiles(paths.cacheDir);
+				const st = authCacheStatus(paths);
+				await stopBridgeDaemon();
+				await ensureBridgeDaemon(this.getBridgeConfig(), this.config.pythonPath || "", this.log);
+				if (cleared > 0) {
+					this.log.warn(
+						`Anker login cache cleared (${cleared} file(s) in ${paths.cacheDir}). ` +
+							"Backup in authcache/backup/ was kept. Use “Restore from backup” if login fails (captcha 100032).",
+					);
+				} else {
+					this.log.warn(
+						`No active login cache in ${paths.cacheDir}. ` +
+							(st.backupExists
+								? "Use “Restore from backup” to restore the saved login."
+								: "Complete a successful login first to create cache and backup."),
+					);
+				}
+				respond({
+					ok: true,
+					cleared,
+					...st,
+					authCacheStatusLine: `Active cache cleared (${cleared} file(s)). Backup: ${st.backupValid ? "OK" : st.backupExists ? "invalid" : "none"}`,
+				});
 				return;
 			}
 
@@ -736,7 +791,9 @@ class AnkerSolix extends utils.Adapter {
 					sites: result.sites || [],
 					devices: result.devices || [],
 				};
-				respond({ ok: true, deviceListJson: JSON.stringify(payload, null, 2), ...payload });
+				this.ensureAuthCacheBackedUp();
+				const deviceListJson = JSON.stringify(payload, null, 2);
+				respond({ ok: true, deviceListJson, ...payload });
 				return;
 			}
 

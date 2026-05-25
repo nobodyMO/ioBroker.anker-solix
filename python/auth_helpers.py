@@ -6,10 +6,38 @@ import asyncio
 import contextlib
 import json
 import logging
+import shutil
 from pathlib import Path
 
 from solixapi.api import AnkerSolixApi
 from solixapi import errors
+
+
+def auth_backup_path(auth_path: Path) -> Path:
+    return auth_path.parent / "backup" / auth_path.name
+
+
+def _is_valid_auth_file(auth_path: Path) -> bool:
+    if not auth_path.is_file():
+        return False
+    try:
+        data = json.loads(auth_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+    return bool(data.get("user_id") and data.get("auth_token"))
+
+
+def backup_auth_cache_once(auth_path: Path, logger: logging.Logger) -> bool:
+    """Copy login cache to authcache/backup/ after first successful login only."""
+    if not _is_valid_auth_file(auth_path):
+        return False
+    backup = auth_backup_path(auth_path)
+    if backup.is_file():
+        return False
+    backup.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(auth_path, backup)
+    logger.info("Anker login cache backed up to %s", backup)
+    return True
 
 
 def purge_invalid_auth_cache(api: AnkerSolixApi, logger: logging.Logger) -> None:
@@ -50,12 +78,14 @@ async def safe_authenticate(api: AnkerSolixApi, logger: logging.Logger) -> None:
             await api.async_authenticate()
             if api.apisession._token and api.apisession._gtoken:
                 api.apisession._loggedIn = True
+                backup_auth_cache_once(auth_path, logger)
                 return
             if auth_path.is_file():
                 api.apisession._authFileTime = 0
                 await api.async_authenticate()
                 if api.apisession._token and api.apisession._gtoken:
                     api.apisession._loggedIn = True
+                    backup_auth_cache_once(auth_path, logger)
                     return
                 raise errors.InvalidCredentialsError(
                     "Cached Anker login is invalid or expired. "
@@ -63,6 +93,7 @@ async def safe_authenticate(api: AnkerSolixApi, logger: logging.Logger) -> None:
                     "(e.g. ha-anker-solix), or use Admin “Load devices” after re-entering the password."
                 )
             if await api.async_authenticate(restart=True):
+                backup_auth_cache_once(auth_path, logger)
                 return
             last_exc = RuntimeError("Authentication failed")
         except errors.CaptchaRequiredError:

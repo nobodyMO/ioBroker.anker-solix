@@ -24,6 +24,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 var fs = __toESM(require("node:fs"));
 var path = __toESM(require("node:path"));
 var utils = __toESM(require("@iobroker/adapter-core"));
+var import_authCacheBackup = require("./lib/authCacheBackup");
 var import_configHelpers = require("./lib/configHelpers");
 var import_controlQueue = require("./lib/controlQueue");
 var import_curtailmentPower = require("./lib/curtailmentPower");
@@ -59,9 +60,17 @@ class AnkerSolix extends utils.Adapter {
   getAuthCacheDir() {
     return path.join(utils.getAbsoluteInstanceDataDir(this), "authcache");
   }
+  getAuthCachePaths() {
+    return (0, import_authCacheBackup.resolveAuthCachePaths)(
+      utils.getAbsoluteInstanceDataDir(this),
+      (this.config.username || "").trim()
+    );
+  }
   getAuthCacheFile() {
-    const email = (this.config.username || "").trim();
-    return path.join(this.getAuthCacheDir(), `${email}.json`);
+    return this.getAuthCachePaths().cacheFile;
+  }
+  ensureAuthCacheBackedUp() {
+    (0, import_authCacheBackup.backupAuthCacheOnce)(this.getAuthCachePaths(), this.log);
   }
   logAuthCacheStatus() {
     const cacheDir = this.getAuthCacheDir();
@@ -222,6 +231,7 @@ class AnkerSolix extends utils.Adapter {
           );
         }
       }
+      this.ensureAuthCacheBackedUp();
       await this.runCurtailmentAvoidanceIfEnabled();
     } catch (error) {
       await this.setState("info.connection", false, true);
@@ -605,24 +615,56 @@ class AnkerSolix extends utils.Adapter {
       }
     };
     try {
-      if (obj.command === "clearAuthCache") {
-        const cacheDir = this.getAuthCacheDir();
-        const fs2 = await Promise.resolve().then(() => __toESM(require("node:fs/promises")));
-        try {
-          const files = await fs2.readdir(cacheDir);
-          await Promise.all(files.map((f) => fs2.unlink(path.join(cacheDir, f)).catch(() => void 0)));
-          await (0, import_pythonBridge.stopBridgeDaemon)();
-          await (0, import_pythonBridge.ensureBridgeDaemon)(this.getBridgeConfig(), this.config.pythonPath || "", this.log);
-          this.log.warn(
-            `Anker login cache cleared (${files.length} file(s) in ${cacheDir}). Next poll requires a new API login; on many hosts Anker returns captcha (100032). Restore authcache/${(this.config.username || "").trim()}.json from HA or retry login when cloud allows it.`
-          );
-          respond({ ok: true, cleared: files.length });
-        } catch {
-          this.log.warn(
-            `Anker login cache clear requested but folder empty or missing (${cacheDir}). Adapter must complete a successful API login to create authcache/<email>.json.`
-          );
-          respond({ ok: true, cleared: 0 });
+      if (obj.command === "authCacheStatus") {
+        const paths = this.getAuthCachePaths();
+        const status = (0, import_authCacheBackup.authCacheStatus)(paths);
+        const authCacheStatusLine = paths.email ? `Cache: ${status.cacheValid ? "OK" : status.cacheExists ? "invalid" : "missing"} | Backup: ${status.backupValid ? "OK" : status.backupExists ? "invalid" : "none"}` : "Enter e-mail in Account tab first.";
+        respond({
+          ok: true,
+          ...status,
+          authCacheStatusLine
+        });
+        return;
+      }
+      if (obj.command === "restoreAuthCache") {
+        const paths = this.getAuthCachePaths();
+        const result = (0, import_authCacheBackup.restoreAuthCacheFromBackup)(paths);
+        if (!result.ok) {
+          respond({ ok: false, error: result.error });
+          return;
         }
+        await (0, import_pythonBridge.stopBridgeDaemon)();
+        await (0, import_pythonBridge.ensureBridgeDaemon)(this.getBridgeConfig(), this.config.pythonPath || "", this.log);
+        this.log.info(`Anker login cache restored from backup: ${paths.backupFile}`);
+        const st = (0, import_authCacheBackup.authCacheStatus)(paths);
+        respond({
+          ok: true,
+          ...st,
+          authCacheStatusLine: `Restored from backup. Cache: ${st.cacheValid ? "OK" : "invalid"}`
+        });
+        return;
+      }
+      if (obj.command === "clearAuthCache") {
+        const paths = this.getAuthCachePaths();
+        const cleared = (0, import_authCacheBackup.clearActiveAuthCacheFiles)(paths.cacheDir);
+        const st = (0, import_authCacheBackup.authCacheStatus)(paths);
+        await (0, import_pythonBridge.stopBridgeDaemon)();
+        await (0, import_pythonBridge.ensureBridgeDaemon)(this.getBridgeConfig(), this.config.pythonPath || "", this.log);
+        if (cleared > 0) {
+          this.log.warn(
+            `Anker login cache cleared (${cleared} file(s) in ${paths.cacheDir}). Backup in authcache/backup/ was kept. Use \u201CRestore from backup\u201D if login fails (captcha 100032).`
+          );
+        } else {
+          this.log.warn(
+            `No active login cache in ${paths.cacheDir}. ` + (st.backupExists ? "Use \u201CRestore from backup\u201D to restore the saved login." : "Complete a successful login first to create cache and backup.")
+          );
+        }
+        respond({
+          ok: true,
+          cleared,
+          ...st,
+          authCacheStatusLine: `Active cache cleared (${cleared} file(s)). Backup: ${st.backupValid ? "OK" : st.backupExists ? "invalid" : "none"}`
+        });
         return;
       }
       if (obj.command === "installPython") {
@@ -646,7 +688,9 @@ class AnkerSolix extends utils.Adapter {
           sites: result.sites || [],
           devices: result.devices || []
         };
-        respond({ ok: true, deviceListJson: JSON.stringify(payload, null, 2), ...payload });
+        this.ensureAuthCacheBackedUp();
+        const deviceListJson = JSON.stringify(payload, null, 2);
+        respond({ ok: true, deviceListJson, ...payload });
         return;
       }
       respond({ error: `Unknown command ${obj.command}` });
