@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.56",
+		"version": "0.10.57",
 		"messagebox": true,
 		"news": {
+			"0.10.57": {
+				"en": "Fix bat_charge_power null while charging when grid/home flow fields are present",
+				"de": "Fix bat_charge_power: Ladeleistung wieder sichtbar wenn Netz/Home-Flow-Felder gesetzt sind",
+				"ru": "Fix bat_charge_power with flow fields",
+				"pt": "Fix bat_charge_power with flow fields",
+				"nl": "Fix bat_charge_power with flow fields",
+				"fr": "Fix bat_charge_power with flow fields",
+				"it": "Fix bat_charge_power with flow fields",
+				"es": "Fix bat_charge_power with flow fields",
+				"pl": "Fix bat_charge_power with flow fields",
+				"uk": "Fix bat_charge_power with flow fields",
+				"zh-cn": "修复有电网流向字段时充电功率为空"
+			},
 			"0.10.56": {
 				"en": "EV charger step 2: schedule & automation controls via MQTT (times, weekend mode, auto-start, random delay)",
 				"de": "EV-Lader Schritt 2: Zeitplan & Automatik per MQTT (Zeiten, Wochenende, Auto-Start, Zufallsverzögerung)",
@@ -250,19 +263,6 @@
 				"pl": "Clearer labels + station limits",
 				"uk": "Clearer labels + station limits",
 				"zh-cn": "更清晰命名；Combiner 读取站点限值"
-			},
-			"0.10.37": {
-				"en": "max_total_ac_output: keep MQTT-applied W in state (cloud/app may still show legal limit)",
-				"de": "max_total_ac_output: gesetzter MQTT-Wert bleibt im Datenpunkt (Cloud/App zeigt ggf. weiter Legal-Limit)",
-				"ru": "max_total_ac_output MQTT cache",
-				"pt": "max_total_ac_output MQTT cache",
-				"nl": "max_total_ac_output MQTT cache",
-				"fr": "max_total_ac_output MQTT cache",
-				"it": "max_total_ac_output MQTT cache",
-				"es": "max_total_ac_output MQTT cache",
-				"pl": "max_total_ac_output MQTT cache",
-				"uk": "max_total_ac_output MQTT cache",
-				"zh-cn": "max_total_ac_output 保留 MQTT 设置值"
 			}
 		},
 		"titleLang": {

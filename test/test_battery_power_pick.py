@@ -126,6 +126,22 @@ def test_power_flow_fields_when_idle() -> None:
     assert discharge == 0
 
 
+def test_charging_with_grid_export_fields_present() -> None:
+    """pv_to_home / photovoltaic_to_grid must not hide bat_charge while charging."""
+    data = {
+        "type": "solarbank",
+        "charging_power": "850",
+        "bat_charge_power": "820",
+        "bat_discharge_power": "0",
+        "photovoltaic_to_grid_power": "1200",
+        "pv_to_home_power": "400",
+        "pv_to_battery_power": "0",
+    }
+    charge, discharge = pick_bat_charge_discharge(data)
+    assert charge == 850
+    assert discharge == 0
+
+
 def test_sum_uses_device_cache_when_list_rows_are_sparse() -> None:
     api = MagicMock()
     api.devices = {

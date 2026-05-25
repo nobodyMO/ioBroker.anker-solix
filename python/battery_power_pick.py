@@ -24,8 +24,8 @@ def _max_positive(*values: int | None) -> int:
     return max(nums) if nums else 0
 
 
-def _has_power_flow_fields(data: dict) -> bool:
-    """True when scene/API provides explicit PV/battery flow breakdown."""
+def _has_battery_flow_fields(data: dict) -> bool:
+    """True when a battery-related flow sensor reports active power (W > 0)."""
     keys = (
         "pv_to_battery_power",
         "solar_to_battery_power",
@@ -33,10 +33,10 @@ def _has_power_flow_fields(data: dict) -> bool:
         "bat_to_home_power",
         "grid_to_battery_power",
         "battery_to_grid_power",
-        "pv_to_home_power",
-        "photovoltaic_to_grid_power",
     )
-    return any(data.get(k) not in (None, "") for k in keys)
+    return any(
+        (parsed := _parse_signed(data.get(k))) is not None and parsed > 0 for k in keys
+    )
 
 
 def _pick_from_power_flows(data: dict) -> tuple[int, int]:
@@ -76,11 +76,8 @@ def _looks_like_export_not_battery_discharge(data: dict, discharge_w: int) -> bo
     return abs(discharge_w - pv) <= max(150, int(pv * 0.08))
 
 
-def pick_bat_charge_discharge(data: dict) -> tuple[int, int]:
-    """Return (charge_W, discharge_W) from cloud cache only (scene info / device API)."""
-    if _has_power_flow_fields(data):
-        return _pick_from_power_flows(data)
-
+def _pick_from_api_totals(data: dict) -> tuple[int, int]:
+    """Charge/discharge from bat_* / charging_power (cloud scene API)."""
     charge_api = _max_positive(
         _parse_signed(data.get("bat_charge_power")),
         _parse_signed(data.get("battery_charge_power")),
@@ -126,6 +123,25 @@ def pick_bat_charge_discharge(data: dict) -> tuple[int, int]:
             return 0, discharge
 
     return 0, 0
+
+
+def pick_bat_charge_discharge(data: dict) -> tuple[int, int]:
+    """Return (charge_W, discharge_W) from cloud cache only (scene info / device API)."""
+    charge, discharge = _pick_from_api_totals(data)
+
+    if _has_battery_flow_fields(data):
+        flow_charge, flow_discharge = _pick_from_power_flows(data)
+        charge = max(charge, flow_charge)
+        discharge = max(discharge, flow_discharge)
+
+    if (
+        discharge > 0
+        and charge == 0
+        and _looks_like_export_not_battery_discharge(data, discharge)
+    ):
+        return 0, 0
+
+    return charge, discharge
 
 
 def scene_bank_entry(api: Any | None, site_id: str, sn: str) -> dict:
