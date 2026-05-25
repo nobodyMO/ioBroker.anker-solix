@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.63",
+		"version": "0.10.64",
 		"messagebox": true,
 		"news": {
+			"0.10.64": {
+				"en": "Curtailment admin: corrected hint text; combiner vs standalone fields toggle fixed",
+				"de": "Abregelung Admin: Hinweistext korrigiert; Combiner/Einzel-Solarbank-Umschaltung repariert",
+				"ru": "Curtailment admin hint and combiner toggle fix",
+				"pt": "Curtailment admin hint and combiner toggle fix",
+				"nl": "Curtailment admin hint and combiner toggle fix",
+				"fr": "Curtailment admin hint and combiner toggle fix",
+				"it": "Curtailment admin hint and combiner toggle fix",
+				"es": "Curtailment admin hint and combiner toggle fix",
+				"pl": "Curtailment admin hint and combiner toggle fix",
+				"uk": "Curtailment admin hint and combiner toggle fix",
+				"zh-cn": "修正 Abregelung 管理说明与 Combiner 切换"
+			},
 			"0.10.63": {
 				"en": "Fix bat_discharge_power; admin: Account terms, Objects tab, curtailment UI (combiner/Power Dock, solarprognose link)",
 				"de": "Fix bat_discharge_power; Admin: Nutzungsbedingungen unter Konto, Tab Objekte, Abregelung (Combiner/Power Dock, Solarprognose-Link)",
@@ -250,19 +263,6 @@
 				"pl": "Fix solarbank_info totals sum",
 				"uk": "Fix solarbank_info totals sum",
 				"zh-cn": "修复 solarbank_info 总充放电功率汇总"
-			},
-			"0.10.42": {
-				"en": "Fix multisystem solarbank_info: total_charging_power and battery_discharge_power (sum per SB, no null)",
-				"de": "Fix Multisystem solarbank_info: Lade-/Entladeleistung gesamt korrekt (Summe pro SB, nicht mehr null)",
-				"ru": "Fix solarbank_info multisystem totals",
-				"pt": "Fix solarbank_info multisystem totals",
-				"nl": "Fix solarbank_info multisystem totals",
-				"fr": "Fix solarbank_info multisystem totals",
-				"it": "Fix solarbank_info multisystem totals",
-				"es": "Fix solarbank_info multisystem totals",
-				"pl": "Fix solarbank_info multisystem totals",
-				"uk": "Fix solarbank_info multisystem totals",
-				"zh-cn": "修复 Multisystem solarbank_info 总功率"
 			}
 		},
 		"titleLang": {
