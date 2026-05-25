@@ -346,8 +346,10 @@ async def _ensure_device_schedule(
     except errors.RequestError:
         pass
     if not (api.devices.get(device_sn) or {}).get("schedule"):
-        with contextlib.suppress(errors.RequestError):
-            await api.get_device_load(siteId=site_id, deviceSn=device_sn)
+        # get_device_home_load is SB1-only; SB2+/SB3 use get_device_parm (param 2) above
+        if int((api.devices.get(device_sn) or {}).get("generation") or 0) < 2:
+            with contextlib.suppress(errors.RequestError):
+                await api.get_device_load(siteId=site_id, deviceSn=device_sn)
 
 
 def _parallel_mqtt_options(api: AnkerSolixApi, control_sn: str, device: dict) -> list[int]:
@@ -1084,7 +1086,19 @@ async def run_service_with_client(
         site_id = site_id or device.get("site_id") or ""
         schedule = device.get("schedule")
         if not schedule and site_id and device_id:
-            schedule = await api.get_device_load(siteId=site_id, deviceSn=device_id)
+            if int(device.get("generation") or 0) >= 2:
+                with contextlib.suppress(errors.RequestError):
+                    data = await api.get_device_parm(
+                        siteId=site_id,
+                        paramType=SolixParmType.SOLARBANK_2_SCHEDULE.value,
+                        deviceSn=device_id,
+                    )
+                    schedule = (data or {}).get("param_data") or schedule
+            else:
+                with contextlib.suppress(errors.RequestError):
+                    schedule = await api.get_device_load(
+                        siteId=site_id, deviceSn=device_id
+                    )
         return {"ok": True, "schedule": _json_safe(schedule or {})}
 
     if service == "clear_schedule":

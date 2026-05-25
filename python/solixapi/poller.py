@@ -18,6 +18,7 @@ from .apitypes import (
     SolixPriceProvider,
     SolixSiteType,
 )
+from . import errors
 from .hesapi import AnkerSolixHesApi
 from .powerpanel import AnkerSolixPowerpanelApi
 
@@ -1194,9 +1195,18 @@ async def poll_device_details(  # noqa: C901
                             "Getting api %s schedule details for device",
                             api.apisession.nickname,
                         )
-                        await api.get_device_load(
-                            siteId=site_id, deviceSn=sn, fromFile=fromFile
-                        )
+                        try:
+                            await api.get_device_load(
+                                siteId=site_id, deviceSn=sn, fromFile=fromFile
+                            )
+                        except errors.ItemNotFoundError as exc:
+                            # Anker 10004 "Failed to request" — site/device has no SB1 schedule API data
+                            api._logger.warning(
+                                "Schedule (get_device_home_load) unavailable for site %s device %s: %s",
+                                site_id,
+                                sn,
+                                exc,
+                            )
                     # Fetch device fittings for device types supporting it
                     if {ApiCategories.solarbank_fittings} - exclude:
                         api._logger.debug(

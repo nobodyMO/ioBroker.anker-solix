@@ -772,7 +772,12 @@ class AnkerSolixClientSession:
                     return await self.request(
                         method, endpoint, headers=headers, json=json
                     )
-            self._logger.error(
+            log = (
+                self._logger.warning
+                if isinstance(err, errors.ItemNotFoundError)
+                else self._logger.error
+            )
+            log(
                 "Api %s Error %s for request: %s %s\nResponse Text: %s",
                 self.nickname,
                 err,

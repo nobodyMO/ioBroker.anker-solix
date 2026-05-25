@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.61",
+		"version": "0.10.62",
 		"messagebox": true,
 		"news": {
+			"0.10.62": {
+				"en": "Fix API 10004 noise: skip SB1 get_device_home_load for SB3/combiner; softer logging",
+				"de": "Fix API 10004: kein SB1-Zeitplan-Abruf für SB3/Combiner; weniger Fehler-Logs",
+				"ru": "Fix get_device_home_load 10004 for SB3",
+				"pt": "Fix get_device_home_load 10004 for SB3",
+				"nl": "Fix get_device_home_load 10004 for SB3",
+				"fr": "Fix get_device_home_load 10004 for SB3",
+				"it": "Fix get_device_home_load 10004 for SB3",
+				"es": "Fix get_device_home_load 10004 for SB3",
+				"pl": "Fix get_device_home_load 10004 for SB3",
+				"uk": "Fix get_device_home_load 10004 for SB3",
+				"zh-cn": "修复 SB3 系统误用 SB1 时间表 API 导致 10004"
+			},
 			"0.10.61": {
 				"en": "EV charger step 5: plug lock, LED, touch/swipe modes, Modbus; device restart via MQTT",
 				"de": "EV-Lader Schritt 5: Verriegelung, LED, Touch/Swipe, Modbus; Geräte-Neustart per MQTT",
@@ -224,19 +237,6 @@
 				"pl": "Fix solarbank_info totals sum",
 				"uk": "Fix solarbank_info totals sum",
 				"zh-cn": "修复 solarbank_info 总充放电功率汇总"
-			},
-			"0.10.43": {
-				"en": "Battery charge/discharge power from cloud scene API (no MQTT); per-SB and solarbank_info totals",
-				"de": "Lade-/Entladeleistung aus Cloud-Scene-API (ohne MQTT); pro Solarbank und solarbank_info-Summen",
-				"ru": "Battery power from cloud API",
-				"pt": "Battery power from cloud API",
-				"nl": "Battery power from cloud API",
-				"fr": "Battery power from cloud API",
-				"it": "Battery power from cloud API",
-				"es": "Battery power from cloud API",
-				"pl": "Battery power from cloud API",
-				"uk": "Battery power from cloud API",
-				"zh-cn": "电池充放电功率来自云端 Scene API（无需 MQTT）"
 			},
 			"0.10.42": {
 				"en": "Fix multisystem solarbank_info: total_charging_power and battery_discharge_power (sum per SB, no null)",
