@@ -11,9 +11,9 @@ Referenz: Home Assistant [ha-anker-solix](https://github.com/thomluther/ha-anker
 | **1** | Ladebetrieb steuern (Start / Stop / Boost / Skip Delay) | erledigt |
 | **2** | Zeitplan & Automatik | erledigt |
 | **3** | Strom, Phasen, Solar | erledigt |
-| 4 | Lastmanagement (Multisystem) | offen |
+| **4** | Lastmanagement (Multisystem) | erledigt |
 | 5 | Hardware / Komfort | offen |
-| 6 | Live-Daten (MQTT-Sensoren erweitern) | offen |
+| **6** | Live-Daten (MQTT-Sensoren erweitern) | erledigt |
 | 7 | Solarbank `ev_charger_switch` (System) | offen |
 
 ---

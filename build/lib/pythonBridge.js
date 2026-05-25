@@ -46,7 +46,7 @@ function isTransientApiError(message) {
   return message.includes("26161") || message.includes("429") || message.includes("Too Many Requests") || message.includes("Busy");
 }
 function isBridgeControlError(message) {
-  return message.includes("rejected") || message.includes("requires MQTT") || message.includes("please wait") || message.includes("Unsupported control") || message.includes("Invalid ev_charger_mode") || message.includes("Invalid schedule") || message.includes("Invalid time") || message.includes("Invalid weekend mode") || message.includes("Invalid switch value") || message.includes("Invalid current") || message.includes("Invalid solar mode") || message.includes("Invalid phase mode");
+  return message.includes("rejected") || message.includes("requires MQTT") || message.includes("please wait") || message.includes("Unsupported control") || message.includes("Invalid ev_charger_mode") || message.includes("Invalid schedule") || message.includes("Invalid time") || message.includes("Invalid weekend mode") || message.includes("Invalid switch value") || message.includes("Invalid current") || message.includes("Invalid solar mode") || message.includes("Invalid phase mode") || message.includes("Invalid main breaker") || message.includes("Invalid monitor device SN") || message.includes("Invalid solar monitor");
 }
 function isAuthError(message) {
   const lower = message.toLowerCase();

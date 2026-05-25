@@ -39,7 +39,10 @@ function isBridgeControlError(message: string): boolean {
 		message.includes("Invalid switch value") ||
 		message.includes("Invalid current") ||
 		message.includes("Invalid solar mode") ||
-		message.includes("Invalid phase mode")
+		message.includes("Invalid phase mode") ||
+		message.includes("Invalid main breaker") ||
+		message.includes("Invalid monitor device SN") ||
+		message.includes("Invalid solar monitor")
 	);
 }
 

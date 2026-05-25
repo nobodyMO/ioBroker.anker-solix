@@ -10,6 +10,8 @@ import {
 	EV_CHARGER_WEEKEND_MODE_STATES,
 	EV_CHARGER_SOLAR_MODE_STATES,
 	EV_CHARGER_PHASE_MODE_STATES,
+	EV_CHARGER_STATUS_STATES,
+	EV_CHARGER_OCPP_STATES,
 	USAGE_MODE_STATES,
 	type EntityMeta,
 } from "./entities";
@@ -274,6 +276,10 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 					common.states = EV_CHARGER_SOLAR_MODE_STATES;
 				} else if (entityId === "ev_charger_phase_mode") {
 					common.states = EV_CHARGER_PHASE_MODE_STATES;
+				} else if (entityId === "ev_charger_status") {
+					common.states = EV_CHARGER_STATUS_STATES;
+				} else if (entityId === "ev_charger_ocpp_connect_status") {
+					common.states = EV_CHARGER_OCPP_STATES;
 				} else if (entityId === "ev_charger_mode") {
 					const opts = device.ev_charger_mode_options?.length
 						? device.ev_charger_mode_options

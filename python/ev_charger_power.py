@@ -53,6 +53,16 @@ _EV_POWER_SPECS: dict[str, tuple[str, str, str]] = {
         "set_auto_phase_switch",
         "std_onoff",
     ),
+    "ev_charger_solar_monitor_switch": (
+        SolixMqttCommands.ev_solar_charging,
+        "set_solar_evcharge_monitoring_mode",
+        "std_onoff",
+    ),
+    "ev_charger_solar_monitor_device": (
+        SolixMqttCommands.ev_solar_charging,
+        "set_solar_evcharge_monitor_device",
+        "monitor_sn",
+    ),
 }
 
 EV_CHARGER_POWER_CONTROL_IDS: list[str] = list(_EV_POWER_SPECS.keys())
@@ -230,6 +240,11 @@ def extract_ev_charger_power_value(control_id: str, data: dict) -> Any:
         return _phase_mode_name(_mqtt_val(data, "phase_operating_mode"))
     if control_id == "ev_charger_auto_phase_switch":
         return _std_switch_on(_mqtt_val(data, "auto_phase_switch"))
+    if control_id == "ev_charger_solar_monitor_switch":
+        return _std_switch_on(_mqtt_val(data, "solar_evcharge_monitoring_mode"))
+    if control_id == "ev_charger_solar_monitor_device":
+        sn = str(_mqtt_val(data, "solar_evcharge_monitor_device") or "").strip()
+        return sn or None
     return None
 
 
@@ -277,6 +292,11 @@ def parse_ev_charger_power_set(
         return cmd, parm, _parse_phase_mode_set(value)
     if kind == "current_a":
         return cmd, parm, _parse_current_set(value, data)
+    if kind == "monitor_sn":
+        sn = str(value or "").strip()
+        if not sn:
+            raise ValueError("Invalid solar monitor device SN (non-empty string required)")
+        return cmd, parm, sn
     raise ValueError(f"Unsupported power control kind '{kind}'")
 
 

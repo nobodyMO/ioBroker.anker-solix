@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.59",
+		"version": "0.10.60",
 		"messagebox": true,
 		"news": {
+			"0.10.60": {
+				"en": "EV charger step 4+6: load balancing controls and live MQTT sensors (phases, energy, OCPP)",
+				"de": "EV-Lader Schritt 4+6: Lastmanagement-Steuerung und Live-MQTT-Sensoren (Phasen, Energie, OCPP)",
+				"ru": "EV load balancing and live sensors",
+				"pt": "EV load balancing and live sensors",
+				"nl": "EV load balancing and live sensors",
+				"fr": "EV load balancing and live sensors",
+				"it": "EV load balancing and live sensors",
+				"es": "EV load balancing and live sensors",
+				"pl": "EV load balancing and live sensors",
+				"uk": "EV load balancing and live sensors",
+				"zh-cn": "EV 充电桩负载均衡控制与实时 MQTT 传感器"
+			},
 			"0.10.59": {
 				"en": "Fix EV solar/phase MQTT controls: send full ev_solar_charging parm_map from device cache",
 				"de": "Fix EV Solar/Phasen-Steuerung: vollständige ev_solar_charging parm_map aus Gerätecache",
@@ -250,19 +263,6 @@
 				"pl": "solarbank_info channel",
 				"uk": "solarbank_info channel",
 				"zh-cn": "system.solarbank_info 通道"
-			},
-			"0.10.40": {
-				"en": "Lifetime statistics on system channel: total_energy, total_co2_savings, total_money_savings (polled each cycle)",
-				"de": "Lifetime-Statistik am System-Kanal: total_energy, total_co2_savings, total_money_savings (bei jedem Poll)",
-				"ru": "Lifetime statistics system channel",
-				"pt": "Lifetime statistics system channel",
-				"nl": "Lifetime statistics system channel",
-				"fr": "Lifetime statistics system channel",
-				"it": "Lifetime statistics system channel",
-				"es": "Lifetime statistics system channel",
-				"pl": "Lifetime statistics system channel",
-				"uk": "Lifetime statistics system channel",
-				"zh-cn": "系统通道终身统计 total_energy/CO2/省钱"
 			}
 		},
 		"titleLang": {
