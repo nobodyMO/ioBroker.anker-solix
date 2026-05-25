@@ -67,20 +67,20 @@ const EV_CHARGER_PHASE_MODE_STATES = {
   one_phase: "1-phasig"
 };
 const EV_CHARGER_STATUS_STATES = {
-  "0": "Standby",
-  "1": "Vorbereitung",
-  "2": "Laden",
-  "3": "Wallbox pausiert",
-  "4": "Fahrzeug pausiert",
-  "5": "Abgeschlossen",
-  "6": "Reservierung",
-  "7": "Deaktiviert",
-  "8": "Fehler"
+  0: "Standby",
+  1: "Vorbereitung",
+  2: "Laden",
+  3: "Wallbox pausiert",
+  4: "Fahrzeug pausiert",
+  5: "Abgeschlossen",
+  6: "Reservierung",
+  7: "Deaktiviert",
+  8: "Fehler"
 };
 const EV_CHARGER_OCPP_STATES = {
-  "0": "Getrennt",
-  "1": "Verbindet",
-  "2": "Verbunden"
+  0: "Getrennt",
+  1: "Verbindet",
+  2: "Verbunden"
 };
 const USAGE_MODE_STATES = {
   manual: "Benutzerdefiniert",

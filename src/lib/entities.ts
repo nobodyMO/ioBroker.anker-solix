@@ -51,21 +51,21 @@ export const EV_CHARGER_PHASE_MODE_STATES: Record<string, string> = {
 };
 
 export const EV_CHARGER_STATUS_STATES: Record<string, string> = {
-	"0": "Standby",
-	"1": "Vorbereitung",
-	"2": "Laden",
-	"3": "Wallbox pausiert",
-	"4": "Fahrzeug pausiert",
-	"5": "Abgeschlossen",
-	"6": "Reservierung",
-	"7": "Deaktiviert",
-	"8": "Fehler",
+	0: "Standby",
+	1: "Vorbereitung",
+	2: "Laden",
+	3: "Wallbox pausiert",
+	4: "Fahrzeug pausiert",
+	5: "Abgeschlossen",
+	6: "Reservierung",
+	7: "Deaktiviert",
+	8: "Fehler",
 };
 
 export const EV_CHARGER_OCPP_STATES: Record<string, string> = {
-	"0": "Getrennt",
-	"1": "Verbindet",
-	"2": "Verbunden",
+	0: "Getrennt",
+	1: "Verbindet",
+	2: "Verbunden",
 };
 
 /** HA de.json labels for preset_usage_mode */
