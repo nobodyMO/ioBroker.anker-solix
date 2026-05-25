@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.62",
+		"version": "0.10.63",
 		"messagebox": true,
 		"news": {
+			"0.10.63": {
+				"en": "Fix bat_discharge_power; admin: Account terms, Objects tab, curtailment UI (combiner/Power Dock, solarprognose link)",
+				"de": "Fix bat_discharge_power; Admin: Nutzungsbedingungen unter Konto, Tab Objekte, Abregelung (Combiner/Power Dock, Solarprognose-Link)",
+				"ru": "bat_discharge_power and admin UI updates",
+				"pt": "bat_discharge_power and admin UI updates",
+				"nl": "bat_discharge_power and admin UI updates",
+				"fr": "bat_discharge_power and admin UI updates",
+				"it": "bat_discharge_power and admin UI updates",
+				"es": "bat_discharge_power and admin UI updates",
+				"pl": "bat_discharge_power and admin UI updates",
+				"uk": "bat_discharge_power and admin UI updates",
+				"zh-cn": "修复放电功率；管理界面与 Abregelung 优化"
+			},
 			"0.10.62": {
 				"en": "Fix API 10004 noise: skip SB1 get_device_home_load for SB3/combiner; softer logging",
 				"de": "Fix API 10004: kein SB1-Zeitplan-Abruf für SB3/Combiner; weniger Fehler-Logs",
