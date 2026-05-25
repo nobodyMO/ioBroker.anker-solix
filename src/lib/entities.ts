@@ -40,6 +40,16 @@ export const EV_CHARGER_WEEKEND_MODE_STATES: Record<string, string> = {
 	different: "Wochenende anders",
 };
 
+export const EV_CHARGER_SOLAR_MODE_STATES: Record<string, string> = {
+	solar_grid: "Solar & Netz",
+	solar_only: "Nur Solar",
+};
+
+export const EV_CHARGER_PHASE_MODE_STATES: Record<string, string> = {
+	automatic: "Automatisch",
+	one_phase: "1-phasig",
+};
+
 /** HA de.json labels for preset_usage_mode */
 export const USAGE_MODE_STATES: Record<string, string> = {
 	manual: "Benutzerdefiniert",
@@ -187,6 +197,36 @@ const CONTROL_ENTITIES: EntityMeta[] = [
 	{ id: "ev_charger_auto_start_switch", kind: "switch", role: "switch" },
 	{ id: "ev_charger_auto_charge_restart_switch", kind: "switch", role: "switch" },
 	{ id: "ev_charger_random_delay_switch", kind: "switch", role: "switch" },
+	{
+		id: "ev_charger_max_current",
+		kind: "number",
+		role: "level.current",
+		unit: "A",
+		min: 6,
+		max: 32,
+	},
+	{ id: "ev_charger_solar_switch", kind: "switch", role: "switch" },
+	{
+		id: "ev_charger_solar_mode",
+		kind: "list",
+		role: "value.mode",
+		states: EV_CHARGER_SOLAR_MODE_STATES,
+	},
+	{
+		id: "ev_charger_solar_min_current",
+		kind: "number",
+		role: "level.current",
+		unit: "A",
+		min: 6,
+		max: 32,
+	},
+	{
+		id: "ev_charger_phase_mode",
+		kind: "list",
+		role: "value.mode",
+		states: EV_CHARGER_PHASE_MODE_STATES,
+	},
+	{ id: "ev_charger_auto_phase_switch", kind: "switch", role: "switch" },
 	{ id: "preset_discharge_priority", kind: "switch", role: "switch" },
 	{ id: "preset_backup_option", kind: "switch", role: "switch" },
 	{ id: "preset_charge_priority", kind: "number", role: "level", unit: "%", min: 0, max: 100 },
@@ -354,6 +394,12 @@ export const STATISTICS_LABELS: Record<string, string> = {
 	ev_charger_auto_start_switch: "Auto-Start (EV-Lader)",
 	ev_charger_auto_charge_restart_switch: "Laden nach Pause neu starten (EV-Lader)",
 	ev_charger_random_delay_switch: "Zufallsverzögerung Start (EV-Lader)",
+	ev_charger_max_current: "Max. Ladestrom (EV-Lader)",
+	ev_charger_solar_switch: "Solar-Laden (EV-Lader)",
+	ev_charger_solar_mode: "Solar-Lade-Modus (EV-Lader)",
+	ev_charger_solar_min_current: "Mindeststrom Solar (EV-Lader)",
+	ev_charger_phase_mode: "Phasenbetrieb (EV-Lader)",
+	ev_charger_auto_phase_switch: "Auto-Phasenumschaltung (EV-Lader)",
 	...Object.fromEntries(
 		(["week", "month", "year"] as const).flatMap(period => {
 			const rows: [string, string][] = [[`${period}_energy_period`, PERIOD_NAMES_DE[period]]];

@@ -242,6 +242,10 @@ async function syncDevices(adapter, devices) {
           common.states = import_entities.EV_CHARGER_SCHEDULE_MODE_STATES;
         } else if (entityId === "ev_charger_weekend_mode") {
           common.states = import_entities.EV_CHARGER_WEEKEND_MODE_STATES;
+        } else if (entityId === "ev_charger_solar_mode") {
+          common.states = import_entities.EV_CHARGER_SOLAR_MODE_STATES;
+        } else if (entityId === "ev_charger_phase_mode") {
+          common.states = import_entities.EV_CHARGER_PHASE_MODE_STATES;
         } else if (entityId === "ev_charger_mode") {
           const opts = ((_e = device.ev_charger_mode_options) == null ? void 0 : _e.length) ? device.ev_charger_mode_options : Object.keys(import_entities.EV_CHARGER_MODE_ACTION_STATES);
           const states = {};

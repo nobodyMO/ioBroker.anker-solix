@@ -172,6 +172,12 @@ export const ENTITY_ID_GROUPS: Record<string, string[]> = {
 	ev_charger_auto_start_switch: [ENTITY_GROUP_EV_CHARGER],
 	ev_charger_auto_charge_restart_switch: [ENTITY_GROUP_EV_CHARGER],
 	ev_charger_random_delay_switch: [ENTITY_GROUP_EV_CHARGER],
+	ev_charger_max_current: [ENTITY_GROUP_EV_CHARGER],
+	ev_charger_solar_switch: [ENTITY_GROUP_EV_CHARGER],
+	ev_charger_solar_mode: [ENTITY_GROUP_EV_CHARGER],
+	ev_charger_solar_min_current: [ENTITY_GROUP_EV_CHARGER],
+	ev_charger_phase_mode: [ENTITY_GROUP_EV_CHARGER],
+	ev_charger_auto_phase_switch: [ENTITY_GROUP_EV_CHARGER],
 	hes_grid_power: [ENTITY_GROUP_HES],
 	powerpanel_avg_power: [ENTITY_GROUP_POWER_PANEL],
 	// advanced (read-only in bridge)

@@ -70,6 +70,7 @@ EV_CHARGER_SCHEDULE_CONTROL_IDS: list[str] = [
 ]
 
 
+
 def _mqtt_val(data: dict, key: str) -> Any:
     mqtt = data.get("mqtt_data")
     if isinstance(mqtt, dict) and key in mqtt and mqtt[key] not in (None, ""):
@@ -108,11 +109,12 @@ def _schedule_mode_name(val: Any) -> str | None:
 def _weekend_mode_name(val: Any) -> str | None:
     if val is None or val == "":
         return None
-    return get_enum_name(
-        SolixScheduleWeekendMode,
-        str(val),
-        SolixScheduleWeekendMode.same.name,
-    )
+    s = str(val).strip().lower()
+    if s in ("same", "1", SolixScheduleWeekendMode.same.name):
+        return SolixScheduleWeekendMode.same.name
+    if s in ("different", "2", SolixScheduleWeekendMode.different.name):
+        return SolixScheduleWeekendMode.different.name
+    return get_enum_name(SolixScheduleWeekendMode, str(val), None)
 
 
 def _format_time(val: Any) -> str | None:
@@ -127,6 +129,13 @@ def _format_time(val: Any) -> str | None:
 
 def extract_ev_charger_control_value(control_id: str, data: dict) -> Any:
     """Map device/MQTT cache to ioBroker state value."""
+    from ev_charger_power import (  # noqa: PLC0415
+        EV_CHARGER_POWER_CONTROL_IDS,
+        extract_ev_charger_power_value,
+    )
+
+    if control_id in EV_CHARGER_POWER_CONTROL_IDS:
+        return extract_ev_charger_power_value(control_id, data)
     if control_id == "ev_charger_schedule_switch":
         return _schedule_switch_on(_mqtt_val(data, "schedule_switch"))
     if control_id == "ev_charger_schedule_mode":
@@ -189,8 +198,17 @@ def _parse_time_set(value: Any) -> str:
     raise ValueError(f"Invalid time '{value}' (use HH:MM)")
 
 
-def parse_ev_charger_control_set(control_id: str, value: Any) -> tuple[str, str, Any]:
+def parse_ev_charger_control_set(
+    control_id: str, value: Any, data: dict | None = None
+) -> tuple[str, str, Any]:
     """Return (mqtt_command, parameter_name, mqtt_value) for _mqtt_command."""
+    from ev_charger_power import (  # noqa: PLC0415
+        EV_CHARGER_POWER_CONTROL_IDS,
+        parse_ev_charger_power_set,
+    )
+
+    if control_id in EV_CHARGER_POWER_CONTROL_IDS:
+        return parse_ev_charger_power_set(control_id, value, data)
     if control_id in _EV_CONTROL_SPECS:
         cmd, parm, kind = _EV_CONTROL_SPECS[control_id]
         if kind == "schedule_onoff":
@@ -224,6 +242,13 @@ def ev_charger_control_supported(
     control_id: str, data: dict, mdev: Any | None = None
 ) -> bool:
     """True when command exists on MQTT device mapping (and random_delay if required)."""
+    from ev_charger_power import (  # noqa: PLC0415
+        EV_CHARGER_POWER_CONTROL_IDS,
+        ev_charger_power_control_supported,
+    )
+
+    if control_id in EV_CHARGER_POWER_CONTROL_IDS:
+        return ev_charger_power_control_supported(control_id, data, mdev)
     if control_id == "ev_charger_random_delay_switch":
         features = data.get("device_code_features") or {}
         if features.get("delay_start") is False:
@@ -253,3 +278,11 @@ def writable_ev_charger_schedule_controls(
         for cid in EV_CHARGER_SCHEDULE_CONTROL_IDS
         if ev_charger_control_writable(cid, data, config, mdev)
     ]
+
+
+from ev_charger_power import EV_CHARGER_POWER_CONTROL_IDS  # noqa: E402
+
+EV_CHARGER_MQTT_CONTROL_IDS: list[str] = [
+    *EV_CHARGER_SCHEDULE_CONTROL_IDS,
+    *EV_CHARGER_POWER_CONTROL_IDS,
+]

@@ -22,7 +22,9 @@ __export(entities_exports, {
   ENTITY_MAP: () => ENTITY_MAP,
   EV_CHARGER_MODE_ACTION_STATES: () => EV_CHARGER_MODE_ACTION_STATES,
   EV_CHARGER_MODE_STATES: () => EV_CHARGER_MODE_STATES,
+  EV_CHARGER_PHASE_MODE_STATES: () => EV_CHARGER_PHASE_MODE_STATES,
   EV_CHARGER_SCHEDULE_MODE_STATES: () => EV_CHARGER_SCHEDULE_MODE_STATES,
+  EV_CHARGER_SOLAR_MODE_STATES: () => EV_CHARGER_SOLAR_MODE_STATES,
   EV_CHARGER_WEEKEND_MODE_STATES: () => EV_CHARGER_WEEKEND_MODE_STATES,
   LIFETIME_STATISTICS_ENTITY_IDS: () => LIFETIME_STATISTICS_ENTITY_IDS,
   STATISTICS_ENTITIES: () => STATISTICS_ENTITIES,
@@ -53,6 +55,14 @@ const EV_CHARGER_SCHEDULE_MODE_STATES = {
 const EV_CHARGER_WEEKEND_MODE_STATES = {
   same: "Wochenende wie Werktag",
   different: "Wochenende anders"
+};
+const EV_CHARGER_SOLAR_MODE_STATES = {
+  solar_grid: "Solar & Netz",
+  solar_only: "Nur Solar"
+};
+const EV_CHARGER_PHASE_MODE_STATES = {
+  automatic: "Automatisch",
+  one_phase: "1-phasig"
 };
 const USAGE_MODE_STATES = {
   manual: "Benutzerdefiniert",
@@ -198,6 +208,36 @@ const CONTROL_ENTITIES = [
   { id: "ev_charger_auto_start_switch", kind: "switch", role: "switch" },
   { id: "ev_charger_auto_charge_restart_switch", kind: "switch", role: "switch" },
   { id: "ev_charger_random_delay_switch", kind: "switch", role: "switch" },
+  {
+    id: "ev_charger_max_current",
+    kind: "number",
+    role: "level.current",
+    unit: "A",
+    min: 6,
+    max: 32
+  },
+  { id: "ev_charger_solar_switch", kind: "switch", role: "switch" },
+  {
+    id: "ev_charger_solar_mode",
+    kind: "list",
+    role: "value.mode",
+    states: EV_CHARGER_SOLAR_MODE_STATES
+  },
+  {
+    id: "ev_charger_solar_min_current",
+    kind: "number",
+    role: "level.current",
+    unit: "A",
+    min: 6,
+    max: 32
+  },
+  {
+    id: "ev_charger_phase_mode",
+    kind: "list",
+    role: "value.mode",
+    states: EV_CHARGER_PHASE_MODE_STATES
+  },
+  { id: "ev_charger_auto_phase_switch", kind: "switch", role: "switch" },
   { id: "preset_discharge_priority", kind: "switch", role: "switch" },
   { id: "preset_backup_option", kind: "switch", role: "switch" },
   { id: "preset_charge_priority", kind: "number", role: "level", unit: "%", min: 0, max: 100 },
@@ -355,6 +395,12 @@ const STATISTICS_LABELS = {
   ev_charger_auto_start_switch: "Auto-Start (EV-Lader)",
   ev_charger_auto_charge_restart_switch: "Laden nach Pause neu starten (EV-Lader)",
   ev_charger_random_delay_switch: "Zufallsverz\xF6gerung Start (EV-Lader)",
+  ev_charger_max_current: "Max. Ladestrom (EV-Lader)",
+  ev_charger_solar_switch: "Solar-Laden (EV-Lader)",
+  ev_charger_solar_mode: "Solar-Lade-Modus (EV-Lader)",
+  ev_charger_solar_min_current: "Mindeststrom Solar (EV-Lader)",
+  ev_charger_phase_mode: "Phasenbetrieb (EV-Lader)",
+  ev_charger_auto_phase_switch: "Auto-Phasenumschaltung (EV-Lader)",
   ...Object.fromEntries(
     ["week", "month", "year"].flatMap((period) => {
       const rows = [[`${period}_energy_period`, PERIOD_NAMES_DE[period]]];
@@ -382,7 +428,9 @@ function isWritable(entityId, writable) {
   ENTITY_MAP,
   EV_CHARGER_MODE_ACTION_STATES,
   EV_CHARGER_MODE_STATES,
+  EV_CHARGER_PHASE_MODE_STATES,
   EV_CHARGER_SCHEDULE_MODE_STATES,
+  EV_CHARGER_SOLAR_MODE_STATES,
   EV_CHARGER_WEEKEND_MODE_STATES,
   LIFETIME_STATISTICS_ENTITY_IDS,
   STATISTICS_ENTITIES,

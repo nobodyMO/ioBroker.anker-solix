@@ -716,15 +716,15 @@ async def _set_ev_charger_schedule_control(
         kwargs: dict[str, Any] = {}
         if control in _TIME_CONTROLS:
             kwargs[_TIME_CONTROLS[control]] = str(
-                parse_ev_charger_control_set(control, value)[2]
+                parse_ev_charger_control_set(control, value, device)[2]
             )
         else:
-            _, _, mode_name = parse_ev_charger_control_set(control, value)
+            _, _, mode_name = parse_ev_charger_control_set(control, value, device)
             kwargs["weekend_mode"] = mode_name
         if await mdev.set_ev_charger_schedule(**kwargs) is None:
             raise RuntimeError(f"{control} rejected: MQTT schedule update failed")
     else:
-        cmd, parm, mqtt_val = parse_ev_charger_control_set(control, value)
+        cmd, parm, mqtt_val = parse_ev_charger_control_set(control, value, device)
         reject = _mqtt_command_reject_reason(api, device_id, cmd, ha_client)
         if reject:
             raise RuntimeError(f"{control} rejected: {reject}")

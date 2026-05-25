@@ -36,7 +36,10 @@ function isBridgeControlError(message: string): boolean {
 		message.includes("Invalid schedule") ||
 		message.includes("Invalid time") ||
 		message.includes("Invalid weekend mode") ||
-		message.includes("Invalid switch value")
+		message.includes("Invalid switch value") ||
+		message.includes("Invalid current") ||
+		message.includes("Invalid solar mode") ||
+		message.includes("Invalid phase mode")
 	);
 }
 

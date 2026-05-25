@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.57",
+		"version": "0.10.58",
 		"messagebox": true,
 		"news": {
+			"0.10.58": {
+				"en": "EV charger step 3: max current, solar charging, phase mode, auto phase switch (MQTT)",
+				"de": "EV-Lader Schritt 3: Ladestrom, Solar-Laden, Phasenbetrieb, Auto-Phasenumschaltung (MQTT)",
+				"ru": "EV charger power and solar controls",
+				"pt": "EV charger power and solar controls",
+				"nl": "EV charger power and solar controls",
+				"fr": "EV charger power and solar controls",
+				"it": "EV charger power and solar controls",
+				"es": "EV charger power and solar controls",
+				"pl": "EV charger power and solar controls",
+				"uk": "EV charger power and solar controls",
+				"zh-cn": "EV 充电桩电流、太阳能与相位控制"
+			},
 			"0.10.57": {
 				"en": "Fix bat_charge_power null while charging when grid/home flow fields are present",
 				"de": "Fix bat_charge_power: Ladeleistung wieder sichtbar wenn Netz/Home-Flow-Felder gesetzt sind",
@@ -250,19 +263,6 @@
 				"pl": "max_total_ac_output persist",
 				"uk": "max_total_ac_output persist",
 				"zh-cn": "max_total_ac_output 轮询后保持"
-			},
-			"0.10.38": {
-				"en": "Clearer control labels; combiner reads station grid feed-in limit + AC input from cloud",
-				"de": "Klarere Bezeichnungen; Combiner liest Station Einspeise-Limit + AC-Eingang aus Cloud",
-				"ru": "Clearer labels + station limits",
-				"pt": "Clearer labels + station limits",
-				"nl": "Clearer labels + station limits",
-				"fr": "Clearer labels + station limits",
-				"it": "Clearer labels + station limits",
-				"es": "Clearer labels + station limits",
-				"pl": "Clearer labels + station limits",
-				"uk": "Clearer labels + station limits",
-				"zh-cn": "更清晰命名；Combiner 读取站点限值"
 			}
 		},
 		"titleLang": {

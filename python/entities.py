@@ -641,17 +641,17 @@ def writable_controls_for_device(
     if dev_type == "ev_charger":
         from ev_charger_mode import ev_charger_mode_writable  # noqa: PLC0415
         from ev_charger_schedule import (  # noqa: PLC0415
-            EV_CHARGER_SCHEDULE_CONTROL_IDS,
+            EV_CHARGER_MQTT_CONTROL_IDS,
             ev_charger_control_writable,
         )
 
         if "ev_charger_mode" in controls and not ev_charger_mode_writable(data, config):
             controls = [c for c in controls if c != "ev_charger_mode"]
-        for sched_id in EV_CHARGER_SCHEDULE_CONTROL_IDS:
-            if sched_id in controls and not ev_charger_control_writable(
-                sched_id, data, config
+        for ev_id in EV_CHARGER_MQTT_CONTROL_IDS:
+            if ev_id in controls and not ev_charger_control_writable(
+                ev_id, data, config
             ):
-                controls = [c for c in controls if c != sched_id]
+                controls = [c for c in controls if c != ev_id]
     return controls
 
 
