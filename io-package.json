@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.66",
+		"version": "0.10.67",
 		"messagebox": true,
 		"news": {
+			"0.10.67": {
+				"en": "Admin: remove Devices tab and load-devices; Python install on Account; device filter on Objects; Login-Cache last",
+				"de": "Admin: Tab Geräte entfernt; Python-Install unter Konto; Gerätefilter unter Objekte; Login-Cache ganz rechts",
+				"ru": "Admin UI simplification",
+				"pt": "Admin UI simplification",
+				"nl": "Admin UI simplification",
+				"fr": "Admin UI simplification",
+				"it": "Admin UI simplification",
+				"es": "Admin UI simplification",
+				"pl": "Admin UI simplification",
+				"uk": "Admin UI simplification",
+				"zh-cn": "简化管理界面：移除设备标签页"
+			},
 			"0.10.66": {
 				"en": "Fix admin: device list and login-cache status display (useNative response)",
 				"de": "Fix Admin: Geräteliste und Login-Cache-Status werden wieder angezeigt (useNative)",
@@ -250,19 +263,6 @@
 				"pl": "Fix solarbank_info totals every poll",
 				"uk": "Fix solarbank_info totals every poll",
 				"zh-cn": "修复 solarbank_info 总功率每轮更新"
-			},
-			"0.10.47": {
-				"en": "Fix system lifetime stats (total_energy, CO2, money): update every poll under sensors.*",
-				"de": "Fix Lifetime-Statistik (total_energy, CO2, Geld): bei jedem Poll unter sensors.*",
-				"ru": "Fix lifetime stats every poll",
-				"pt": "Fix lifetime stats every poll",
-				"nl": "Fix lifetime stats every poll",
-				"fr": "Fix lifetime stats every poll",
-				"it": "Fix lifetime stats every poll",
-				"es": "Fix lifetime stats every poll",
-				"pl": "Fix lifetime stats every poll",
-				"uk": "Fix lifetime stats every poll",
-				"zh-cn": "修复系统终身统计每轮更新"
 			}
 		},
 		"titleLang": {

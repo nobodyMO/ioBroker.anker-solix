@@ -316,14 +316,8 @@ class AnkerSolix extends utils.Adapter {
 		if (selected[0]) {
 			return selected[0];
 		}
-		try {
-			const list = JSON.parse(this.config.deviceListJson || '{"devices":[]}') as {
-				devices?: Array<{ id: string }>;
-			};
-			return list.devices?.[0]?.id || "";
-		} catch {
-			return "";
-		}
+		const first = this.deviceContexts.keys().next().value;
+		return first || "";
 	}
 
 	private async handleServiceTrigger(stateId: string): Promise<void> {
@@ -773,28 +767,6 @@ class AnkerSolix extends utils.Adapter {
 			if (obj.command === "installPython") {
 				const ok = await this.ensurePythonDeps(true);
 				respond({ ok });
-				return;
-			}
-
-			if (obj.command === "loadDevices") {
-				if (!this.config.username || !this.config.password) {
-					respond({ error: "Credentials required" });
-					return;
-				}
-				await this.ensurePythonDeps();
-				const result = await runBridge(
-					"list_devices",
-					this.getBridgeConfig(),
-					this.config.pythonPath || "",
-					this.log,
-				);
-				const payload = {
-					sites: result.sites || [],
-					devices: result.devices || [],
-				};
-				this.ensureAuthCacheBackedUp();
-				const deviceListJson = JSON.stringify(payload, null, 2);
-				respondNative({ deviceListJson });
 				return;
 			}
 

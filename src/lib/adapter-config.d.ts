@@ -50,8 +50,6 @@ declare global {
 			selectedSiteId: string;
 			/** Comma-separated device SNs or array from ioBroker */
 			selectedDeviceIds: string | string[];
-			/** Populated by admin sendTo – device list JSON */
-			deviceListJson?: string;
 			/** Populated by admin sendTo – login cache status line */
 			authCacheStatusLine?: string;
 			/** Optional curtailment avoidance (solarprognose forecast). */

@@ -34,133 +34,6 @@
 					"lg": 4,
 					"xl": 4
 				},
-				"acceptTerms": {
-					"type": "checkbox",
-					"label": "acceptTerms",
-					"xs": 12,
-					"sm": 12,
-					"md": 12,
-					"lg": 12,
-					"xl": 12
-				},
-				"_terms_hint": {
-					"type": "staticText",
-					"text": "terms_hint",
-					"xs": 12,
-					"sm": 12,
-					"md": 12,
-					"lg": 12,
-					"xl": 12
-				}
-			}
-		},
-		"_tab_auth_cache": {
-			"type": "panel",
-			"label": "AuthCache",
-			"items": {
-				"_auth_cache_hint": {
-					"type": "staticText",
-					"text": "auth_cache_hint",
-					"xs": 12,
-					"sm": 12,
-					"md": 12,
-					"lg": 12,
-					"xl": 12
-				},
-				"authCacheStatusLine": {
-					"type": "text",
-					"label": "authCacheStatusLabel",
-					"readOnly": true,
-					"minRows": 2,
-					"maxRows": 4,
-					"default": "",
-					"xs": 12,
-					"sm": 12,
-					"md": 12,
-					"lg": 12,
-					"xl": 12
-				},
-				"authCacheStatus": {
-					"type": "sendTo",
-					"command": "authCacheStatus",
-					"label": "authCacheStatus",
-					"variant": "outlined",
-					"useNative": true,
-					"onLoaded": true,
-					"showProcess": true,
-					"xs": 12,
-					"sm": 6,
-					"md": 4,
-					"lg": 4,
-					"xl": 4
-				},
-				"restoreAuthCache": {
-					"type": "sendTo",
-					"label": "restoreAuthCache",
-					"command": "restoreAuthCache",
-					"variant": "contained",
-					"useNative": true,
-					"showProcess": true,
-					"xs": 12,
-					"sm": 6,
-					"md": 4,
-					"lg": 4,
-					"xl": 4
-				},
-				"_clearAuthCache_warn": {
-					"type": "staticText",
-					"text": "clearAuthCache_warn",
-					"style": {
-						"fontSize": "0.9em",
-						"color": "#b45309"
-					},
-					"xs": 12,
-					"sm": 12,
-					"md": 12,
-					"lg": 12,
-					"xl": 12
-				},
-				"clearAuthCache": {
-					"type": "sendTo",
-					"label": "clearAuthCache",
-					"command": "clearAuthCache",
-					"variant": "outlined",
-					"useNative": true,
-					"showProcess": true,
-					"xs": 12,
-					"sm": 6,
-					"md": 4,
-					"lg": 4,
-					"xl": 4
-				}
-			}
-		},
-		"_tab_devices": {
-			"type": "panel",
-			"label": "Devices",
-			"items": {
-				"_devices_hint": {
-					"type": "staticText",
-					"text": "devices_hint",
-					"xs": 12,
-					"sm": 12,
-					"md": 12,
-					"lg": 12,
-					"xl": 12
-				},
-				"loadDevices": {
-					"type": "sendTo",
-					"label": "loadDevices",
-					"command": "loadDevices",
-					"variant": "contained",
-					"useNative": true,
-					"showProcess": true,
-					"xs": 12,
-					"sm": 6,
-					"md": 4,
-					"lg": 4,
-					"xl": 4
-				},
 				"installPython": {
 					"type": "sendTo",
 					"label": "installPython",
@@ -173,40 +46,18 @@
 					"lg": 4,
 					"xl": 4
 				},
-				"enableAllDevices": {
+				"acceptTerms": {
 					"type": "checkbox",
-					"label": "enableAllDevices",
-					"default": true,
-					"xs": 12,
-					"sm": 6,
-					"md": 4,
-					"lg": 4,
-					"xl": 4
-				},
-				"selectedSiteId": {
-					"type": "text",
-					"label": "selectedSiteId",
-					"xs": 12,
-					"sm": 6,
-					"md": 4,
-					"lg": 4,
-					"xl": 4
-				},
-				"selectedDeviceIds": {
-					"type": "text",
-					"label": "selectedDeviceIds",
+					"label": "acceptTerms",
 					"xs": 12,
 					"sm": 12,
-					"md": 8,
-					"lg": 8,
-					"xl": 8
+					"md": 12,
+					"lg": 12,
+					"xl": 12
 				},
-				"deviceListJson": {
-					"type": "text",
-					"label": "deviceListJson",
-					"readOnly": true,
-					"minRows": 14,
-					"maxRows": 24,
+				"_terms_hint": {
+					"type": "staticText",
+					"text": "terms_hint",
 					"xs": 12,
 					"sm": 12,
 					"md": 12,
@@ -306,6 +157,49 @@
 				"_entities_hint": {
 					"type": "staticText",
 					"text": "entities_hint",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+				"enableAllDevices": {
+					"type": "checkbox",
+					"label": "enableAllDevices",
+					"default": true,
+					"xs": 12,
+					"sm": 6,
+					"md": 4,
+					"lg": 4,
+					"xl": 4
+				},
+				"selectedSiteId": {
+					"type": "text",
+					"label": "selectedSiteId",
+					"hidden": "data.enableAllDevices",
+					"xs": 12,
+					"sm": 6,
+					"md": 4,
+					"lg": 4,
+					"xl": 4
+				},
+				"selectedDeviceIds": {
+					"type": "text",
+					"label": "selectedDeviceIds",
+					"hidden": "data.enableAllDevices",
+					"xs": 12,
+					"sm": 12,
+					"md": 8,
+					"lg": 8,
+					"xl": 8
+				},
+				"_device_filter_hint": {
+					"type": "staticText",
+					"text": "device_filter_hint",
+					"style": {
+						"fontSize": "0.9em"
+					},
+					"hidden": "data.enableAllDevices",
 					"xs": 12,
 					"sm": 12,
 					"md": 12,
@@ -819,6 +713,87 @@
 					"md": 12,
 					"lg": 12,
 					"xl": 12
+				}
+			}
+		},
+		"_tab_auth_cache": {
+			"type": "panel",
+			"label": "AuthCache",
+			"items": {
+				"_auth_cache_hint": {
+					"type": "staticText",
+					"text": "auth_cache_hint",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+				"authCacheStatusLine": {
+					"type": "text",
+					"label": "authCacheStatusLabel",
+					"readOnly": true,
+					"minRows": 2,
+					"maxRows": 4,
+					"default": "",
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+				"authCacheStatus": {
+					"type": "sendTo",
+					"command": "authCacheStatus",
+					"label": "authCacheStatus",
+					"variant": "outlined",
+					"useNative": true,
+					"onLoaded": true,
+					"showProcess": true,
+					"xs": 12,
+					"sm": 6,
+					"md": 4,
+					"lg": 4,
+					"xl": 4
+				},
+				"restoreAuthCache": {
+					"type": "sendTo",
+					"label": "restoreAuthCache",
+					"command": "restoreAuthCache",
+					"variant": "contained",
+					"useNative": true,
+					"showProcess": true,
+					"xs": 12,
+					"sm": 6,
+					"md": 4,
+					"lg": 4,
+					"xl": 4
+				},
+				"_clearAuthCache_warn": {
+					"type": "staticText",
+					"text": "clearAuthCache_warn",
+					"style": {
+						"fontSize": "0.9em",
+						"color": "#b45309"
+					},
+					"xs": 12,
+					"sm": 12,
+					"md": 12,
+					"lg": 12,
+					"xl": 12
+				},
+				"clearAuthCache": {
+					"type": "sendTo",
+					"label": "clearAuthCache",
+					"command": "clearAuthCache",
+					"variant": "outlined",
+					"useNative": true,
+					"showProcess": true,
+					"xs": 12,
+					"sm": 6,
+					"md": 4,
+					"lg": 4,
+					"xl": 4
 				}
 			}
 		}

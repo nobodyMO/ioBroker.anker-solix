@@ -261,17 +261,12 @@ class AnkerSolix extends utils.Adapter {
     }
   }
   getPrimaryDeviceId() {
-    var _a, _b;
     const selected = (0, import_configHelpers.parseSelectedDeviceIds)(this.config.selectedDeviceIds);
     if (selected[0]) {
       return selected[0];
     }
-    try {
-      const list = JSON.parse(this.config.deviceListJson || '{"devices":[]}');
-      return ((_b = (_a = list.devices) == null ? void 0 : _a[0]) == null ? void 0 : _b.id) || "";
-    } catch {
-      return "";
-    }
+    const first = this.deviceContexts.keys().next().value;
+    return first || "";
   }
   async handleServiceTrigger(stateId) {
     const ns = `${this.namespace}.services.`;
@@ -669,27 +664,6 @@ class AnkerSolix extends utils.Adapter {
       if (obj.command === "installPython") {
         const ok = await this.ensurePythonDeps(true);
         respond({ ok });
-        return;
-      }
-      if (obj.command === "loadDevices") {
-        if (!this.config.username || !this.config.password) {
-          respond({ error: "Credentials required" });
-          return;
-        }
-        await this.ensurePythonDeps();
-        const result = await (0, import_pythonBridge.runBridge)(
-          "list_devices",
-          this.getBridgeConfig(),
-          this.config.pythonPath || "",
-          this.log
-        );
-        const payload = {
-          sites: result.sites || [],
-          devices: result.devices || []
-        };
-        this.ensureAuthCacheBackedUp();
-        const deviceListJson = JSON.stringify(payload, null, 2);
-        respondNative({ deviceListJson });
         return;
       }
       respond({ error: `Unknown command ${obj.command}` });
