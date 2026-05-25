@@ -521,6 +521,7 @@
 				"_curtailment_hint": {
 					"type": "staticText",
 					"text": "curtailment_hint",
+					"format": "html",
 					"xs": 12,
 					"sm": 12,
 					"md": 12,
@@ -579,6 +580,7 @@
 					"type": "header",
 					"text": "curtailment_devices_header",
 					"size": 5,
+					"hidden": "jq data.enableCurtailmentAvoidance != true",
 					"xs": 12,
 					"sm": 12,
 					"md": 12,
@@ -589,6 +591,7 @@
 					"type": "checkbox",
 					"label": "curtailmentHasCombiner",
 					"default": false,
+					"hidden": "jq data.enableCurtailmentAvoidance != true",
 					"xs": 12,
 					"sm": 12,
 					"md": 12,
@@ -599,9 +602,7 @@
 					"type": "header",
 					"text": "curtailment_standalone_header",
 					"size": 6,
-					"hidden": {
-						"jq": "data.curtailmentHasCombiner == true"
-					},
+					"hidden": "jq data.enableCurtailmentAvoidance != true || data.curtailmentHasCombiner == true",
 					"xs": 12,
 					"sm": 12,
 					"md": 12,
@@ -611,9 +612,7 @@
 				"curtailmentStandaloneDeviceId": {
 					"type": "text",
 					"label": "curtailmentStandaloneDeviceId",
-					"hidden": {
-						"jq": "data.curtailmentHasCombiner == true"
-					},
+					"hidden": "jq data.enableCurtailmentAvoidance != true || data.curtailmentHasCombiner == true",
 					"xs": 12,
 					"sm": 6,
 					"md": 4,
@@ -629,9 +628,7 @@
 						{ "label": "profile_solarbank4pro", "value": "solarbank4pro" }
 					],
 					"default": "solarbank3pro",
-					"hidden": {
-						"jq": "data.curtailmentHasCombiner == true"
-					},
+					"hidden": "jq data.enableCurtailmentAvoidance != true || data.curtailmentHasCombiner == true",
 					"xs": 12,
 					"sm": 6,
 					"md": 4,
@@ -644,9 +641,7 @@
 					"min": 1000,
 					"max": 100000,
 					"default": 5000,
-					"hidden": {
-						"jq": "data.curtailmentHasCombiner == true"
-					},
+					"hidden": "jq data.enableCurtailmentAvoidance != true || data.curtailmentHasCombiner == true",
 					"xs": 12,
 					"sm": 6,
 					"md": 4,
@@ -657,9 +652,7 @@
 					"type": "header",
 					"text": "curtailment_combiner_header",
 					"size": 6,
-					"hidden": {
-						"jq": "data.curtailmentHasCombiner != true"
-					},
+					"hidden": "jq data.enableCurtailmentAvoidance != true || data.curtailmentHasCombiner != true",
 					"xs": 12,
 					"sm": 12,
 					"md": 12,
@@ -669,9 +662,7 @@
 				"curtailmentCombinerDeviceId": {
 					"type": "text",
 					"label": "curtailmentCombinerDeviceId",
-					"hidden": {
-						"jq": "data.curtailmentHasCombiner != true"
-					},
+					"hidden": "jq data.enableCurtailmentAvoidance != true || data.curtailmentHasCombiner != true",
 					"xs": 12,
 					"sm": 6,
 					"md": 4,
@@ -684,9 +675,7 @@
 					"min": 1000,
 					"max": 200000,
 					"default": 15000,
-					"hidden": {
-						"jq": "data.curtailmentHasCombiner != true"
-					},
+					"hidden": "jq data.enableCurtailmentAvoidance != true || data.curtailmentHasCombiner != true",
 					"xs": 12,
 					"sm": 6,
 					"md": 4,
@@ -703,9 +692,7 @@
 						{ "label": "profile_solarbank4pro", "value": "solarbank4pro" }
 					],
 					"default": "",
-					"hidden": {
-						"jq": "data.curtailmentHasCombiner != true"
-					},
+					"hidden": "jq data.enableCurtailmentAvoidance != true || data.curtailmentHasCombiner != true",
 					"xs": 12,
 					"sm": 6,
 					"md": 3,
@@ -722,9 +709,7 @@
 						{ "label": "profile_solarbank4pro", "value": "solarbank4pro" }
 					],
 					"default": "",
-					"hidden": {
-						"jq": "data.curtailmentHasCombiner != true"
-					},
+					"hidden": "jq data.enableCurtailmentAvoidance != true || data.curtailmentHasCombiner != true",
 					"xs": 12,
 					"sm": 6,
 					"md": 3,
@@ -741,9 +726,7 @@
 						{ "label": "profile_solarbank4pro", "value": "solarbank4pro" }
 					],
 					"default": "",
-					"hidden": {
-						"jq": "data.curtailmentHasCombiner != true"
-					},
+					"hidden": "jq data.enableCurtailmentAvoidance != true || data.curtailmentHasCombiner != true",
 					"xs": 12,
 					"sm": 6,
 					"md": 3,
@@ -760,9 +743,7 @@
 						{ "label": "profile_solarbank4pro", "value": "solarbank4pro" }
 					],
 					"default": "",
-					"hidden": {
-						"jq": "data.curtailmentHasCombiner != true"
-					},
+					"hidden": "jq data.enableCurtailmentAvoidance != true || data.curtailmentHasCombiner != true",
 					"xs": 12,
 					"sm": 6,
 					"md": 3,
