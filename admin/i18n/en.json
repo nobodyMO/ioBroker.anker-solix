@@ -79,7 +79,7 @@
 	"cloud_state": "Cloud state",
 	"wifi_state": "WiFi state",
 	"CurtailmentAvoidance": "Curtailment avoidance",
-	"curtailment_hint": "On days with a high PV forecast (curtailment risk), the adapter prioritizes charging the battery and limits grid export to PV surplus after charging — reducing grid curtailment. After the daily window, the selected usage mode is restored. Also required: the <a href=\"https://www.iobroker.net/#en/adapters/adapterref/iobroker.solarprognose/README.md\" target=\"_blank\" rel=\"noopener noreferrer\">ioBroker.solarprognose</a> adapter (PV forecast from solarprognose.de) and sufficient live PV.",
+	"curtailment_hint": "On days with a high PV forecast (curtailment risk), the adapter deliberately delays battery charging and shifts it to times when generation exceeds the inverter limit. After the time window, the selected usage mode is restored. Also required: <a href=\"https://www.iobroker.net/#en/adapters/adapterref/iobroker.solarprognose/README.md\" target=\"_blank\" rel=\"noopener noreferrer\">ioBroker.solarprognose</a> adapter (PV forecast from solarprognose.de) and sufficient live PV.",
 	"enableCurtailmentAvoidance": "Enable curtailment avoidance",
 	"curtailmentMinPvW": "Minimum live PV (W) for controls",
 	"curtailmentMinPvW_help": "Manual mode and AC output limit apply only when live PV is at least this value (default 50). At 0, any PV above 0 W is enough. Prevents night-time feed-in from forecast.",
