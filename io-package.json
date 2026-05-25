@@ -263,19 +263,6 @@
 				"pl": "Fix solarbank_info multisystem totals",
 				"uk": "Fix solarbank_info multisystem totals",
 				"zh-cn": "修复 Multisystem solarbank_info 总功率"
-			},
-			"0.10.41": {
-				"en": "system.solarbank_info: battery_discharge_power, total_charging_power, per-SB battery_energy (AnkerSolix2 layout)",
-				"de": "system.solarbank_info: Ent-/Ladeleistung gesamt, battery_energy pro Solarbank (wie AnkerSolix2)",
-				"ru": "solarbank_info channel",
-				"pt": "solarbank_info channel",
-				"nl": "solarbank_info channel",
-				"fr": "solarbank_info channel",
-				"it": "solarbank_info channel",
-				"es": "solarbank_info channel",
-				"pl": "solarbank_info channel",
-				"uk": "solarbank_info channel",
-				"zh-cn": "system.solarbank_info 通道"
 			}
 		},
 		"titleLang": {
