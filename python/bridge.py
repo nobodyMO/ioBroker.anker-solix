@@ -724,13 +724,28 @@ async def _set_ev_charger_schedule_control(
         if await mdev.set_ev_charger_schedule(**kwargs) is None:
             raise RuntimeError(f"{control} rejected: MQTT schedule update failed")
     else:
+        from ev_charger_power import (  # noqa: PLC0415
+            build_ev_solar_charging_parm_map,
+            is_ev_solar_charging_command,
+        )
+
         cmd, parm, mqtt_val = parse_ev_charger_control_set(control, value, device)
         reject = _mqtt_command_reject_reason(api, device_id, cmd, ha_client)
         if reject:
             raise RuntimeError(f"{control} rejected: {reject}")
-        if not await _mqtt_command(
-            api, device_id, cmd, mqtt_val, parm, ha_client=ha_client
-        ):
+        if is_ev_solar_charging_command(cmd) and mdev:
+            parm_map = build_ev_solar_charging_parm_map(parm, mqtt_val, device, mdev)
+            if ha_client:
+                if not api.mqttsession or not api.mqttsession.is_connected():
+                    await ha_client.check_mqtt_session()
+            elif not await _ensure_mqtt(api):
+                raise RuntimeError(f"{control} requires an active MQTT session")
+            ok = (await mdev.run_command(cmd=cmd, parm_map=parm_map)) is not None
+        else:
+            ok = await _mqtt_command(
+                api, device_id, cmd, mqtt_val, parm, ha_client=ha_client
+            )
+        if not ok:
             reject = _mqtt_command_reject_reason(api, device_id, cmd, ha_client)
             raise RuntimeError(
                 f"{control} rejected: {reject or 'MQTT publish failed (see log)'}"

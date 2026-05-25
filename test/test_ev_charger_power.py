@@ -8,6 +8,7 @@ if str(PYTHON_DIR) not in sys.path:
     sys.path.insert(0, str(PYTHON_DIR))
 
 from ev_charger_power import (  # noqa: E402
+    build_ev_solar_charging_parm_map,
     extract_ev_charger_power_value,
     ev_charger_power_control_supported,
     ev_charger_power_control_writable,
@@ -51,8 +52,25 @@ def test_parse_solar_switch() -> None:
 
 
 def test_parse_phase_mode() -> None:
-    _, _, val = parse_ev_charger_power_set("ev_charger_phase_mode", "one_phase")
+    _, parm, val = parse_ev_charger_power_set("ev_charger_phase_mode", "one_phase")
+    assert parm == "set_phase_operating_mode?"
     assert val == 1
+
+
+def test_solar_charging_parm_map_includes_switch() -> None:
+    data = {
+        "solar_evcharge_switch": "1",
+        "solar_evcharge_mode": "0",
+        "solar_evcharge_min_current": "8",
+        "phase_operating_mode": "0",
+        "solar_evcharge_monitoring_mode": "0",
+        "auto_phase_switch": "0",
+    }
+    parm_map = build_ev_solar_charging_parm_map(
+        "set_solar_evcharge_mode", 1, data
+    )
+    assert parm_map["set_solar_evcharge_switch"] == 1
+    assert parm_map["set_solar_evcharge_mode"] == 1
 
 
 def test_auto_phase_hidden_on_single_phase() -> None:

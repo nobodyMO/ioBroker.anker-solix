@@ -45,7 +45,7 @@ _EV_POWER_SPECS: dict[str, tuple[str, str, str]] = {
     ),
     "ev_charger_phase_mode": (
         SolixMqttCommands.ev_solar_charging,
-        "set_phase_operating_mode",
+        "set_phase_operating_mode?",
         "phase_mode",
     ),
     "ev_charger_auto_phase_switch": (
@@ -56,6 +56,16 @@ _EV_POWER_SPECS: dict[str, tuple[str, str, str]] = {
 }
 
 EV_CHARGER_POWER_CONTROL_IDS: list[str] = list(_EV_POWER_SPECS.keys())
+
+# All parameters of CMD_EV_SOLAR_CHARGING (must be sent together).
+_SOLAR_CHARGING_PARM_SPECS: list[tuple[str, str, str]] = [
+    ("set_solar_evcharge_switch", "solar_evcharge_switch", "std_onoff"),
+    ("set_solar_evcharge_mode", "solar_evcharge_mode", "solar_mode"),
+    ("set_solar_evcharge_min_current", "solar_evcharge_min_current", "current_a"),
+    ("set_phase_operating_mode?", "phase_operating_mode", "phase_mode"),
+    ("set_solar_evcharge_monitoring_mode", "solar_evcharge_monitoring_mode", "std_onoff"),
+    ("set_auto_phase_switch", "auto_phase_switch", "std_onoff"),
+]
 
 
 def _mqtt_val(data: dict, key: str) -> Any:
@@ -69,6 +79,77 @@ def _std_switch_on(val: Any) -> bool:
     if val is None or val == "":
         return False
     return str(val).strip().lower() in ("1", "true", "on", "yes")
+
+
+def _mqtt_switch_int(val: Any, *, default: int = 0) -> int:
+    if val is None or val == "":
+        return default
+    if isinstance(val, bool):
+        return 1 if val else 0
+    try:
+        return _parse_std_switch_set(val)
+    except ValueError:
+        return 1 if _std_switch_on(val) else 0
+
+
+def _current_from_data(data: dict, key: str) -> int:
+    amps = _display_amps(_mqtt_val(data, key))
+    if amps is None:
+        min_a, _ = _current_limits(data)
+        return min_a
+    return int(round(amps))
+
+
+def _merge_mqtt_cache(data: dict, mdev: Any | None = None) -> dict:
+    merged = dict(data)
+    mqtt = getattr(mdev, "mqttdata", None) if mdev is not None else None
+    if isinstance(mqtt, dict):
+        for key, val in mqtt.items():
+            if val is not None and val != "":
+                merged[key] = val
+    nested = merged.get("mqtt_data")
+    if isinstance(nested, dict):
+        for key, val in nested.items():
+            if val is not None and val != "":
+                merged[key] = val
+    return merged
+
+
+def _encode_solar_parm_value(state_key: str, kind: str, data: dict) -> Any:
+    if kind == "std_onoff":
+        return _mqtt_switch_int(_mqtt_val(data, state_key))
+    if kind == "solar_mode":
+        name = _solar_mode_name(_mqtt_val(data, state_key)) or "solar_grid"
+        return _parse_solar_mode_set(name)
+    if kind == "phase_mode":
+        name = _phase_mode_name(_mqtt_val(data, state_key)) or "automatic"
+        return _parse_phase_mode_set(name)
+    if kind == "current_a":
+        return _current_from_data(data, state_key)
+    raise ValueError(f"Unknown solar charging parameter kind '{kind}'")
+
+
+def build_ev_solar_charging_parm_map(
+    target_parm: str,
+    target_value: Any,
+    data: dict,
+    mdev: Any | None = None,
+) -> dict[str, Any]:
+    """Build full parm_map for ev_solar_charging (all fields required by encoder)."""
+    cache = _merge_mqtt_cache(data, mdev)
+    parm_map: dict[str, Any] = {}
+    for parm, state_key, kind in _SOLAR_CHARGING_PARM_SPECS:
+        if parm == target_parm:
+            parm_map[parm] = target_value
+        else:
+            parm_map[parm] = _encode_solar_parm_value(state_key, kind, cache)
+    monitor = str(_mqtt_val(cache, "solar_evcharge_monitor_device") or "").strip()
+    parm_map["set_solar_evcharge_monitor_device"] = monitor
+    return parm_map
+
+
+def is_ev_solar_charging_command(cmd: str) -> bool:
+    return cmd == SolixMqttCommands.ev_solar_charging
 
 
 def _parse_std_switch_set(value: Any) -> int:
