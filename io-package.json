@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.55",
+		"version": "0.10.56",
 		"messagebox": true,
 		"news": {
+			"0.10.56": {
+				"en": "EV charger step 2: schedule & automation controls via MQTT (times, weekend mode, auto-start, random delay)",
+				"de": "EV-Lader Schritt 2: Zeitplan & Automatik per MQTT (Zeiten, Wochenende, Auto-Start, Zufallsverzögerung)",
+				"ru": "EV charger schedule controls",
+				"pt": "EV charger schedule controls",
+				"nl": "EV charger schedule controls",
+				"fr": "EV charger schedule controls",
+				"it": "EV charger schedule controls",
+				"es": "EV charger schedule controls",
+				"pl": "EV charger schedule controls",
+				"uk": "EV charger schedule controls",
+				"zh-cn": "EV 充电桩时间表与自动化控制"
+			},
 			"0.10.55": {
 				"en": "Fix bat_discharge_power: no false discharge when PV feeds grid and battery is idle (charging_power 0)",
 				"de": "Fix bat_discharge_power: keine falsche Entladung bei reiner PV-Einspeisung (Akku idle, charging_power 0)",
@@ -250,19 +263,6 @@
 				"pl": "max_total_ac_output MQTT cache",
 				"uk": "max_total_ac_output MQTT cache",
 				"zh-cn": "max_total_ac_output 保留 MQTT 设置值"
-			},
-			"0.10.36": {
-				"en": "New control max_total_ac_output (MQTT grid max AC 1200–4800 W); curtailment never touches it",
-				"de": "Neuer Datenpunkt max_total_ac_output (MQTT Max. Gesamtausgangsleistung); Abregelung setzt ihn nicht",
-				"ru": "max_total_ac_output control",
-				"pt": "max_total_ac_output control",
-				"nl": "max_total_ac_output control",
-				"fr": "max_total_ac_output control",
-				"it": "max_total_ac_output control",
-				"es": "max_total_ac_output control",
-				"pl": "max_total_ac_output control",
-				"uk": "max_total_ac_output control",
-				"zh-cn": "新增 max_total_ac_output 控制；限电不修改"
 			}
 		},
 		"titleLang": {

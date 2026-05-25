@@ -22,6 +22,8 @@ __export(entities_exports, {
   ENTITY_MAP: () => ENTITY_MAP,
   EV_CHARGER_MODE_ACTION_STATES: () => EV_CHARGER_MODE_ACTION_STATES,
   EV_CHARGER_MODE_STATES: () => EV_CHARGER_MODE_STATES,
+  EV_CHARGER_SCHEDULE_MODE_STATES: () => EV_CHARGER_SCHEDULE_MODE_STATES,
+  EV_CHARGER_WEEKEND_MODE_STATES: () => EV_CHARGER_WEEKEND_MODE_STATES,
   LIFETIME_STATISTICS_ENTITY_IDS: () => LIFETIME_STATISTICS_ENTITY_IDS,
   STATISTICS_ENTITIES: () => STATISTICS_ENTITIES,
   STATISTICS_ENTITY_IDS: () => STATISTICS_ENTITY_IDS,
@@ -43,6 +45,14 @@ const EV_CHARGER_MODE_ACTION_STATES = {
   stop_charge: EV_CHARGER_MODE_STATES.stop_charge,
   skip_delay: EV_CHARGER_MODE_STATES.skip_delay,
   boost_charge: EV_CHARGER_MODE_STATES.boost_charge
+};
+const EV_CHARGER_SCHEDULE_MODE_STATES = {
+  normal: "Normal",
+  smart: "Smart"
+};
+const EV_CHARGER_WEEKEND_MODE_STATES = {
+  same: "Wochenende wie Werktag",
+  different: "Wochenende anders"
 };
 const USAGE_MODE_STATES = {
   manual: "Benutzerdefiniert",
@@ -178,6 +188,16 @@ const CONTROL_ENTITIES = [
   },
   { id: "ac_fast_charge_switch", kind: "switch", role: "switch" },
   { id: "ev_charger_mode", kind: "list", role: "value.mode", states: EV_CHARGER_MODE_ACTION_STATES },
+  { id: "ev_charger_schedule_switch", kind: "switch", role: "switch" },
+  { id: "ev_charger_schedule_mode", kind: "list", role: "value.mode", states: EV_CHARGER_SCHEDULE_MODE_STATES },
+  { id: "ev_charger_week_start_time", kind: "text", role: "text" },
+  { id: "ev_charger_week_end_time", kind: "text", role: "text" },
+  { id: "ev_charger_weekend_start_time", kind: "text", role: "text" },
+  { id: "ev_charger_weekend_end_time", kind: "text", role: "text" },
+  { id: "ev_charger_weekend_mode", kind: "list", role: "value.mode", states: EV_CHARGER_WEEKEND_MODE_STATES },
+  { id: "ev_charger_auto_start_switch", kind: "switch", role: "switch" },
+  { id: "ev_charger_auto_charge_restart_switch", kind: "switch", role: "switch" },
+  { id: "ev_charger_random_delay_switch", kind: "switch", role: "switch" },
   { id: "preset_discharge_priority", kind: "switch", role: "switch" },
   { id: "preset_backup_option", kind: "switch", role: "switch" },
   { id: "preset_charge_priority", kind: "number", role: "level", unit: "%", min: 0, max: 100 },
@@ -325,6 +345,16 @@ const STATISTICS_LABELS = {
   preset_usage_mode: "Nutzungsmodus",
   ev_charger_mode: "Ladebetrieb (EV-Lader)",
   ev_charger_mode_status: "Ladebetrieb Status (EV-Lader)",
+  ev_charger_schedule_switch: "Zeitplan aktiv (EV-Lader)",
+  ev_charger_schedule_mode: "Zeitplan-Modus (EV-Lader)",
+  ev_charger_week_start_time: "Zeitplan Werktag Start (EV-Lader)",
+  ev_charger_week_end_time: "Zeitplan Werktag Ende (EV-Lader)",
+  ev_charger_weekend_start_time: "Zeitplan Wochenende Start (EV-Lader)",
+  ev_charger_weekend_end_time: "Zeitplan Wochenende Ende (EV-Lader)",
+  ev_charger_weekend_mode: "Zeitplan Wochenende Modus (EV-Lader)",
+  ev_charger_auto_start_switch: "Auto-Start (EV-Lader)",
+  ev_charger_auto_charge_restart_switch: "Laden nach Pause neu starten (EV-Lader)",
+  ev_charger_random_delay_switch: "Zufallsverz\xF6gerung Start (EV-Lader)",
   ...Object.fromEntries(
     ["week", "month", "year"].flatMap((period) => {
       const rows = [[`${period}_energy_period`, PERIOD_NAMES_DE[period]]];
@@ -352,6 +382,8 @@ function isWritable(entityId, writable) {
   ENTITY_MAP,
   EV_CHARGER_MODE_ACTION_STATES,
   EV_CHARGER_MODE_STATES,
+  EV_CHARGER_SCHEDULE_MODE_STATES,
+  EV_CHARGER_WEEKEND_MODE_STATES,
   LIFETIME_STATISTICS_ENTITY_IDS,
   STATISTICS_ENTITIES,
   STATISTICS_ENTITY_IDS,

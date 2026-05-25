@@ -38,7 +38,7 @@ function resolveStateType(meta, value) {
   if ((meta == null ? void 0 : meta.kind) === "switch") {
     return "boolean";
   }
-  if ((meta == null ? void 0 : meta.kind) === "list") {
+  if ((meta == null ? void 0 : meta.kind) === "list" || (meta == null ? void 0 : meta.kind) === "text") {
     return "string";
   }
   if ((meta == null ? void 0 : meta.kind) === "statistics") {
@@ -238,6 +238,10 @@ async function syncDevices(adapter, devices) {
             states[String(w)] = `${w} W`;
           }
           common.states = states;
+        } else if (entityId === "ev_charger_schedule_mode") {
+          common.states = import_entities.EV_CHARGER_SCHEDULE_MODE_STATES;
+        } else if (entityId === "ev_charger_weekend_mode") {
+          common.states = import_entities.EV_CHARGER_WEEKEND_MODE_STATES;
         } else if (entityId === "ev_charger_mode") {
           const opts = ((_e = device.ev_charger_mode_options) == null ? void 0 : _e.length) ? device.ev_charger_mode_options : Object.keys(import_entities.EV_CHARGER_MODE_ACTION_STATES);
           const states = {};
@@ -289,7 +293,7 @@ async function syncDevices(adapter, devices) {
         common,
         native: { control: entityId }
       });
-      if ((meta == null ? void 0 : meta.kind) === "number" || (meta == null ? void 0 : meta.kind) === "switch" || (meta == null ? void 0 : meta.kind) === "list" || entityId === "ev_charger_mode_status") {
+      if ((meta == null ? void 0 : meta.kind) === "number" || (meta == null ? void 0 : meta.kind) === "switch" || (meta == null ? void 0 : meta.kind) === "list" || (meta == null ? void 0 : meta.kind) === "text" || entityId === "ev_charger_mode_status") {
         await adapter.extendObject(stateId, { common });
       } else if (import_entities.STATISTICS_LABELS[entityId]) {
         await adapter.extendObject(stateId, { common: { name: common.name } });

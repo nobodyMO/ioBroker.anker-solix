@@ -1,6 +1,6 @@
 /** HA-aligned entity metadata (ha-anker-solix sensor/switch/number). */
 
-export type EntityKind = "sensor" | "switch" | "number" | "list" | "statistics";
+export type EntityKind = "sensor" | "switch" | "number" | "list" | "statistics" | "text";
 
 export interface EntityMeta {
 	id: string;
@@ -28,6 +28,16 @@ export const EV_CHARGER_MODE_ACTION_STATES: Record<string, string> = {
 	stop_charge: EV_CHARGER_MODE_STATES.stop_charge,
 	skip_delay: EV_CHARGER_MODE_STATES.skip_delay,
 	boost_charge: EV_CHARGER_MODE_STATES.boost_charge,
+};
+
+export const EV_CHARGER_SCHEDULE_MODE_STATES: Record<string, string> = {
+	normal: "Normal",
+	smart: "Smart",
+};
+
+export const EV_CHARGER_WEEKEND_MODE_STATES: Record<string, string> = {
+	same: "Wochenende wie Werktag",
+	different: "Wochenende anders",
 };
 
 /** HA de.json labels for preset_usage_mode */
@@ -167,6 +177,16 @@ const CONTROL_ENTITIES: EntityMeta[] = [
 	},
 	{ id: "ac_fast_charge_switch", kind: "switch", role: "switch" },
 	{ id: "ev_charger_mode", kind: "list", role: "value.mode", states: EV_CHARGER_MODE_ACTION_STATES },
+	{ id: "ev_charger_schedule_switch", kind: "switch", role: "switch" },
+	{ id: "ev_charger_schedule_mode", kind: "list", role: "value.mode", states: EV_CHARGER_SCHEDULE_MODE_STATES },
+	{ id: "ev_charger_week_start_time", kind: "text", role: "text" },
+	{ id: "ev_charger_week_end_time", kind: "text", role: "text" },
+	{ id: "ev_charger_weekend_start_time", kind: "text", role: "text" },
+	{ id: "ev_charger_weekend_end_time", kind: "text", role: "text" },
+	{ id: "ev_charger_weekend_mode", kind: "list", role: "value.mode", states: EV_CHARGER_WEEKEND_MODE_STATES },
+	{ id: "ev_charger_auto_start_switch", kind: "switch", role: "switch" },
+	{ id: "ev_charger_auto_charge_restart_switch", kind: "switch", role: "switch" },
+	{ id: "ev_charger_random_delay_switch", kind: "switch", role: "switch" },
 	{ id: "preset_discharge_priority", kind: "switch", role: "switch" },
 	{ id: "preset_backup_option", kind: "switch", role: "switch" },
 	{ id: "preset_charge_priority", kind: "number", role: "level", unit: "%", min: 0, max: 100 },
@@ -324,6 +344,16 @@ export const STATISTICS_LABELS: Record<string, string> = {
 	preset_usage_mode: "Nutzungsmodus",
 	ev_charger_mode: "Ladebetrieb (EV-Lader)",
 	ev_charger_mode_status: "Ladebetrieb Status (EV-Lader)",
+	ev_charger_schedule_switch: "Zeitplan aktiv (EV-Lader)",
+	ev_charger_schedule_mode: "Zeitplan-Modus (EV-Lader)",
+	ev_charger_week_start_time: "Zeitplan Werktag Start (EV-Lader)",
+	ev_charger_week_end_time: "Zeitplan Werktag Ende (EV-Lader)",
+	ev_charger_weekend_start_time: "Zeitplan Wochenende Start (EV-Lader)",
+	ev_charger_weekend_end_time: "Zeitplan Wochenende Ende (EV-Lader)",
+	ev_charger_weekend_mode: "Zeitplan Wochenende Modus (EV-Lader)",
+	ev_charger_auto_start_switch: "Auto-Start (EV-Lader)",
+	ev_charger_auto_charge_restart_switch: "Laden nach Pause neu starten (EV-Lader)",
+	ev_charger_random_delay_switch: "Zufallsverzögerung Start (EV-Lader)",
 	...Object.fromEntries(
 		(["week", "month", "year"] as const).flatMap(period => {
 			const rows: [string, string][] = [[`${period}_energy_period`, PERIOD_NAMES_DE[period]]];

@@ -6,6 +6,8 @@ import {
 	STATISTICS_LABELS,
 	EV_CHARGER_MODE_ACTION_STATES,
 	EV_CHARGER_MODE_STATES,
+	EV_CHARGER_SCHEDULE_MODE_STATES,
+	EV_CHARGER_WEEKEND_MODE_STATES,
 	USAGE_MODE_STATES,
 	type EntityMeta,
 } from "./entities";
@@ -32,7 +34,7 @@ function resolveStateType(meta: EntityMeta | undefined, value: unknown): ioBroke
 	if (meta?.kind === "switch") {
 		return "boolean";
 	}
-	if (meta?.kind === "list") {
+	if (meta?.kind === "list" || meta?.kind === "text") {
 		return "string";
 	}
 	if (meta?.kind === "statistics") {
@@ -262,6 +264,10 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 						states[String(w)] = `${w} W`;
 					}
 					common.states = states;
+				} else if (entityId === "ev_charger_schedule_mode") {
+					common.states = EV_CHARGER_SCHEDULE_MODE_STATES;
+				} else if (entityId === "ev_charger_weekend_mode") {
+					common.states = EV_CHARGER_WEEKEND_MODE_STATES;
 				} else if (entityId === "ev_charger_mode") {
 					const opts = device.ev_charger_mode_options?.length
 						? device.ev_charger_mode_options
@@ -323,6 +329,7 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 				meta?.kind === "number" ||
 				meta?.kind === "switch" ||
 				meta?.kind === "list" ||
+				meta?.kind === "text" ||
 				entityId === "ev_charger_mode_status"
 			) {
 				await adapter.extendObject(stateId, { common });

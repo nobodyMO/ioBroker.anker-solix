@@ -667,7 +667,8 @@ class AnkerSolix extends utils.Adapter {
 					} else {
 						this.log.error(`Control failed for ${id}: ${message}`);
 					}
-					if (control.control === "ev_charger_mode" && current?.ack) {
+					const isEvControl = control.control.startsWith("ev_charger_");
+					if (isEvControl && current?.ack) {
 						await this.setState(id, { val: current.val, ack: true });
 					} else {
 						await this.setState(id, { val: value, ack: false });

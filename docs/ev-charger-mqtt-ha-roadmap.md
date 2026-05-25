@@ -8,8 +8,8 @@ Referenz: Home Assistant [ha-anker-solix](https://github.com/thomluther/ha-anker
 
 | Schritt | Thema | Status |
 |--------|--------|--------|
-| **1** | Ladebetrieb steuern (Start / Stop / Boost / Skip Delay) | in Arbeit |
-| 2 | Zeitplan & Automatik | offen |
+| **1** | Ladebetrieb steuern (Start / Stop / Boost / Skip Delay) | erledigt |
+| **2** | Zeitplan & Automatik | erledigt |
 | 3 | Strom, Phasen, Solar | offen |
 | 4 | Lastmanagement (Multisystem) | offen |
 | 5 | Hardware / Komfort | offen |

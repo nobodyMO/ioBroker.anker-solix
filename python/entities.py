@@ -638,11 +638,20 @@ def writable_controls_for_device(
             controls = [c for c in controls if c != "max_total_ac_output"]
         elif not max_total_ac_output_options(data, dev_type):
             controls = [c for c in controls if c != "max_total_ac_output"]
-    if "ev_charger_mode" in controls:
+    if dev_type == "ev_charger":
         from ev_charger_mode import ev_charger_mode_writable  # noqa: PLC0415
+        from ev_charger_schedule import (  # noqa: PLC0415
+            EV_CHARGER_SCHEDULE_CONTROL_IDS,
+            ev_charger_control_writable,
+        )
 
-        if dev_type != "ev_charger" or not ev_charger_mode_writable(data, config):
+        if "ev_charger_mode" in controls and not ev_charger_mode_writable(data, config):
             controls = [c for c in controls if c != "ev_charger_mode"]
+        for sched_id in EV_CHARGER_SCHEDULE_CONTROL_IDS:
+            if sched_id in controls and not ev_charger_control_writable(
+                sched_id, data, config
+            ):
+                controls = [c for c in controls if c != sched_id]
     return controls
 
 
@@ -764,6 +773,14 @@ def extract_entities(data: dict, config: dict | None = None) -> dict[str, Any]:
 
             cur = current_ev_charger_mode(data)
             val = cur if is_ev_charger_action_mode(cur) else None
+        elif (
+            dev_type == "ev_charger"
+            and spec.get("control")
+            and spec["id"] != "ev_charger_mode"
+        ):
+            from ev_charger_schedule import extract_ev_charger_control_value  # noqa: PLC0415
+
+            val = extract_ev_charger_control_value(spec["id"], data)
         elif spec.get("kind") == "list" and spec["id"] == "max_total_ac_output":
             val = pick_max_total_ac_output_value(data, dev_type)
             if val is not None:

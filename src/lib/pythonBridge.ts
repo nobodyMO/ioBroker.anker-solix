@@ -32,7 +32,11 @@ function isBridgeControlError(message: string): boolean {
 		message.includes("requires MQTT") ||
 		message.includes("please wait") ||
 		message.includes("Unsupported control") ||
-		message.includes("Invalid ev_charger_mode")
+		message.includes("Invalid ev_charger_mode") ||
+		message.includes("Invalid schedule") ||
+		message.includes("Invalid time") ||
+		message.includes("Invalid weekend mode") ||
+		message.includes("Invalid switch value")
 	);
 }
 

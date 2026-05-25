@@ -685,6 +685,69 @@ async def _set_ev_charger_mode(
     return {"mqtt": True, "ev_charger_mode": str(value)}
 
 
+async def _set_ev_charger_schedule_control(
+    api: AnkerSolixApi,
+    device_id: str,
+    control: str,
+    value: Any,
+    ha_client: IoBrokerAnkerApiClient | None = None,
+    config: dict | None = None,
+) -> dict[str, Any]:
+    """HA-aligned EV schedule/automation via MQTT (A5191)."""
+    from ev_charger_schedule import (  # noqa: PLC0415
+        _TIME_CONTROLS,
+        _WEEKEND_MODE_CONTROL,
+        ev_charger_control_writable,
+        parse_ev_charger_control_set,
+    )
+
+    device = api.devices.get(device_id) or {}
+    mdev = (ha_client.get_mqtt_device(device_id) if ha_client else None) or (
+        SolixMqttDeviceFactory(api, device_id).create_device()
+    )
+    if not ev_charger_control_writable(control, device, config, mdev):
+        raise RuntimeError(
+            f"{control} rejected (enable MQTT, device online, feature supported)"
+        )
+
+    if control in _TIME_CONTROLS or control == _WEEKEND_MODE_CONTROL:
+        if not mdev or not hasattr(mdev, "set_ev_charger_schedule"):
+            raise RuntimeError(f"{control} rejected: MQTT schedule not supported")
+        kwargs: dict[str, Any] = {}
+        if control in _TIME_CONTROLS:
+            kwargs[_TIME_CONTROLS[control]] = str(
+                parse_ev_charger_control_set(control, value)[2]
+            )
+        else:
+            _, _, mode_name = parse_ev_charger_control_set(control, value)
+            kwargs["weekend_mode"] = mode_name
+        if await mdev.set_ev_charger_schedule(**kwargs) is None:
+            raise RuntimeError(f"{control} rejected: MQTT schedule update failed")
+    else:
+        cmd, parm, mqtt_val = parse_ev_charger_control_set(control, value)
+        reject = _mqtt_command_reject_reason(api, device_id, cmd, ha_client)
+        if reject:
+            raise RuntimeError(f"{control} rejected: {reject}")
+        if not await _mqtt_command(
+            api, device_id, cmd, mqtt_val, parm, ha_client=ha_client
+        ):
+            reject = _mqtt_command_reject_reason(api, device_id, cmd, ha_client)
+            raise RuntimeError(
+                f"{control} rejected: {reject or 'MQTT publish failed (see log)'}"
+            )
+
+    with contextlib.suppress(Exception):
+        await _mqtt_command(
+            api,
+            device_id,
+            SolixMqttCommands.realtime_trigger,
+            1,
+            "set_realtime_trigger",
+            ha_client=ha_client,
+        )
+    return {"mqtt": True, control: str(value)}
+
+
 async def _set_preset_usage_mode(
     api: AnkerSolixApi,
     site_id: str,
@@ -881,6 +944,16 @@ async def apply_control(
             raise RuntimeError("ev_charger_mode requires an active MQTT session")
         result = await _set_ev_charger_mode(
             api, device_id, value, ha_client=ha_client
+        )
+    elif control.startswith("ev_charger_") and control != "ev_charger_mode":
+        if not config.get("mqttUsage"):
+            raise RuntimeError(f"{control} requires MQTT enabled in adapter settings")
+        if ha_client:
+            await ha_client.check_mqtt_session()
+        elif not await _ensure_mqtt(api):
+            raise RuntimeError(f"{control} requires an active MQTT session")
+        result = await _set_ev_charger_schedule_control(
+            api, device_id, control, value, ha_client=ha_client, config=config
         )
     elif control == "ac_fast_charge_switch":
         enabled = bool(value)
