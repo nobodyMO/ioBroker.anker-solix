@@ -61,10 +61,7 @@ class AnkerSolix extends utils.Adapter {
     return path.join(utils.getAbsoluteInstanceDataDir(this), "authcache");
   }
   getAuthCachePaths() {
-    return (0, import_authCacheBackup.resolveAuthCachePaths)(
-      utils.getAbsoluteInstanceDataDir(this),
-      (this.config.username || "").trim()
-    );
+    return (0, import_authCacheBackup.resolveAuthCachePaths)(utils.getAbsoluteInstanceDataDir(this), (this.config.username || "").trim());
   }
   getAuthCacheFile() {
     return this.getAuthCachePaths().cacheFile;
@@ -656,7 +653,7 @@ class AnkerSolix extends utils.Adapter {
           );
         } else {
           this.log.warn(
-            `No active login cache in ${paths.cacheDir}. ` + (st.backupExists ? "Use \u201CRestore from backup\u201D to restore the saved login." : "Complete a successful login first to create cache and backup.")
+            `No active login cache in ${paths.cacheDir}. ${st.backupExists ? "Use \u201CRestore from backup\u201D to restore the saved login." : "Complete a successful login first to create cache and backup."}`
           );
         }
         respond({

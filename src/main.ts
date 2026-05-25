@@ -9,6 +9,7 @@ import * as path from "node:path";
 import * as utils from "@iobroker/adapter-core";
 
 import {
+	type AuthCachePaths,
 	authCacheStatus,
 	backupAuthCacheOnce,
 	clearActiveAuthCacheFiles,
@@ -71,11 +72,8 @@ class AnkerSolix extends utils.Adapter {
 		return path.join(utils.getAbsoluteInstanceDataDir(this), "authcache");
 	}
 
-	private getAuthCachePaths() {
-		return resolveAuthCachePaths(
-			utils.getAbsoluteInstanceDataDir(this),
-			(this.config.username || "").trim(),
-		);
+	private getAuthCachePaths(): AuthCachePaths {
+		return resolveAuthCachePaths(utils.getAbsoluteInstanceDataDir(this), (this.config.username || "").trim());
 	}
 
 	private getAuthCacheFile(): string {
@@ -754,10 +752,11 @@ class AnkerSolix extends utils.Adapter {
 					);
 				} else {
 					this.log.warn(
-						`No active login cache in ${paths.cacheDir}. ` +
-							(st.backupExists
+						`No active login cache in ${paths.cacheDir}. ${
+							st.backupExists
 								? "Use “Restore from backup” to restore the saved login."
-								: "Complete a successful login first to create cache and backup."),
+								: "Complete a successful login first to create cache and backup."
+						}`,
 					);
 				}
 				respond({

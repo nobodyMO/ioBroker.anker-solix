@@ -24,10 +24,7 @@ describe("authCacheBackup", () => {
 		withTempDir(dir => {
 			const paths = resolveAuthCachePaths(dir, "user@test.de");
 			fs.mkdirSync(paths.cacheDir, { recursive: true });
-			fs.writeFileSync(
-				paths.cacheFile,
-				JSON.stringify({ user_id: "1", auth_token: "abc" }),
-			);
+			fs.writeFileSync(paths.cacheFile, JSON.stringify({ user_id: "1", auth_token: "abc" }));
 			assert.strictEqual(backupAuthCacheOnce(paths), true);
 			assert.strictEqual(backupAuthCacheOnce(paths), false);
 			fs.unlinkSync(paths.cacheFile);
