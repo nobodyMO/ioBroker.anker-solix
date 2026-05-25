@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.53",
+		"version": "0.10.54",
 		"messagebox": true,
 		"news": {
+			"0.10.54": {
+				"en": "Fix EV charger mode: treat empty MQTT command response as success (was false 'publish failed')",
+				"de": "Fix EV-Lader Modus: leere MQTT-Antwort gilt als Erfolg (kein falscher Publish-Fehler mehr)",
+				"ru": "Fix EV mode empty response",
+				"pt": "Fix EV mode empty response",
+				"nl": "Fix EV mode empty response",
+				"fr": "Fix EV mode empty response",
+				"it": "Fix EV mode empty response",
+				"es": "Fix EV mode empty response",
+				"pl": "Fix EV mode empty response",
+				"uk": "Fix EV mode empty response",
+				"zh-cn": "修复 EV 模式 MQTT 空响应误判失败"
+			},
 			"0.10.53": {
 				"en": "EV charger control: clearer reject reasons, no daemon restart on control errors, hide control when passive",
 				"de": "EV-Lader Steuerung: klarere Fehlermeldungen, Daemon bleibt bei Steuerfehlern aktiv, Steuerung aus bei passive",
@@ -250,19 +263,6 @@
 				"pl": "Curtailment schedule device_sn",
 				"uk": "Curtailment schedule device_sn",
 				"zh-cn": "限电计划 API 含 device_sn 并预载 schedule"
-			},
-			"0.10.34": {
-				"en": "Curtailment combiner: arbitrary export W via manual schedule API (not MQTT 1200–4800 steps)",
-				"de": "Abregelung Combiner: beliebige Export-W via Manual-Schedule-API (nicht MQTT-Stufen 1200–4800)",
-				"ru": "Curtailment schedule API export",
-				"pt": "Curtailment schedule API export",
-				"nl": "Curtailment schedule API export",
-				"fr": "Curtailment schedule API export",
-				"it": "Curtailment schedule API export",
-				"es": "Curtailment schedule API export",
-				"pl": "Curtailment schedule API export",
-				"uk": "Curtailment schedule API export",
-				"zh-cn": "限电组合器通过计划 API 设置任意导出功率"
 			}
 		},
 		"titleLang": {

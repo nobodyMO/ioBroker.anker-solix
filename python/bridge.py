@@ -288,7 +288,8 @@ async def _mqtt_command(
         parm=parm,
         parm_map=parm_map,
     )
-    return bool(resp)
+    # None = validation/publish failed; {} = success without mock state fields (e.g. EV mode)
+    return resp is not None
 
 
 # Combiner parallel max load via MQTT (discrete steps only; arbitrary watts need schedule API).
