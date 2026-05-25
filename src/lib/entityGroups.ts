@@ -160,6 +160,7 @@ export const ENTITY_ID_GROUPS: Record<string, string[]> = {
 	smartplug_energy_today: [ENTITY_GROUP_SMARTPLUG, ENTITY_GROUP_ENERGY_DETAIL],
 	evcharger_power: [ENTITY_GROUP_EV_CHARGER],
 	evcharger_status_desc: [ENTITY_GROUP_EV_CHARGER],
+	ev_charger_mode: [ENTITY_GROUP_EV_CHARGER],
 	hes_grid_power: [ENTITY_GROUP_HES],
 	powerpanel_avg_power: [ENTITY_GROUP_POWER_PANEL],
 	// advanced (read-only in bridge)

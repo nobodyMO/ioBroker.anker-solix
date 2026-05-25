@@ -156,7 +156,7 @@ async function syncSolarbankInfo(adapter, channelPath, info) {
   }
 }
 async function syncDevices(adapter, devices) {
-  var _a, _b, _c, _d, _e;
+  var _a, _b, _c, _d, _e, _f;
   const curtailmentHost = adapter;
   for (const device of devices) {
     const base = channelForDevice(device.info);
@@ -235,8 +235,21 @@ async function syncDevices(adapter, devices) {
             states[String(w)] = `${w} W`;
           }
           common.states = states;
+        } else if (entityId === "ev_charger_mode") {
+          const opts = ((_e = device.ev_charger_mode_options) == null ? void 0 : _e.length) ? device.ev_charger_mode_options : Object.keys(import_entities.EV_CHARGER_MODE_STATES);
+          const states = {};
+          for (const key of opts) {
+            if (import_entities.EV_CHARGER_MODE_STATES[key]) {
+              states[key] = import_entities.EV_CHARGER_MODE_STATES[key];
+            }
+          }
+          if (Object.keys(states).length > 0) {
+            common.states = states;
+          } else if (meta.states) {
+            common.states = meta.states;
+          }
         } else {
-          const opts = ((_e = device.usage_mode_options) == null ? void 0 : _e.length) ? device.usage_mode_options : Object.keys(import_entities.USAGE_MODE_STATES);
+          const opts = ((_f = device.usage_mode_options) == null ? void 0 : _f.length) ? device.usage_mode_options : Object.keys(import_entities.USAGE_MODE_STATES);
           const states = {};
           for (const key of opts) {
             if (import_entities.USAGE_MODE_STATES[key]) {

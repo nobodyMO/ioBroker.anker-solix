@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.49",
+		"version": "0.10.50",
 		"messagebox": true,
 		"news": {
+			"0.10.50": {
+				"en": "EV charger: control charge mode via MQTT (start/stop/boost/skip delay), HA-aligned",
+				"de": "EV-Lader: Ladebetrieb per MQTT steuern (Start/Stop/Boost/Verzögerung überspringen), wie HA",
+				"ru": "EV charger MQTT mode control",
+				"pt": "EV charger MQTT mode control",
+				"nl": "EV charger MQTT mode control",
+				"fr": "EV charger MQTT mode control",
+				"it": "EV charger MQTT mode control",
+				"es": "EV charger MQTT mode control",
+				"pl": "EV charger MQTT mode control",
+				"uk": "EV charger MQTT mode control",
+				"zh-cn": "EV 充电桩 MQTT 充电模式控制"
+			},
 			"0.10.49": {
 				"en": "System bat charge/discharge: sum of solarbank sensors (live); remove solarbank_info power totals and combiner bat power",
 				"de": "System Lade-/Entladeleistung: Summe der Solarbank-Sensoren (live); solarbank_info-Summen und Combiner bat_* entfernt",
@@ -250,19 +263,6 @@
 				"pl": "Period stats daily schedule",
 				"uk": "Period stats daily schedule",
 				"zh-cn": "周期统计每日定时拉取"
-			},
-			"0.10.30": {
-				"en": "Week/month stats: energy_daily + empty device_sn (HA style); fixes energy_analysis 10003",
-				"de": "Wochen/Monats-Statistik: energy_daily + leere device_sn (wie HA); Fix energy_analysis 10003",
-				"ru": "Period stats HA-style",
-				"pt": "Period stats HA-style",
-				"nl": "Period stats HA-style",
-				"fr": "Period stats HA-style",
-				"it": "Period stats HA-style",
-				"es": "Period stats HA-style",
-				"pl": "Period stats HA-style",
-				"uk": "Period stats HA-style",
-				"zh-cn": "周期统计按 HA 方式获取"
 			}
 		},
 		"titleLang": {

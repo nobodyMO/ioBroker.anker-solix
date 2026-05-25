@@ -260,6 +260,10 @@ async def _mqtt_command(
 # Combiner parallel max load via MQTT (discrete steps only; arbitrary watts need schedule API).
 _DEFAULT_PARALLEL_MQTT_OPTIONS = [1200, 2400, 3600, 4800]
 
+# Min interval between EV mode MQTT commands (avoid broker / device spam).
+_EV_CHARGER_MODE_MIN_SEC = 12.0
+_ev_charger_mode_last: dict[str, float] = {}
+
 
 def _schedule_device_candidates(
     api: AnkerSolixApi, site_id: str, device_id: str, device: dict
@@ -587,6 +591,49 @@ async def _set_ac_charge_limit(
     )
 
 
+async def _set_ev_charger_mode(
+    api: AnkerSolixApi,
+    device_id: str,
+    value: Any,
+    ha_client: IoBrokerAnkerApiClient | None = None,
+) -> dict[str, Any]:
+    """HA-aligned EV charge mode (MQTT ev_charger_mode_select only, no cloud schedule API)."""
+    import time
+
+    from ev_charger_mode import parse_ev_charger_mode_set  # noqa: PLC0415
+
+    now = time.monotonic()
+    last = _ev_charger_mode_last.get(device_id, 0.0)
+    if now - last < _EV_CHARGER_MODE_MIN_SEC:
+        wait = int(_EV_CHARGER_MODE_MIN_SEC - (now - last) + 0.5)
+        raise RuntimeError(
+            f"ev_charger_mode: please wait {wait}s before the next command (MQTT rate limit)"
+        )
+    mode_val = parse_ev_charger_mode_set(value)
+    if not await _mqtt_command(
+        api,
+        device_id,
+        SolixMqttCommands.ev_charger_mode_select,
+        mode_val,
+        "set_ev_charger_mode",
+        ha_client=ha_client,
+    ):
+        raise RuntimeError(
+            "ev_charger_mode rejected (enable MQTT, local charger mode, device online)"
+        )
+    _ev_charger_mode_last[device_id] = now
+    with contextlib.suppress(Exception):
+        await _mqtt_command(
+            api,
+            device_id,
+            SolixMqttCommands.realtime_trigger,
+            1,
+            "set_realtime_trigger",
+            ha_client=ha_client,
+        )
+    return {"mqtt": True, "ev_charger_mode": str(value)}
+
+
 async def _set_preset_usage_mode(
     api: AnkerSolixApi,
     site_id: str,
@@ -773,6 +820,16 @@ async def apply_control(
     elif control == "preset_usage_mode":
         result = await _set_preset_usage_mode(
             api, site_id, device_id, device, value
+        )
+    elif control == "ev_charger_mode":
+        if not config.get("mqttUsage"):
+            raise RuntimeError("ev_charger_mode requires MQTT enabled in adapter settings")
+        if ha_client:
+            await ha_client.check_mqtt_session()
+        elif not await _ensure_mqtt(api):
+            raise RuntimeError("ev_charger_mode requires an active MQTT session")
+        result = await _set_ev_charger_mode(
+            api, device_id, value, ha_client=ha_client
         )
     elif control == "ac_fast_charge_switch":
         enabled = bool(value)
@@ -1013,6 +1070,19 @@ def _devices_from_caches(
         usage_opts = sorted(
             client.api.solarbank_usage_mode_options(deviceSn=str(ctx_id))
         )
+        ev_mode_opts: list[str] = []
+        if str(info.get("type") or "") == "ev_charger":
+            from ev_charger_mode import ev_charger_mode_options  # noqa: PLC0415
+
+            mdev = (
+                client.get_mqtt_device(str(ctx_id))
+                if client._mqtt_usage
+                else None
+            )
+            if mdev and hasattr(mdev, "ev_charger_mode_options"):
+                ev_mode_opts = sorted(mdev.ev_charger_mode_options())
+            else:
+                ev_mode_opts = ev_charger_mode_options(ctx_data)
         max_ac_opts = max_total_ac_output_options(
             ctx_data, str(info.get("type") or ""), client.api, str(ctx_id)
         )
@@ -1027,6 +1097,7 @@ def _devices_from_caches(
                 "entities": _json_safe(entities),
                 "writable": writable,
                 "usage_mode_options": usage_opts,
+                "ev_charger_mode_options": ev_mode_opts,
                 "max_total_ac_output_options": max_ac_opts,
                 "hasStatistics": has_statistics,
                 "solarbankInfo": solarbank_info,

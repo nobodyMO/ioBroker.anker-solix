@@ -638,6 +638,11 @@ def writable_controls_for_device(
             controls = [c for c in controls if c != "max_total_ac_output"]
         elif not max_total_ac_output_options(data, dev_type):
             controls = [c for c in controls if c != "max_total_ac_output"]
+    if "ev_charger_mode" in controls:
+        from ev_charger_mode import ev_charger_mode_writable  # noqa: PLC0415
+
+        if dev_type != "ev_charger" or not ev_charger_mode_writable(data, config):
+            controls = [c for c in controls if c != "ev_charger_mode"]
     return controls
 
 
@@ -744,6 +749,10 @@ def extract_entities(data: dict, config: dict | None = None) -> dict[str, Any]:
                 pick_value(data, spec["keys"])
                 or (data.get("schedule") or {}).get("mode_type")
             )
+        elif spec.get("kind") == "list" and spec["id"] == "ev_charger_mode":
+            from ev_charger_mode import current_ev_charger_mode  # noqa: PLC0415
+
+            val = current_ev_charger_mode(data)
         elif spec.get("kind") == "list" and spec["id"] == "max_total_ac_output":
             val = pick_max_total_ac_output_value(data, dev_type)
             if val is not None:

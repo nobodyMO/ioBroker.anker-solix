@@ -24,6 +24,8 @@ export interface BridgeDevice {
 	writable: string[];
 	/** Valid SolarbankUsageMode names for preset_usage_mode (HA solarbank_usage_mode_options). */
 	usage_mode_options?: string[];
+	/** Valid ev_charger_mode command names (HA ev_charger_mode_options). */
+	ev_charger_mode_options?: string[];
 	/** Valid MQTT steps for max_total_ac_output (W as string keys). */
 	max_total_ac_output_options?: number[];
 	/** Site/device has energy_details from API (statistics channel). */

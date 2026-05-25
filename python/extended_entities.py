@@ -358,6 +358,15 @@ EXTENDED_SENSOR_ENTITIES: list[dict[str, Any]] = [
 
 EXTENDED_CONTROL_ENTITIES: list[dict[str, Any]] = [
     {
+        "id": "ev_charger_mode",
+        "keys": ["ev_charger_mode"],
+        "role": "value.mode",
+        "types": ["ev_charger"],
+        "control": "ev_charger_mode",
+        "kind": "list",
+        "groups": [GROUP_EV_CHARGER],
+    },
+    {
         "id": "preset_discharge_priority",
         "keys": ["preset_discharge_priority", "priority_discharge_switch"],
         "role": "switch",

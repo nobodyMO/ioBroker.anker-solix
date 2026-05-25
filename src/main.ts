@@ -647,7 +647,9 @@ class AnkerSolix extends utils.Adapter {
 					);
 					await this.setState(id, { val: value, ack: true });
 					this.log.info(`Applied ${control.control} on ${control.deviceId}`);
-					this.schedulePollAfterControl();
+					if (control.control !== "ev_charger_mode") {
+						this.schedulePollAfterControl();
+					}
 				} catch (error) {
 					const message = (error as Error).message;
 					if (message.includes("429") || message.includes("Too Many Requests")) {

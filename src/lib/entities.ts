@@ -12,6 +12,16 @@ export interface EntityMeta {
 	states?: Record<string, string>;
 }
 
+/** HA-aligned labels for ev_charger_mode (V1 wallbox, MQTT). */
+export const EV_CHARGER_MODE_STATES: Record<string, string> = {
+	start_charge: "Laden starten",
+	stop_charge: "Laden stoppen",
+	skip_delay: "Verzögerung überspringen",
+	boost_charge: "Boost",
+	wait_plug: "Warte auf Stecker",
+	wait_start: "Warte auf Start",
+};
+
 /** HA de.json labels for preset_usage_mode */
 export const USAGE_MODE_STATES: Record<string, string> = {
 	manual: "Benutzerdefiniert",
@@ -142,6 +152,7 @@ const CONTROL_ENTITIES: EntityMeta[] = [
 		states: USAGE_MODE_STATES,
 	},
 	{ id: "ac_fast_charge_switch", kind: "switch", role: "switch" },
+	{ id: "ev_charger_mode", kind: "list", role: "value.mode", states: EV_CHARGER_MODE_STATES },
 	{ id: "preset_discharge_priority", kind: "switch", role: "switch" },
 	{ id: "preset_backup_option", kind: "switch", role: "switch" },
 	{ id: "preset_charge_priority", kind: "number", role: "level", unit: "%", min: 0, max: 100 },
@@ -297,6 +308,7 @@ export const STATISTICS_LABELS: Record<string, string> = {
 	preset_allow_export: "Export erlauben (Zeitplan)",
 	min_soc: "Mindest-SOC Reserve (%)",
 	preset_usage_mode: "Nutzungsmodus",
+	ev_charger_mode: "Ladebetrieb (EV-Lader)",
 	...Object.fromEntries(
 		(["week", "month", "year"] as const).flatMap(period => {
 			const rows: [string, string][] = [[`${period}_energy_period`, PERIOD_NAMES_DE[period]]];

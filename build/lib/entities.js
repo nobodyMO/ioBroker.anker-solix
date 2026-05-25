@@ -20,6 +20,7 @@ var entities_exports = {};
 __export(entities_exports, {
   DEVICE_STATISTICS_ENTITY_IDS: () => DEVICE_STATISTICS_ENTITY_IDS,
   ENTITY_MAP: () => ENTITY_MAP,
+  EV_CHARGER_MODE_STATES: () => EV_CHARGER_MODE_STATES,
   LIFETIME_STATISTICS_ENTITY_IDS: () => LIFETIME_STATISTICS_ENTITY_IDS,
   STATISTICS_ENTITIES: () => STATISTICS_ENTITIES,
   STATISTICS_ENTITY_IDS: () => STATISTICS_ENTITY_IDS,
@@ -28,6 +29,14 @@ __export(entities_exports, {
   isWritable: () => isWritable
 });
 module.exports = __toCommonJS(entities_exports);
+const EV_CHARGER_MODE_STATES = {
+  start_charge: "Laden starten",
+  stop_charge: "Laden stoppen",
+  skip_delay: "Verz\xF6gerung \xFCberspringen",
+  boost_charge: "Boost",
+  wait_plug: "Warte auf Stecker",
+  wait_start: "Warte auf Start"
+};
 const USAGE_MODE_STATES = {
   manual: "Benutzerdefiniert",
   smartmeter: "Eigenverbrauch",
@@ -155,6 +164,7 @@ const CONTROL_ENTITIES = [
     states: USAGE_MODE_STATES
   },
   { id: "ac_fast_charge_switch", kind: "switch", role: "switch" },
+  { id: "ev_charger_mode", kind: "list", role: "value.mode", states: EV_CHARGER_MODE_STATES },
   { id: "preset_discharge_priority", kind: "switch", role: "switch" },
   { id: "preset_backup_option", kind: "switch", role: "switch" },
   { id: "preset_charge_priority", kind: "number", role: "level", unit: "%", min: 0, max: 100 },
@@ -300,6 +310,7 @@ const STATISTICS_LABELS = {
   preset_allow_export: "Export erlauben (Zeitplan)",
   min_soc: "Mindest-SOC Reserve (%)",
   preset_usage_mode: "Nutzungsmodus",
+  ev_charger_mode: "Ladebetrieb (EV-Lader)",
   ...Object.fromEntries(
     ["week", "month", "year"].flatMap((period) => {
       const rows = [[`${period}_energy_period`, PERIOD_NAMES_DE[period]]];
@@ -325,6 +336,7 @@ function isWritable(entityId, writable) {
 0 && (module.exports = {
   DEVICE_STATISTICS_ENTITY_IDS,
   ENTITY_MAP,
+  EV_CHARGER_MODE_STATES,
   LIFETIME_STATISTICS_ENTITY_IDS,
   STATISTICS_ENTITIES,
   STATISTICS_ENTITY_IDS,

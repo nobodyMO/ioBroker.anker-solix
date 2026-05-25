@@ -4,6 +4,7 @@ import {
 	DEVICE_STATISTICS_ENTITY_IDS,
 	LIFETIME_STATISTICS_ENTITY_IDS,
 	STATISTICS_LABELS,
+	EV_CHARGER_MODE_STATES,
 	USAGE_MODE_STATES,
 	type EntityMeta,
 } from "./entities";
@@ -257,6 +258,21 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 						states[String(w)] = `${w} W`;
 					}
 					common.states = states;
+				} else if (entityId === "ev_charger_mode") {
+					const opts = device.ev_charger_mode_options?.length
+						? device.ev_charger_mode_options
+						: Object.keys(EV_CHARGER_MODE_STATES);
+					const states: Record<string, string> = {};
+					for (const key of opts) {
+						if (EV_CHARGER_MODE_STATES[key]) {
+							states[key] = EV_CHARGER_MODE_STATES[key];
+						}
+					}
+					if (Object.keys(states).length > 0) {
+						common.states = states;
+					} else if (meta.states) {
+						common.states = meta.states;
+					}
 				} else {
 					const opts = device.usage_mode_options?.length
 						? device.usage_mode_options
