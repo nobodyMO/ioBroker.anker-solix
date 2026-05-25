@@ -96,6 +96,36 @@ def test_sum_banks_from_scene_list() -> None:
     assert discharge == 200
 
 
+def test_idle_grid_export_not_counted_as_discharge() -> None:
+    """bat_discharge_power can mirror PV export while charging_power is 0 (idle pack)."""
+    data = {
+        "type": "solarbank",
+        "photovoltaic_power": "4800",
+        "photovoltaic_to_grid_power": "4800",
+        "output_power": "4800",
+        "charging_power": "0",
+        "bat_charge_power": "0",
+        "bat_discharge_power": "4800",
+    }
+    charge, discharge = pick_bat_charge_discharge(data)
+    assert charge == 0
+    assert discharge == 0
+
+
+def test_power_flow_fields_when_idle() -> None:
+    data = {
+        "type": "solarbank",
+        "bat_discharge_power": "4800",
+        "charging_power": "0",
+        "pv_to_battery_power": "0",
+        "battery_to_home_power": "0",
+        "photovoltaic_to_grid_power": "4800",
+    }
+    charge, discharge = pick_bat_charge_discharge(data)
+    assert charge == 0
+    assert discharge == 0
+
+
 def test_sum_uses_device_cache_when_list_rows_are_sparse() -> None:
     api = MagicMock()
     api.devices = {

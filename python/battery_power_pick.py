@@ -24,13 +24,68 @@ def _max_positive(*values: int | None) -> int:
     return max(nums) if nums else 0
 
 
+def _has_power_flow_fields(data: dict) -> bool:
+    """True when scene/API provides explicit PV/battery flow breakdown."""
+    keys = (
+        "pv_to_battery_power",
+        "solar_to_battery_power",
+        "battery_to_home_power",
+        "bat_to_home_power",
+        "grid_to_battery_power",
+        "battery_to_grid_power",
+        "pv_to_home_power",
+        "photovoltaic_to_grid_power",
+    )
+    return any(data.get(k) not in (None, "") for k in keys)
+
+
+def _pick_from_power_flows(data: dict) -> tuple[int, int]:
+    """Charge/discharge from flow sensors only (no cloud bat_* totals)."""
+    charge = _max_positive(
+        _parse_signed(data.get("pv_to_battery_power")),
+        _parse_signed(data.get("solar_to_battery_power")),
+        _parse_signed(data.get("grid_to_battery_power")),
+    )
+    discharge = _max_positive(
+        _parse_signed(data.get("battery_to_home_power")),
+        _parse_signed(data.get("bat_to_home_power")),
+        _parse_signed(data.get("battery_to_grid_power")),
+    )
+    return charge, discharge
+
+
+def _looks_like_export_not_battery_discharge(data: dict, discharge_w: int) -> bool:
+    """Cloud bat_discharge_power often mirrors PV→grid when the pack is idle."""
+    if discharge_w <= 0:
+        return False
+    pv = _parse_signed(data.get("photovoltaic_power")) or _parse_signed(
+        data.get("input_power")
+    )
+    if pv is None:
+        return False
+    pv_grid = _parse_signed(data.get("photovoltaic_to_grid_power"))
+    if isinstance(pv_grid, int) and pv_grid > 0 and abs(discharge_w - pv_grid) <= max(
+        150, int(pv * 0.08)
+    ):
+        return True
+    out = _parse_signed(data.get("output_power")) or _parse_signed(
+        data.get("dc_output_power")
+    )
+    if isinstance(out, int) and out > 0 and abs(discharge_w - out) <= max(150, int(pv * 0.08)):
+        return True
+    return abs(discharge_w - pv) <= max(150, int(pv * 0.08))
+
+
 def pick_bat_charge_discharge(data: dict) -> tuple[int, int]:
     """Return (charge_W, discharge_W) from cloud cache only (scene info / device API)."""
-    charge = _max_positive(
+    if _has_power_flow_fields(data):
+        return _pick_from_power_flows(data)
+
+    charge_api = _max_positive(
         _parse_signed(data.get("bat_charge_power")),
         _parse_signed(data.get("battery_charge_power")),
     )
-    discharge = _max_positive(
+    discharge_api = _max_positive(
         _parse_signed(data.get("bat_discharge_power")),
         _parse_signed(data.get("battery_discharge_power")),
     )
@@ -38,12 +93,20 @@ def pick_bat_charge_discharge(data: dict) -> tuple[int, int]:
     signed = _parse_signed(data.get("charging_power"))
     if signed is not None:
         if signed > 0:
-            charge = max(charge, signed)
-        elif signed < 0:
-            discharge = max(discharge, abs(signed))
+            return max(charge_api, signed), 0
+        if signed < 0:
+            return 0, max(discharge_api, abs(signed))
+        # signed == 0: pack idle — ignore bat_discharge mirroring inverter export
+        if charge_api > 0:
+            return charge_api, 0
+        return 0, 0
 
-    if charge or discharge:
-        return charge, discharge
+    if charge_api or discharge_api:
+        if discharge_api > 0 and charge_api == 0 and _looks_like_export_not_battery_discharge(
+            data, discharge_api
+        ):
+            return 0, 0
+        return charge_api, discharge_api
 
     pv = _parse_signed(data.get("photovoltaic_power")) or _parse_signed(
         data.get("input_power")
@@ -57,7 +120,10 @@ def pick_bat_charge_discharge(data: dict) -> tuple[int, int]:
         if calc > 0:
             return calc, 0
         if calc < 0:
-            return 0, abs(calc)
+            discharge = abs(calc)
+            if _looks_like_export_not_battery_discharge(data, discharge):
+                return 0, 0
+            return 0, discharge
 
     return 0, 0
 
