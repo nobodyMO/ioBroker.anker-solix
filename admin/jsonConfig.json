@@ -34,18 +34,6 @@
 					"lg": 4,
 					"xl": 4
 				},
-				"installPython": {
-					"type": "sendTo",
-					"label": "installPython",
-					"command": "installPython",
-					"variant": "outlined",
-					"showProcess": true,
-					"xs": 12,
-					"sm": 6,
-					"md": 4,
-					"lg": 4,
-					"xl": 4
-				},
 				"acceptTerms": {
 					"type": "checkbox",
 					"label": "acceptTerms",
@@ -142,6 +130,18 @@
 				"pythonPath": {
 					"type": "text",
 					"label": "pythonPath",
+					"xs": 12,
+					"sm": 6,
+					"md": 4,
+					"lg": 4,
+					"xl": 4
+				},
+				"installPython": {
+					"type": "sendTo",
+					"label": "installPython",
+					"command": "installPython",
+					"variant": "outlined",
+					"showProcess": true,
 					"xs": 12,
 					"sm": 6,
 					"md": 4,

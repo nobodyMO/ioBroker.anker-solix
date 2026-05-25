@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.67",
+		"version": "0.10.68",
 		"messagebox": true,
 		"news": {
+			"0.10.68": {
+				"en": "Admin: move Install Python dependencies to bottom of Options tab",
+				"de": "Admin: Python-Abhängigkeiten installieren ans Ende des Tabs Optionen",
+				"ru": "Admin: installPython on Options tab",
+				"pt": "Admin: installPython on Options tab",
+				"nl": "Admin: installPython on Options tab",
+				"fr": "Admin: installPython on Options tab",
+				"it": "Admin: installPython on Options tab",
+				"es": "Admin: installPython on Options tab",
+				"pl": "Admin: installPython on Options tab",
+				"uk": "Admin: installPython on Options tab",
+				"zh-cn": "管理界面：Python 安装按钮移至选项页底部"
+			},
 			"0.10.67": {
 				"en": "Admin: remove Devices tab and load-devices; Python install on Account; device filter on Objects; Login-Cache last",
 				"de": "Admin: Tab Geräte entfernt; Python-Install unter Konto; Gerätefilter unter Objekte; Login-Cache ganz rechts",
@@ -250,19 +263,6 @@
 				"pl": "System bat power from solarbank sum",
 				"uk": "System bat power from solarbank sum",
 				"zh-cn": "系统充放电功率由太阳能银行传感器求和"
-			},
-			"0.10.48": {
-				"en": "Fix solarbank_info totals (total_charging_power, battery_discharge_power) update every poll",
-				"de": "Fix solarbank_info-Summen: Lade-/Entladeleistung gesamt bei jedem Poll aktualisiert",
-				"ru": "Fix solarbank_info totals every poll",
-				"pt": "Fix solarbank_info totals every poll",
-				"nl": "Fix solarbank_info totals every poll",
-				"fr": "Fix solarbank_info totals every poll",
-				"it": "Fix solarbank_info totals every poll",
-				"es": "Fix solarbank_info totals every poll",
-				"pl": "Fix solarbank_info totals every poll",
-				"uk": "Fix solarbank_info totals every poll",
-				"zh-cn": "修复 solarbank_info 总功率每轮更新"
 			}
 		},
 		"titleLang": {
