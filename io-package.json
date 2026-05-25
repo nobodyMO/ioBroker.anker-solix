@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.50",
+		"version": "0.10.51",
 		"messagebox": true,
 		"news": {
+			"0.10.51": {
+				"en": "Fix EV charger mode: wait_plug/wait_start are display-only, not sent via MQTT",
+				"de": "Fix EV-Lader Modus: wait_plug/wait_start nur Anzeige, kein MQTT-Befehl",
+				"ru": "Fix EV mode wait states",
+				"pt": "Fix EV mode wait states",
+				"nl": "Fix EV mode wait states",
+				"fr": "Fix EV mode wait states",
+				"it": "Fix EV mode wait states",
+				"es": "Fix EV mode wait states",
+				"pl": "Fix EV mode wait states",
+				"uk": "Fix EV mode wait states",
+				"zh-cn": "修复 EV 模式 wait 状态不可下发"
+			},
 			"0.10.50": {
 				"en": "EV charger: control charge mode via MQTT (start/stop/boost/skip delay), HA-aligned",
 				"de": "EV-Lader: Ladebetrieb per MQTT steuern (Start/Stop/Boost/Verzögerung überspringen), wie HA",
@@ -251,18 +264,18 @@
 				"uk": "Fix poll crash",
 				"zh-cn": "修复轮询崩溃"
 			},
-			"0.10.31": {
-				"en": "Period stats: once daily after 23:00 / 23:15 / 23:30 Europe/Berlin",
-				"de": "Perioden-Statistik: je 1× täglich nach 23:00 / 23:15 / 23:30 (Europe/Berlin)",
-				"ru": "Period stats daily schedule",
-				"pt": "Period stats daily schedule",
-				"nl": "Period stats daily schedule",
-				"fr": "Period stats daily schedule",
-				"it": "Period stats daily schedule",
-				"es": "Period stats daily schedule",
-				"pl": "Period stats daily schedule",
-				"uk": "Period stats daily schedule",
-				"zh-cn": "周期统计每日定时拉取"
+			"0.10.32": {
+				"en": "Fix poll crash (needs_daily_energy_poll / PERIOD_YEAR imports)",
+				"de": "Fix Poll-Absturz (needs_daily_energy_poll / PERIOD_YEAR)",
+				"ru": "Fix poll crash",
+				"pt": "Fix poll crash",
+				"nl": "Fix poll crash",
+				"fr": "Fix poll crash",
+				"it": "Fix poll crash",
+				"es": "Fix poll crash",
+				"pl": "Fix poll crash",
+				"uk": "Fix poll crash",
+				"zh-cn": "修复轮询崩溃"
 			}
 		},
 		"titleLang": {

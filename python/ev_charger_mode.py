@@ -28,6 +28,16 @@ _ACTION_MODES: dict[str, int] = {
 }
 
 
+def _flag_on(val: Any) -> bool:
+    if val is None or val == "":
+        return False
+    return str(val).lower() in ("1", "true", "on", "yes")
+
+
+def is_ev_charger_action_mode(mode: str | None) -> bool:
+    return bool(mode) and mode in _ACTION_MODES
+
+
 def _status_name(data: dict) -> str:
     status = data.get("ev_charger_status")
     if status is None:
@@ -37,9 +47,9 @@ def _status_name(data: dict) -> str:
 
 def current_ev_charger_mode(data: dict) -> str | None:
     """Current mode for display (matches SolixMqttDeviceCharger.ev_charger_mode_state)."""
-    if data.get("ev_charger_status") is None and not data.get("boost_status"):
+    if data.get("ev_charger_status") is None and not _flag_on(data.get("boost_status")):
         return None
-    if bool(data.get("boost_status")):
+    if _flag_on(data.get("boost_status")):
         return SolixEvChargerMode.boost_charge.name
     state = _status_name(data)
     if state == SolixEvChargerStatus.preparing.name:
@@ -60,7 +70,7 @@ def current_ev_charger_mode(data: dict) -> str | None:
 
 
 def ev_charger_mode_options(data: dict) -> list[str]:
-    """Allowed next commands (HA SolixMqttDeviceCharger.ev_charger_mode_options)."""
+    """Allowed next MQTT commands (HA logic; includes display-only wait_* for HA select)."""
     options: set[str] = set()
     status = _status_name(data)
     current = current_ev_charger_mode(data)
@@ -83,6 +93,11 @@ def ev_charger_mode_options(data: dict) -> list[str]:
     return sorted(options)
 
 
+def ev_charger_action_options(data: dict) -> list[str]:
+    """ioBroker control dropdown: only MQTT-sendable modes (no wait_plug / wait_start)."""
+    return sorted(m for m in ev_charger_mode_options(data) if is_ev_charger_action_mode(m))
+
+
 def parse_ev_charger_mode_set(value: Any) -> int:
     """Map ioBroker list value to MQTT command value (1–4)."""
     key = str(value or "").strip().lower()
@@ -99,4 +114,4 @@ def ev_charger_mode_writable(data: dict, config: dict | None) -> bool:
         return False
     if not (data.get("mqtt_supported") or data.get("mqtt_data")):
         return False
-    return bool(ev_charger_mode_options(data))
+    return bool(ev_charger_action_options(data))

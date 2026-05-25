@@ -1072,7 +1072,10 @@ def _devices_from_caches(
         )
         ev_mode_opts: list[str] = []
         if str(info.get("type") or "") == "ev_charger":
-            from ev_charger_mode import ev_charger_mode_options  # noqa: PLC0415
+            from ev_charger_mode import (  # noqa: PLC0415
+                ev_charger_action_options,
+                is_ev_charger_action_mode,
+            )
 
             mdev = (
                 client.get_mqtt_device(str(ctx_id))
@@ -1080,9 +1083,11 @@ def _devices_from_caches(
                 else None
             )
             if mdev and hasattr(mdev, "ev_charger_mode_options"):
-                ev_mode_opts = sorted(mdev.ev_charger_mode_options())
+                ev_mode_opts = sorted(
+                    m for m in mdev.ev_charger_mode_options() if is_ev_charger_action_mode(m)
+                )
             else:
-                ev_mode_opts = ev_charger_mode_options(ctx_data)
+                ev_mode_opts = ev_charger_action_options(ctx_data)
         max_ac_opts = max_total_ac_output_options(
             ctx_data, str(info.get("type") or ""), client.api, str(ctx_id)
         )

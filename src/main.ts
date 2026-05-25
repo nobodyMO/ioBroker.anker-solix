@@ -615,6 +615,14 @@ class AnkerSolix extends utils.Adapter {
 			return;
 		}
 
+		if (control.control === "ev_charger_mode") {
+			const mode = String(state.val ?? "");
+			if (mode === "wait_plug" || mode === "wait_start") {
+				await this.setState(id, { val: state.val, ack: true });
+				return;
+			}
+		}
+
 		const current = await this.getStateAsync(id);
 		if (
 			current?.ack &&
