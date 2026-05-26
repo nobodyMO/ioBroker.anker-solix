@@ -86,11 +86,7 @@ function canImportWithSitePackages(systemSpec) {
 		return false;
 	}
 	const env = pipEnv({ PYTHONPATH: sitePackages });
-	const result = tryCommand(
-		systemSpec.cmd,
-		[...systemSpec.prefix, "-c", "import aiohttp"],
-		env,
-	);
+	const result = tryCommand(systemSpec.cmd, [...systemSpec.prefix, "-c", "import aiohttp"], env);
 	return result.ok;
 }
 
