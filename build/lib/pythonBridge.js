@@ -59,11 +59,12 @@ async function runBridgeOnce(action, config, pythonPath, log) {
   }
   const tmpFile = path.join(os.tmpdir(), `anker-solix-${process.pid}-${Date.now()}.json`);
   fs.writeFileSync(tmpFile, JSON.stringify(config), "utf8");
-  const python = (0, import_pythonPaths.resolvePythonExecutable)(pythonPath);
-  const args = (0, import_pythonPaths.isPyLauncher)(python) ? ["-3", script, action, tmpFile] : [script, action, tmpFile];
+  const spec = (0, import_pythonPaths.resolvePythonSpawn)(pythonPath);
+  const args = (0, import_pythonPaths.pythonSpawnArgs)(spec, [script, action, tmpFile]);
   return new Promise((resolve, reject) => {
-    const proc = (0, import_node_child_process.spawn)(python, args, {
+    const proc = (0, import_node_child_process.spawn)(spec.cmd, args, {
       windowsHide: true,
+      shell: process.platform === "win32",
       env: (0, import_pythonPaths.buildPythonEnv)()
     });
     let stdout = "";

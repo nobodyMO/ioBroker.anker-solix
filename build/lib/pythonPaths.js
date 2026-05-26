@@ -32,13 +32,16 @@ __export(pythonPaths_exports, {
   buildPythonEnv: () => buildPythonEnv,
   hasSitePackagesDeps: () => hasSitePackagesDeps,
   isPyLauncher: () => isPyLauncher,
+  pythonSpawnArgs: () => pythonSpawnArgs,
   resolvePythonExecutable: () => resolvePythonExecutable,
+  resolvePythonSpawn: () => resolvePythonSpawn,
   sitePackagesPath: () => sitePackagesPath,
   venvPythonPath: () => venvPythonPath
 });
 module.exports = __toCommonJS(pythonPaths_exports);
 var fs = __toESM(require("node:fs"));
 var path = __toESM(require("node:path"));
+var import_pythonCommand = require("./pythonCommand");
 var import_spawnEnv = require("./spawnEnv");
 function adapterRoot() {
   return path.join(__dirname, "..", "..");
@@ -54,21 +57,42 @@ function sitePackagesPath() {
 function hasSitePackagesDeps() {
   return fs.existsSync(path.join(sitePackagesPath(), "aiohttp"));
 }
-function resolvePythonExecutable(configPath) {
-  if (configPath == null ? void 0 : configPath.trim()) {
-    return configPath.trim();
-  }
+function venvSpawnSpec() {
   const venv = venvPythonPath();
+  if (!venv) {
+    return null;
+  }
+  return { cmd: venv, prefix: [], label: venv };
+}
+function resolvePythonSpawn(configPath) {
+  if (configPath == null ? void 0 : configPath.trim()) {
+    const custom = (0, import_pythonCommand.resolvePythonCommand)(configPath.trim(), adapterRoot());
+    if (custom) {
+      return custom;
+    }
+    return { cmd: configPath.trim(), prefix: [], label: configPath.trim() };
+  }
+  const venv = venvSpawnSpec();
   if (venv) {
     return venv;
   }
-  if (process.platform === "win32") {
-    return "py";
+  const system = (0, import_pythonCommand.resolvePythonCommand)(void 0, adapterRoot());
+  if (system) {
+    return system;
   }
-  return "python3";
+  if (process.platform === "win32") {
+    return { cmd: "py", prefix: ["-3.12"], label: "py -3.12" };
+  }
+  return { cmd: "python3", prefix: [], label: "python3" };
+}
+function resolvePythonExecutable(configPath) {
+  return resolvePythonSpawn(configPath).cmd;
 }
 function isPyLauncher(python) {
   return python === "py";
+}
+function pythonSpawnArgs(spec, scriptArgs) {
+  return [...spec.prefix, ...scriptArgs];
 }
 function buildPythonEnv() {
   const extra = {
@@ -86,7 +110,9 @@ function buildPythonEnv() {
   buildPythonEnv,
   hasSitePackagesDeps,
   isPyLauncher,
+  pythonSpawnArgs,
   resolvePythonExecutable,
+  resolvePythonSpawn,
   sitePackagesPath,
   venvPythonPath
 });

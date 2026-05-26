@@ -64,12 +64,13 @@ class BridgeDaemon {
     if (!fs.existsSync(script)) {
       throw new Error(`Python bridge not found: ${script}`);
     }
-    const python = (0, import_pythonPaths.resolvePythonExecutable)(this.pythonPath);
-    const args = (0, import_pythonPaths.isPyLauncher)(python) ? ["-3", script, "serve"] : [script, "serve"];
+    const spec = (0, import_pythonPaths.resolvePythonSpawn)(this.pythonPath);
+    const args = (0, import_pythonPaths.pythonSpawnArgs)(spec, [script, "serve"]);
     this.readyPromise = new Promise((resolveReady, rejectReady) => {
       var _a2;
-      const proc = (0, import_node_child_process.spawn)(python, args, {
+      const proc = (0, import_node_child_process.spawn)(spec.cmd, args, {
         windowsHide: true,
+        shell: process.platform === "win32",
         env: (0, import_pythonPaths.buildPythonEnv)(),
         stdio: ["pipe", "pipe", "pipe"]
       });
