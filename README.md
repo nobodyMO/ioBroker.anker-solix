@@ -53,7 +53,7 @@ Poll interval should be **60–180 s** (same recommendation as HA). Site list is
 
 - ioBroker **js-controller >= 6**, **admin >= 7.6**
 - **Node.js >= 22**
-- **Python 3.12+** on the ioBroker host (`python3-venv` + `python3-pip` recommended on Debian/Ubuntu). **Windows:** the installer tries `py -3.13`, `py -3.12`, then typical `Program Files\\Python\\Python3xx\\python.exe` paths (not only generic `py -3`).
+- **Python 3.12+** on the ioBroker host (`python3-venv` + `python3-pip` recommended on Debian/Ubuntu). **Windows:** the installer tries `py -3.13`, `py -3.12`, then typical `Program Files\\Python\\Python3xx\\python.exe` paths (not only generic `py -3`). The `tzdata` package is installed automatically (required for `Europe/Berlin` time zones on Windows).
 
 Python dependencies install into the adapter folder (`python/.venv` or `python/site-packages`). Since v0.2.0: automatic on start (**Options** → `autoInstallPython`) or button **Install Python dependencies**.
 

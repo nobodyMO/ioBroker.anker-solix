@@ -77,8 +77,11 @@ function tryCommand(cmd, args, env) {
 	};
 }
 
-function canImportAiohttp(pythonExe, env) {
-	const check = tryCommand(pythonExe, ["-c", "import aiohttp"], env);
+const BRIDGE_DEPS_CHECK =
+	"import aiohttp; from zoneinfo import ZoneInfo; ZoneInfo('Europe/Berlin')";
+
+function canRunPythonBridge(pythonExe, env) {
+	const check = tryCommand(pythonExe, ["-c", BRIDGE_DEPS_CHECK], env);
 	return check.ok;
 }
 
@@ -87,7 +90,7 @@ function canImportWithSitePackages(systemSpec) {
 		return false;
 	}
 	const env = pipEnv({ PYTHONPATH: sitePackages });
-	const result = tryCommand(systemSpec.cmd, [...systemSpec.prefix, "-c", "import aiohttp"], env);
+	const result = tryCommand(systemSpec.cmd, [...systemSpec.prefix, "-c", BRIDGE_DEPS_CHECK], env);
 	return result.ok;
 }
 
@@ -183,7 +186,7 @@ async function bootstrapPip(systemSpec, options = {}) {
 
 function depsReady() {
 	const vpy = venvPython();
-	if (fs.existsSync(vpy) && canImportAiohttp(vpy)) {
+	if (fs.existsSync(vpy) && canRunPythonBridge(vpy)) {
 		return true;
 	}
 	const sys = resolvePythonCommand(cli.python, adapterRoot);
