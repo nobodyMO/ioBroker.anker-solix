@@ -327,6 +327,14 @@ Tab **Abregelungsvermeidung** / **Curtailment avoidance**: requires the [ioBroke
 
 ## Changelog
 
+### 0.10.71
+
+- **Python install:** detects host profile (Linux server, **Home Assistant** ioBroker add-on, **Windows**, container)
+- **HA:** venv-first, `get-pip.py` with `--break-system-packages` / `PIP_BREAK_SYSTEM_PACKAGES` for PEP 668
+- **Windows:** tries `py -3.13`, `py -3.12`, Program Files paths; parses `--version` (no broken shell `-c` check); adds **`tzdata`** for `Europe/Berlin`
+- **Bridge:** uses resolved Python spawn spec (`py -3.12` args) consistently in daemon and one-shot mode
+- Deps check: `aiohttp` + `ZoneInfo("Europe/Berlin")` before skipping install
+
 ### 0.10.70
 
 - **Repository / CI:** `common.news` capped at 7 npm-published versions; workflow concurrency per ioBroker.example; admin header `size` ≤ 5; automated checks in `test/io-package-policy.js`; `CHANGELOG_OLD.md` excluded from npm package
