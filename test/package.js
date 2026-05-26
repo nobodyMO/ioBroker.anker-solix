@@ -9,3 +9,6 @@ require("./io-package-policy");
 
 // Python install profile detection (tools/pythonInstallEnv.js)
 require("./python-install-env");
+
+// Windows py -3.12 / py -3.13 resolution (tools/pythonCommand.js)
+require("./python-command");

@@ -2,7 +2,7 @@ import { type ChildProcess, spawn } from "node:child_process";
 import * as readline from "node:readline";
 import * as fs from "node:fs";
 
-import { buildPythonEnv, isPyLauncher, resolvePythonExecutable } from "./pythonPaths";
+import { buildPythonEnv, pythonSpawnArgs, resolvePythonSpawn } from "./pythonPaths";
 import type { BridgeConfig, BridgePollResult, BridgeServiceConfig, BridgeSetConfig } from "./types";
 
 function bridgeScriptPath(): string {
@@ -50,12 +50,13 @@ export class BridgeDaemon {
 			throw new Error(`Python bridge not found: ${script}`);
 		}
 
-		const python = resolvePythonExecutable(this.pythonPath);
-		const args = isPyLauncher(python) ? ["-3", script, "serve"] : [script, "serve"];
+		const spec = resolvePythonSpawn(this.pythonPath);
+		const args = pythonSpawnArgs(spec, [script, "serve"]);
 
 		this.readyPromise = new Promise<void>((resolveReady, rejectReady) => {
-			const proc = spawn(python, args, {
+			const proc = spawn(spec.cmd, args, {
 				windowsHide: true,
+				shell: process.platform === "win32",
 				env: buildPythonEnv(),
 				stdio: ["pipe", "pipe", "pipe"],
 			});

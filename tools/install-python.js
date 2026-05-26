@@ -11,6 +11,7 @@ const https = require("node:https");
 const path = require("node:path");
 
 const { detectInstallProfile, hintLines, installOrder, profileLabel } = require("./pythonInstallEnv");
+const { describePythonProbe, resolvePythonCommand, runPython } = require("./pythonCommand");
 
 const adapterRoot = path.join(__dirname, "..");
 const requirements = path.join(adapterRoot, "python", "requirements.txt");
@@ -75,61 +76,26 @@ function tryCommand(cmd, args, env) {
 	};
 }
 
-function pythonArgs(systemPython, extra) {
-	if (process.platform === "win32" && systemPython === "py") {
-		return ["-3", ...extra];
-	}
-	return extra;
-}
-
-function findSystemPython(customPath) {
-	const candidates = [];
-	if (customPath?.trim()) {
-		candidates.push(customPath.trim());
-	}
-	if (process.platform === "win32") {
-		candidates.push("py", "python", "python3");
-	} else {
-		candidates.push("python3", "python");
-	}
-	for (const cmd of [...new Set(candidates)]) {
-		const check = tryCommand(cmd, pythonArgs(cmd, ["--version"]));
-		if (check.ok && (check.stdout + check.stderr).includes("Python")) {
-			return cmd;
-		}
-	}
-	return null;
-}
-
-function pythonVersionOk(systemPython) {
-	const check = tryCommand(
-		systemPython,
-		pythonArgs(systemPython, ["-c", "import sys; raise SystemExit(0 if sys.version_info>=(3,12) else 1)"]),
-	);
+function canImportAiohttp(pythonExe, env) {
+	const check = tryCommand(pythonExe, ["-c", "import aiohttp"], env);
 	return check.ok;
 }
 
-function canImportAiohttp(pythonCmd, env) {
-	const check = tryCommand(pythonCmd, pythonArgs(pythonCmd, ["-c", "import aiohttp"]), env);
-	return check.ok;
-}
-
-function canImportWithSitePackages(systemPython) {
+function canImportWithSitePackages(systemSpec) {
 	if (!fs.existsSync(path.join(sitePackages, "aiohttp"))) {
 		return false;
 	}
 	const env = pipEnv({ PYTHONPATH: sitePackages });
-	const r = spawnSync(systemPython, pythonArgs(systemPython, ["-c", "import aiohttp"]), {
-		cwd: adapterRoot,
-		encoding: "utf8",
-		shell: process.platform === "win32",
+	const result = tryCommand(
+		systemSpec.cmd,
+		[...systemSpec.prefix, "-c", "import aiohttp"],
 		env,
-	});
-	return r.status === 0;
+	);
+	return result.ok;
 }
 
-function hasPip(pythonCmd) {
-	return tryCommand(pythonCmd, pythonArgs(pythonCmd, ["-m", "pip", "--version"]), pipEnv()).ok;
+function hasPip(systemSpec) {
+	return runPython(systemSpec, ["-m", "pip", "--version"], adapterRoot).ok;
 }
 
 function downloadGetPip(dest) {
@@ -177,21 +143,21 @@ async function ensureGetPipScript() {
 }
 
 /**
- * @param {string} pythonCmd
+ * @param {import("./pythonCommand").PythonCommand} systemSpec
  * @param {{ breakSystem?: boolean }} options breakSystem: PEP 668 hosts (HA system python)
  */
-async function bootstrapPip(pythonCmd, options = {}) {
+async function bootstrapPip(systemSpec, options = {}) {
 	const { breakSystem = false } = options;
-	if (hasPip(pythonCmd)) {
+	if (hasPip(systemSpec)) {
 		return true;
 	}
 
-	log(`pip not found for ${pythonCmd} – trying ensurepip ...`);
-	const ensure = tryCommand(pythonCmd, pythonArgs(pythonCmd, ["-m", "ensurepip", "--upgrade"]), pipEnv());
-	if (!ensure.ok && ensure.stderr) {
-		log(ensure.stderr.split("\n")[0] || "ensurepip failed");
+	log(`pip not found for ${systemSpec.label} – trying ensurepip ...`);
+	const ensure = runPython(systemSpec, ["-m", "ensurepip", "--upgrade"], adapterRoot);
+	if (!ensure.ok) {
+		log("ensurepip failed");
 	}
-	if (hasPip(pythonCmd)) {
+	if (hasPip(systemSpec)) {
 		log("pip available after ensurepip");
 		return true;
 	}
@@ -205,13 +171,13 @@ async function bootstrapPip(pythonCmd, options = {}) {
 		getPipArgs.push("--break-system-packages");
 	}
 
-	const install = tryCommand(pythonCmd, pythonArgs(pythonCmd, getPipArgs), pipEnv());
+	const install = runPython(systemSpec, getPipArgs, adapterRoot);
 	if (!install.ok) {
-		log(`get-pip.py failed: ${install.stderr || install.stdout}`);
+		log("get-pip.py failed (see stderr above)");
 		return false;
 	}
 
-	if (hasPip(pythonCmd)) {
+	if (hasPip(systemSpec)) {
 		log("pip available after get-pip.py");
 		return true;
 	}
@@ -223,36 +189,33 @@ function depsReady() {
 	if (fs.existsSync(vpy) && canImportAiohttp(vpy)) {
 		return true;
 	}
-	const sys = findSystemPython(cli.python);
+	const sys = resolvePythonCommand(cli.python, adapterRoot);
 	return Boolean(sys && canImportWithSitePackages(sys));
 }
 
-function createVenv(systemPython, withoutPip) {
+function createVenv(systemSpec, withoutPip) {
 	const args = ["-m", "venv"];
 	if (withoutPip) {
 		args.push("--without-pip");
 	}
 	args.push(venvDir);
-	return tryCommand(systemPython, pythonArgs(systemPython, args));
+	return runPython(systemSpec, args, adapterRoot);
 }
 
-function ensureVenv(systemPython) {
+function ensureVenv(systemSpec) {
 	const py = venvPython();
 	if (fs.existsSync(py)) {
 		return py;
 	}
 
 	log(`Creating virtual environment at ${venvDir} ...`);
-	let created = createVenv(systemPython, false);
+	let created = createVenv(systemSpec, false);
 	if (!created.ok) {
-		const detail = created.stderr || created.stdout;
-		if (detail.includes("ensurepip") || detail.includes("python3-venv") || detail.includes("externally-managed")) {
-			log("Standard venv failed – trying venv --without-pip ...");
-			created = createVenv(systemPython, true);
-		}
+		log("Standard venv failed – trying venv --without-pip ...");
+		created = createVenv(systemSpec, true);
 	}
 	if (!created.ok) {
-		log(`venv creation failed: ${created.stderr || created.stdout}`);
+		log("venv creation failed");
 		return null;
 	}
 	return fs.existsSync(py) ? py : null;
@@ -269,54 +232,48 @@ function installIntoVenv(py) {
 	return true;
 }
 
-function installIntoSitePackages(systemPython) {
+function installIntoSitePackages(systemSpec) {
 	fs.mkdirSync(sitePackages, { recursive: true });
 	log(`Installing into ${sitePackages} (no venv required) ...`);
-	const pipArgs = [
-		...pythonArgs(systemPython, ["-m", "pip", "install"]),
-		"-r",
-		requirements,
-		"--target",
-		sitePackages,
-		"--upgrade",
-	];
+	const pipArgs = ["-m", "pip", "install", "-r", requirements, "--target", sitePackages, "--upgrade"];
 	if (process.platform !== "win32") {
 		pipArgs.push("--break-system-packages");
 	}
-	const result = tryCommand(systemPython, pipArgs, pipEnv());
+	const result = runPython(systemSpec, pipArgs, adapterRoot);
 	if (!result.ok) {
-		log(`pip --target failed: ${result.stderr || result.stdout}`);
+		log("pip --target failed");
 		return false;
 	}
 	log("Python dependencies installed in python/site-packages");
 	return true;
 }
 
-async function tryVenvPath(systemPython) {
-	const py = ensureVenv(systemPython);
+async function tryVenvPath(systemSpec) {
+	const py = ensureVenv(systemSpec);
 	if (!py) {
 		return false;
 	}
-	if (!(await bootstrapPip(py, { breakSystem: false }))) {
+	const venvSpec = { cmd: py, prefix: [], label: py };
+	if (!(await bootstrapPip(venvSpec, { breakSystem: false }))) {
 		log("Could not enable pip inside venv.");
 		return false;
 	}
 	return installIntoVenv(py);
 }
 
-async function trySitePackagesPath(systemPython, breakSystem) {
-	if (!(await bootstrapPip(systemPython, { breakSystem }))) {
+async function trySitePackagesPath(systemSpec, breakSystem) {
+	if (!(await bootstrapPip(systemSpec, { breakSystem }))) {
 		return false;
 	}
-	return installIntoSitePackages(systemPython);
+	return installIntoSitePackages(systemSpec);
 }
 
-async function runInstall(systemPython, profile) {
+async function runInstall(systemSpec, profile) {
 	const order = installOrder(profile);
 	const breakSystem = profile === "ha-iobroker" || profile === "container" || process.platform !== "win32";
 
-	const venvStep = () => tryVenvPath(systemPython);
-	const siteStep = () => trySitePackagesPath(systemPython, breakSystem);
+	const venvStep = () => tryVenvPath(systemSpec);
+	const siteStep = () => trySitePackagesPath(systemSpec, breakSystem);
 
 	const steps = order === "site-packages-first" ? [siteStep, venvStep] : [venvStep, siteStep];
 
@@ -365,22 +322,17 @@ async function main() {
 	const order = installOrder(profile);
 	log(`Install profile: ${profileLabel(profile)} (${order})`);
 
-	const systemPython = findSystemPython(cli.python);
-	if (!systemPython) {
+	const systemSpec = resolvePythonCommand(cli.python, adapterRoot);
+	if (!systemSpec) {
 		log("Python 3.12+ not found on this host.");
+		log(describePythonProbe(cli.python, adapterRoot));
 		finish(false, profile);
 		return;
 	}
 
-	if (!pythonVersionOk(systemPython)) {
-		log(`${systemPython}: Python 3.12+ required.`);
-		finish(false, profile);
-		return;
-	}
+	log(`System Python: ${systemSpec.label}`);
 
-	log(`System Python: ${systemPython}`);
-
-	if (await runInstall(systemPython, profile)) {
+	if (await runInstall(systemSpec, profile)) {
 		process.exitCode = 0;
 		return;
 	}

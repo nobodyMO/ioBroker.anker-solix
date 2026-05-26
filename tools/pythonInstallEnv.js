@@ -82,7 +82,9 @@ function hintLines(profile) {
 			return ["Container host: prefer site-packages in the adapter folder; venv may be unavailable."];
 		case "windows":
 			return [
-				"Windows: install Python 3.12+ from python.org (include pip), or set a custom pythonPath in admin.",
+				"Windows: install Python 3.12+ from python.org (include pip).",
+				"Installer tries py -3.13, py -3.12, then Program Files Python paths before generic py -3.",
+				"Or set pythonPath in admin to the full path of python.exe.",
 			];
 		case "macos":
 			return ["macOS: brew install python@3.12 (includes pip) if automatic install fails."];

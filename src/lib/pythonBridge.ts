@@ -6,7 +6,7 @@ import * as path from "node:path";
 import { getBridgeDaemon, stopBridgeDaemon } from "./bridgeDaemon";
 
 export { stopBridgeDaemon };
-import { buildPythonEnv, isPyLauncher, resolvePythonExecutable } from "./pythonPaths";
+import { buildPythonEnv, pythonSpawnArgs, resolvePythonSpawn } from "./pythonPaths";
 import type { BridgeConfig, BridgePollResult, BridgeServiceConfig, BridgeSetConfig } from "./types";
 
 type BridgeRunConfig = BridgeConfig | BridgeSetConfig | BridgeServiceConfig;
@@ -73,12 +73,13 @@ async function runBridgeOnce(
 	const tmpFile = path.join(os.tmpdir(), `anker-solix-${process.pid}-${Date.now()}.json`);
 	fs.writeFileSync(tmpFile, JSON.stringify(config), "utf8");
 
-	const python = resolvePythonExecutable(pythonPath);
-	const args = isPyLauncher(python) ? ["-3", script, action, tmpFile] : [script, action, tmpFile];
+	const spec = resolvePythonSpawn(pythonPath);
+	const args = pythonSpawnArgs(spec, [script, action, tmpFile]);
 
 	return new Promise((resolve, reject) => {
-		const proc = spawn(python, args, {
+		const proc = spawn(spec.cmd, args, {
 			windowsHide: true,
+			shell: process.platform === "win32",
 			env: buildPythonEnv(),
 		});
 
