@@ -63,7 +63,8 @@ function inContainerCgroup() {
 /** @returns {"venv-first" | "site-packages-first"} */
 function installOrder(profile) {
 	if (profile === "ha-iobroker" || profile === "container") {
-		return "site-packages-first";
+		// venv is not subject to PEP 668; prefer it before touching system pip
+		return "venv-first";
 	}
 	return "venv-first";
 }
@@ -73,9 +74,9 @@ function hintLines(profile) {
 	switch (profile) {
 		case "ha-iobroker":
 			return [
-				"Home Assistant ioBroker add-on: system pip/venv are often missing.",
-				"This installer tries pip bootstrap (ensurepip / get-pip.py) and local site-packages.",
-				"If it still fails: SSH into the add-on, run the admin button again, or copy python/site-packages from a working install.",
+				"Home Assistant ioBroker add-on: Python is PEP 668 (externally managed).",
+				"Installer tries venv first, then pip with --break-system-packages / PIP_BREAK_SYSTEM_PACKAGES.",
+				"If it still fails: copy python/site-packages from a working Ubuntu install, or run node tools/install-python.js in the add-on SSH shell.",
 			];
 		case "container":
 			return ["Container host: prefer site-packages in the adapter folder; venv may be unavailable."];

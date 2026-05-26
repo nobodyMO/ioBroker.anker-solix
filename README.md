@@ -84,9 +84,9 @@ python3 -m venv python/.venv && python/.venv/bin/pip install -r python/requireme
 
 The official **ioBroker** app on Home Assistant OS often has `python3` but **no `pip`** and **no `python3-venv`**. The adapter installer (since GitHub `main`, not yet on every npm release) detects this profile and tries:
 
-1. `ensurepip` / `get-pip.py` bootstrap  
-2. `pip install --target python/site-packages` (preferred on HA)  
-3. virtualenv as fallback  
+1. virtualenv in `python/.venv` (or `--without-pip` + pip inside venv)  
+2. `get-pip.py` with `--break-system-packages` when system Python is PEP 668  
+3. `pip install --target python/site-packages` as fallback  
 
 **Install from GitHub** while testing:
 

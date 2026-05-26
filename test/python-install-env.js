@@ -25,9 +25,9 @@ describe("python install environment", () => {
 		);
 	});
 
-	it("installOrder prefers site-packages on ha-iobroker", () => {
-		assert.strictEqual(installOrder("ha-iobroker"), "site-packages-first");
-		assert.strictEqual(installOrder("container"), "site-packages-first");
+	it("installOrder prefers venv on ha-iobroker (avoids PEP 668 system pip)", () => {
+		assert.strictEqual(installOrder("ha-iobroker"), "venv-first");
+		assert.strictEqual(installOrder("container"), "venv-first");
 		assert.strictEqual(installOrder("linux-server"), "venv-first");
 		assert.strictEqual(installOrder("windows"), "venv-first");
 	});

@@ -54,12 +54,19 @@ function venvPython() {
 	return path.join(venvDir, "bin", "python3");
 }
 
+function pipEnv(extra = {}) {
+	if (process.platform === "win32") {
+		return { ...process.env, ...extra };
+	}
+	return { ...process.env, PIP_BREAK_SYSTEM_PACKAGES: "1", ...extra };
+}
+
 function tryCommand(cmd, args, env) {
 	const result = spawnSync(cmd, args, {
 		cwd: adapterRoot,
 		encoding: "utf8",
 		shell: process.platform === "win32",
-		env,
+		env: env || process.env,
 	});
 	return {
 		ok: result.status === 0,
@@ -111,7 +118,7 @@ function canImportWithSitePackages(systemPython) {
 	if (!fs.existsSync(path.join(sitePackages, "aiohttp"))) {
 		return false;
 	}
-	const env = { ...process.env, PYTHONPATH: sitePackages };
+	const env = pipEnv({ PYTHONPATH: sitePackages });
 	const r = spawnSync(systemPython, pythonArgs(systemPython, ["-c", "import aiohttp"]), {
 		cwd: adapterRoot,
 		encoding: "utf8",
@@ -121,8 +128,8 @@ function canImportWithSitePackages(systemPython) {
 	return r.status === 0;
 }
 
-function hasPip(systemPython) {
-	return tryCommand(systemPython, pythonArgs(systemPython, ["-m", "pip", "--version"])).ok;
+function hasPip(pythonCmd) {
+	return tryCommand(pythonCmd, pythonArgs(pythonCmd, ["-m", "pip", "--version"]), pipEnv()).ok;
 }
 
 function downloadGetPip(dest) {
@@ -150,41 +157,61 @@ function downloadGetPip(dest) {
 	});
 }
 
-async function bootstrapPip(systemPython) {
-	if (hasPip(systemPython)) {
+async function ensureGetPipScript() {
+	if (fs.existsSync(getPipCache)) {
 		return true;
 	}
-
-	log("pip not found – trying ensurepip ...");
-	const ensure = tryCommand(systemPython, pythonArgs(systemPython, ["-m", "ensurepip", "--upgrade"]));
-	if (!ensure.ok && ensure.stderr) {
-		log(ensure.stderr.split("\n")[0] || "ensurepip failed");
-	}
-	if (hasPip(systemPython)) {
-		log("pip available after ensurepip");
-		return true;
-	}
-
 	log("Downloading get-pip.py ...");
 	try {
 		fs.mkdirSync(path.dirname(getPipCache), { recursive: true });
 		await downloadGetPip(getPipCache);
+		return true;
 	} catch (err) {
 		const curl = tryCommand("curl", ["-fsSL", GET_PIP_URL, "-o", getPipCache]);
 		if (!curl.ok) {
 			log(`Could not download get-pip.py: ${err.message}`);
 			return false;
 		}
+		return true;
+	}
+}
+
+/**
+ * @param {string} pythonCmd
+ * @param {{ breakSystem?: boolean }} options breakSystem: PEP 668 hosts (HA system python)
+ */
+async function bootstrapPip(pythonCmd, options = {}) {
+	const { breakSystem = false } = options;
+	if (hasPip(pythonCmd)) {
+		return true;
 	}
 
-	const pipArgs = pythonArgs(systemPython, [getPipCache]);
-	const install = tryCommand(systemPython, pipArgs);
+	log(`pip not found for ${pythonCmd} – trying ensurepip ...`);
+	const ensure = tryCommand(pythonCmd, pythonArgs(pythonCmd, ["-m", "ensurepip", "--upgrade"]), pipEnv());
+	if (!ensure.ok && ensure.stderr) {
+		log(ensure.stderr.split("\n")[0] || "ensurepip failed");
+	}
+	if (hasPip(pythonCmd)) {
+		log("pip available after ensurepip");
+		return true;
+	}
+
+	if (!(await ensureGetPipScript())) {
+		return false;
+	}
+
+	const getPipArgs = [getPipCache];
+	if (breakSystem && process.platform !== "win32") {
+		getPipArgs.push("--break-system-packages");
+	}
+
+	const install = tryCommand(pythonCmd, pythonArgs(pythonCmd, getPipArgs), pipEnv());
 	if (!install.ok) {
 		log(`get-pip.py failed: ${install.stderr || install.stdout}`);
 		return false;
 	}
 
-	if (hasPip(systemPython)) {
+	if (hasPip(pythonCmd)) {
 		log("pip available after get-pip.py");
 		return true;
 	}
@@ -200,20 +227,32 @@ function depsReady() {
 	return Boolean(sys && canImportWithSitePackages(sys));
 }
 
+function createVenv(systemPython, withoutPip) {
+	const args = ["-m", "venv"];
+	if (withoutPip) {
+		args.push("--without-pip");
+	}
+	args.push(venvDir);
+	return tryCommand(systemPython, pythonArgs(systemPython, args));
+}
+
 function ensureVenv(systemPython) {
 	const py = venvPython();
 	if (fs.existsSync(py)) {
 		return py;
 	}
+
 	log(`Creating virtual environment at ${venvDir} ...`);
-	const created = tryCommand(systemPython, pythonArgs(systemPython, ["-m", "venv", venvDir]));
+	let created = createVenv(systemPython, false);
 	if (!created.ok) {
 		const detail = created.stderr || created.stdout;
-		if (detail.includes("ensurepip") || detail.includes("python3-venv")) {
-			log("python3-venv not available – trying site-packages instead.");
-		} else {
-			log(`venv creation failed: ${detail}`);
+		if (detail.includes("ensurepip") || detail.includes("python3-venv") || detail.includes("externally-managed")) {
+			log("Standard venv failed – trying venv --without-pip ...");
+			created = createVenv(systemPython, true);
 		}
+	}
+	if (!created.ok) {
+		log(`venv creation failed: ${created.stderr || created.stdout}`);
 		return null;
 	}
 	return fs.existsSync(py) ? py : null;
@@ -221,7 +260,7 @@ function ensureVenv(systemPython) {
 
 function installIntoVenv(py) {
 	log(`Installing into venv from ${requirements} ...`);
-	const result = tryCommand(py, ["-m", "pip", "install", "-r", requirements, "--upgrade"]);
+	const result = tryCommand(py, ["-m", "pip", "install", "-r", requirements, "--upgrade"], pipEnv());
 	if (!result.ok) {
 		log(`pip into venv failed: ${result.stderr || result.stdout}`);
 		return false;
@@ -244,7 +283,7 @@ function installIntoSitePackages(systemPython) {
 	if (process.platform !== "win32") {
 		pipArgs.push("--break-system-packages");
 	}
-	const result = tryCommand(systemPython, pipArgs);
+	const result = tryCommand(systemPython, pipArgs, pipEnv());
 	if (!result.ok) {
 		log(`pip --target failed: ${result.stderr || result.stdout}`);
 		return false;
@@ -253,26 +292,36 @@ function installIntoSitePackages(systemPython) {
 	return true;
 }
 
-function tryInstall(systemPython, order) {
-	const steps =
-		order === "site-packages-first"
-			? [
-					() => installIntoSitePackages(systemPython),
-					() => {
-						const py = ensureVenv(systemPython);
-						return py ? installIntoVenv(py) : false;
-					},
-				]
-			: [
-					() => {
-						const py = ensureVenv(systemPython);
-						return py ? installIntoVenv(py) : false;
-					},
-					() => installIntoSitePackages(systemPython),
-				];
+async function tryVenvPath(systemPython) {
+	const py = ensureVenv(systemPython);
+	if (!py) {
+		return false;
+	}
+	if (!(await bootstrapPip(py, { breakSystem: false }))) {
+		log("Could not enable pip inside venv.");
+		return false;
+	}
+	return installIntoVenv(py);
+}
+
+async function trySitePackagesPath(systemPython, breakSystem) {
+	if (!(await bootstrapPip(systemPython, { breakSystem }))) {
+		return false;
+	}
+	return installIntoSitePackages(systemPython);
+}
+
+async function runInstall(systemPython, profile) {
+	const order = installOrder(profile);
+	const breakSystem = profile === "ha-iobroker" || profile === "container" || process.platform !== "win32";
+
+	const venvStep = () => tryVenvPath(systemPython);
+	const siteStep = () => trySitePackagesPath(systemPython, breakSystem);
+
+	const steps = order === "site-packages-first" ? [siteStep, venvStep] : [venvStep, siteStep];
 
 	for (const step of steps) {
-		if (step()) {
+		if (await step()) {
 			return true;
 		}
 	}
@@ -331,14 +380,7 @@ async function main() {
 
 	log(`System Python: ${systemPython}`);
 
-	const pipOk = await bootstrapPip(systemPython);
-	if (!pipOk) {
-		log("Could not enable pip on this Python.");
-		finish(false, profile);
-		return;
-	}
-
-	if (tryInstall(systemPython, order)) {
+	if (await runInstall(systemPython, profile)) {
 		process.exitCode = 0;
 		return;
 	}
