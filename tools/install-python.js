@@ -1,17 +1,23 @@
 #!/usr/bin/env node
 /**
  * Installs Python deps into python/.venv (preferred) or python/site-packages (fallback).
+ * Profiles: Windows, Linux server, macOS, HA ioBroker add-on, generic container.
  * npm postinstall: best-effort, never fails npm (exit 0) — use: node tools/install-python.js --soft
  */
 
 const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
+const https = require("node:https");
 const path = require("node:path");
+
+const { detectInstallProfile, hintLines, installOrder, profileLabel } = require("./pythonInstallEnv");
 
 const adapterRoot = path.join(__dirname, "..");
 const requirements = path.join(adapterRoot, "python", "requirements.txt");
 const venvDir = path.join(adapterRoot, "python", ".venv");
 const sitePackages = path.join(adapterRoot, "python", "site-packages");
+const getPipCache = path.join(adapterRoot, "python", ".get-pip.py");
+const GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py";
 
 function parseArgs(argv) {
 	let python = "";
@@ -88,8 +94,16 @@ function findSystemPython(customPath) {
 	return null;
 }
 
-function canImportAiohttp(pythonCmd) {
-	const check = tryCommand(pythonCmd, pythonArgs(pythonCmd, ["-c", "import aiohttp"]));
+function pythonVersionOk(systemPython) {
+	const check = tryCommand(
+		systemPython,
+		pythonArgs(systemPython, ["-c", "import sys; raise SystemExit(0 if sys.version_info>=(3,12) else 1)"]),
+	);
+	return check.ok;
+}
+
+function canImportAiohttp(pythonCmd, env) {
+	const check = tryCommand(pythonCmd, pythonArgs(pythonCmd, ["-c", "import aiohttp"]), env);
 	return check.ok;
 }
 
@@ -97,7 +111,7 @@ function canImportWithSitePackages(systemPython) {
 	if (!fs.existsSync(path.join(sitePackages, "aiohttp"))) {
 		return false;
 	}
-	const env = { PYTHONPATH: sitePackages };
+	const env = { ...process.env, PYTHONPATH: sitePackages };
 	const r = spawnSync(systemPython, pythonArgs(systemPython, ["-c", "import aiohttp"]), {
 		cwd: adapterRoot,
 		encoding: "utf8",
@@ -105,6 +119,76 @@ function canImportWithSitePackages(systemPython) {
 		env,
 	});
 	return r.status === 0;
+}
+
+function hasPip(systemPython) {
+	return tryCommand(systemPython, pythonArgs(systemPython, ["-m", "pip", "--version"])).ok;
+}
+
+function downloadGetPip(dest) {
+	return new Promise((resolve, reject) => {
+		const file = fs.createWriteStream(dest);
+		const request = url => {
+			https
+				.get(url, res => {
+					if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+						request(res.headers.location);
+						return;
+					}
+					if (res.statusCode !== 200) {
+						reject(new Error(`get-pip download HTTP ${res.statusCode}`));
+						return;
+					}
+					res.pipe(file);
+					file.on("finish", () => {
+						file.close(err => (err ? reject(err) : resolve()));
+					});
+				})
+				.on("error", reject);
+		};
+		request(GET_PIP_URL);
+	});
+}
+
+async function bootstrapPip(systemPython) {
+	if (hasPip(systemPython)) {
+		return true;
+	}
+
+	log("pip not found – trying ensurepip ...");
+	const ensure = tryCommand(systemPython, pythonArgs(systemPython, ["-m", "ensurepip", "--upgrade"]));
+	if (!ensure.ok && ensure.stderr) {
+		log(ensure.stderr.split("\n")[0] || "ensurepip failed");
+	}
+	if (hasPip(systemPython)) {
+		log("pip available after ensurepip");
+		return true;
+	}
+
+	log("Downloading get-pip.py ...");
+	try {
+		fs.mkdirSync(path.dirname(getPipCache), { recursive: true });
+		await downloadGetPip(getPipCache);
+	} catch (err) {
+		const curl = tryCommand("curl", ["-fsSL", GET_PIP_URL, "-o", getPipCache]);
+		if (!curl.ok) {
+			log(`Could not download get-pip.py: ${err.message}`);
+			return false;
+		}
+	}
+
+	const pipArgs = pythonArgs(systemPython, [getPipCache]);
+	const install = tryCommand(systemPython, pipArgs);
+	if (!install.ok) {
+		log(`get-pip.py failed: ${install.stderr || install.stdout}`);
+		return false;
+	}
+
+	if (hasPip(systemPython)) {
+		log("pip available after get-pip.py");
+		return true;
+	}
+	return false;
 }
 
 function depsReady() {
@@ -126,9 +210,7 @@ function ensureVenv(systemPython) {
 	if (!created.ok) {
 		const detail = created.stderr || created.stdout;
 		if (detail.includes("ensurepip") || detail.includes("python3-venv")) {
-			log(
-				"python3-venv not available (install: sudo apt install python3-venv) – trying local site-packages instead.",
-			);
+			log("python3-venv not available – trying site-packages instead.");
 		} else {
 			log(`venv creation failed: ${detail}`);
 		}
@@ -158,8 +240,10 @@ function installIntoSitePackages(systemPython) {
 		"--target",
 		sitePackages,
 		"--upgrade",
-		"--break-system-packages",
 	];
+	if (process.platform !== "win32") {
+		pipArgs.push("--break-system-packages");
+	}
 	const result = tryCommand(systemPython, pipArgs);
 	if (!result.ok) {
 		log(`pip --target failed: ${result.stderr || result.stdout}`);
@@ -169,20 +253,47 @@ function installIntoSitePackages(systemPython) {
 	return true;
 }
 
-function finish(success, message) {
+function tryInstall(systemPython, order) {
+	const steps =
+		order === "site-packages-first"
+			? [
+					() => installIntoSitePackages(systemPython),
+					() => {
+						const py = ensureVenv(systemPython);
+						return py ? installIntoVenv(py) : false;
+					},
+				]
+			: [
+					() => {
+						const py = ensureVenv(systemPython);
+						return py ? installIntoVenv(py) : false;
+					},
+					() => installIntoSitePackages(systemPython),
+				];
+
+	for (const step of steps) {
+		if (step()) {
+			return true;
+		}
+	}
+	return false;
+}
+
+function finish(success, profile) {
 	if (!success) {
-		log(message);
+		for (const line of hintLines(profile)) {
+			log(line);
+		}
 		if (!isSoftFail()) {
 			process.exitCode = 1;
 			return;
 		}
 		log("Install deferred – start the adapter instance or use admin: Install Python dependencies.");
-		log("On Debian/Ubuntu without venv: sudo apt install python3-venv python3-pip");
 	}
 	process.exitCode = 0;
 }
 
-function main() {
+async function main() {
 	if (isNpmTempInstall()) {
 		log("Skipping Python setup in npm cache (runs in adapter folder after install).");
 		process.exitCode = 0;
@@ -190,7 +301,8 @@ function main() {
 	}
 
 	if (!fs.existsSync(requirements)) {
-		finish(false, `Missing ${requirements}`);
+		log(`Missing ${requirements}`);
+		finish(false, detectInstallProfile(adapterRoot));
 		return;
 	}
 
@@ -200,26 +312,41 @@ function main() {
 		return;
 	}
 
+	const profile = detectInstallProfile(adapterRoot);
+	const order = installOrder(profile);
+	log(`Install profile: ${profileLabel(profile)} (${order})`);
+
 	const systemPython = findSystemPython(cli.python);
 	if (!systemPython) {
-		finish(false, "Python 3.12+ not found on this host.");
+		log("Python 3.12+ not found on this host.");
+		finish(false, profile);
+		return;
+	}
+
+	if (!pythonVersionOk(systemPython)) {
+		log(`${systemPython}: Python 3.12+ required.`);
+		finish(false, profile);
 		return;
 	}
 
 	log(`System Python: ${systemPython}`);
 
-	const py = ensureVenv(systemPython);
-	if (py && installIntoVenv(py)) {
+	const pipOk = await bootstrapPip(systemPython);
+	if (!pipOk) {
+		log("Could not enable pip on this Python.");
+		finish(false, profile);
+		return;
+	}
+
+	if (tryInstall(systemPython, order)) {
 		process.exitCode = 0;
 		return;
 	}
 
-	if (installIntoSitePackages(systemPython)) {
-		process.exitCode = 0;
-		return;
-	}
-
-	finish(false, "Could not install Python packages (venv and site-packages fallback failed).");
+	finish(false, profile);
 }
 
-main();
+main().catch(err => {
+	log(`Installer error: ${err.message}`);
+	finish(false, detectInstallProfile(adapterRoot));
+});

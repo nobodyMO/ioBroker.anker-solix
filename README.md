@@ -80,6 +80,34 @@ cd node_modules/iobroker.anker-solix
 python3 -m venv python/.venv && python/.venv/bin/pip install -r python/requirements.txt
 ```
 
+### Home Assistant (ioBroker add-on)
+
+The official **ioBroker** app on Home Assistant OS often has `python3` but **no `pip`** and **no `python3-venv`**. The adapter installer (since GitHub `main`, not yet on every npm release) detects this profile and tries:
+
+1. `ensurepip` / `get-pip.py` bootstrap  
+2. `pip install --target python/site-packages` (preferred on HA)  
+3. virtualenv as fallback  
+
+**Install from GitHub** while testing:
+
+```bash
+iobroker url https://github.com/MatthiasUlrich1/ioBroker.anker-solix --host "PC(SmartHome)"
+```
+
+Then in the instance admin: **Options** → **Install Python dependencies**, or restart the instance with **autoInstallPython** enabled.
+
+If logs still show `No module named pip`, open the ioBroker/SSH terminal on the host and run:
+
+```bash
+cd /data/iobroker/node_modules/iobroker.anker-solix
+node tools/install-python.js
+iobroker restart anker-solix.0
+```
+
+Copy **`authcache/<email>.json`** from a working Anker setup (e.g. ha-anker-solix) into `iobroker-data/anker-solix.0/authcache/` to avoid captcha on first login.
+
+**Revert** to the previous installer: install a fixed commit, e.g. `iobroker url https://github.com/MatthiasUlrich1/ioBroker.anker-solix#9f78195`.
+
 ---
 
 ## Configuration
