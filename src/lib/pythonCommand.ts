@@ -11,11 +11,30 @@ export interface PythonCommand {
 	label: string;
 }
 
+export interface ParsedPythonVersion {
+	major: number;
+	minor: number;
+	patch: number;
+}
+
+export function parsePythonVersionText(text: string): ParsedPythonVersion | null {
+	const m = (text || "").match(/Python\s+(\d+)\.(\d+)(?:\.(\d+))?/i);
+	if (!m) {
+		return null;
+	}
+	return { major: Number(m[1]), minor: Number(m[2]), patch: Number(m[3] || 0) };
+}
+
+export function versionMeetsMinimum(major: number, minor: number): boolean {
+	return major > MIN_MAJOR || (major === MIN_MAJOR && minor >= MIN_MINOR);
+}
+
 function trySpawn(cmd: string, args: string[], cwd?: string): { ok: boolean; stdout: string; stderr: string } {
 	const result = spawnSync(cmd, args, {
 		cwd,
 		encoding: "utf8",
-		shell: process.platform === "win32",
+		shell: false,
+		windowsHide: true,
 	});
 	return {
 		ok: result.status === 0,
@@ -28,12 +47,18 @@ export function runPython(spec: PythonCommand, extra: string[], cwd?: string): {
 	return trySpawn(spec.cmd, [...spec.prefix, ...extra], cwd);
 }
 
+export function pythonVersionText(spec: PythonCommand, cwd?: string): string {
+	const r = trySpawn(spec.cmd, [...spec.prefix, "--version"], cwd);
+	return (r.stdout || r.stderr).trim();
+}
+
 export function pythonVersionOk(spec: PythonCommand, cwd?: string): boolean {
-	return runPython(
-		spec,
-		["-c", `import sys; raise SystemExit(0 if sys.version_info>=(${MIN_MAJOR}, ${MIN_MINOR}) else 1)`],
-		cwd,
-	).ok;
+	const text = pythonVersionText(spec, cwd);
+	if (!text) {
+		return false;
+	}
+	const parsed = parsePythonVersionText(text);
+	return parsed !== null && versionMeetsMinimum(parsed.major, parsed.minor);
 }
 
 function windowsProgramFilesPythons(): string[] {
@@ -98,11 +123,12 @@ export function buildCandidates(customPath?: string): PythonCommand[] {
 
 export function resolvePythonCommand(customPath?: string, cwd?: string): PythonCommand | null {
 	for (const spec of buildCandidates(customPath)) {
-		const versionProbe = runPython(spec, ["--version"], cwd);
-		if (!versionProbe.ok) {
+		const text = pythonVersionText(spec, cwd);
+		if (!text) {
 			continue;
 		}
-		if (!pythonVersionOk(spec, cwd)) {
+		const parsed = parsePythonVersionText(text);
+		if (!parsed || !versionMeetsMinimum(parsed.major, parsed.minor)) {
 			continue;
 		}
 		return spec;
@@ -113,3 +139,5 @@ export function resolvePythonCommand(customPath?: string, cwd?: string): PythonC
 export function isPyLauncherSpec(spec: PythonCommand): boolean {
 	return process.platform === "win32" && spec.cmd === "py" && spec.prefix.length > 0;
 }
+
+export { MIN_MAJOR, MIN_MINOR };

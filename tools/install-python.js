@@ -66,7 +66,8 @@ function tryCommand(cmd, args, env) {
 	const result = spawnSync(cmd, args, {
 		cwd: adapterRoot,
 		encoding: "utf8",
-		shell: process.platform === "win32",
+		shell: false,
+		windowsHide: true,
 		env: env || process.env,
 	});
 	return {

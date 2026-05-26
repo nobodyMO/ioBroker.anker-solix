@@ -56,7 +56,7 @@ export class BridgeDaemon {
 		this.readyPromise = new Promise<void>((resolveReady, rejectReady) => {
 			const proc = spawn(spec.cmd, args, {
 				windowsHide: true,
-				shell: process.platform === "win32",
+				shell: false,
 				env: buildPythonEnv(),
 				stdio: ["pipe", "pipe", "pipe"],
 			});

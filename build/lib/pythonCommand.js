@@ -28,11 +28,16 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var pythonCommand_exports = {};
 __export(pythonCommand_exports, {
+  MIN_MAJOR: () => MIN_MAJOR,
+  MIN_MINOR: () => MIN_MINOR,
   buildCandidates: () => buildCandidates,
   isPyLauncherSpec: () => isPyLauncherSpec,
+  parsePythonVersionText: () => parsePythonVersionText,
   pythonVersionOk: () => pythonVersionOk,
+  pythonVersionText: () => pythonVersionText,
   resolvePythonCommand: () => resolvePythonCommand,
-  runPython: () => runPython
+  runPython: () => runPython,
+  versionMeetsMinimum: () => versionMeetsMinimum
 });
 module.exports = __toCommonJS(pythonCommand_exports);
 var import_node_child_process = require("node:child_process");
@@ -40,11 +45,22 @@ var fs = __toESM(require("node:fs"));
 var path = __toESM(require("node:path"));
 const MIN_MAJOR = 3;
 const MIN_MINOR = 12;
+function parsePythonVersionText(text) {
+  const m = (text || "").match(/Python\s+(\d+)\.(\d+)(?:\.(\d+))?/i);
+  if (!m) {
+    return null;
+  }
+  return { major: Number(m[1]), minor: Number(m[2]), patch: Number(m[3] || 0) };
+}
+function versionMeetsMinimum(major, minor) {
+  return major > MIN_MAJOR || major === MIN_MAJOR && minor >= MIN_MINOR;
+}
 function trySpawn(cmd, args, cwd) {
   const result = (0, import_node_child_process.spawnSync)(cmd, args, {
     cwd,
     encoding: "utf8",
-    shell: process.platform === "win32"
+    shell: false,
+    windowsHide: true
   });
   return {
     ok: result.status === 0,
@@ -55,12 +71,17 @@ function trySpawn(cmd, args, cwd) {
 function runPython(spec, extra, cwd) {
   return trySpawn(spec.cmd, [...spec.prefix, ...extra], cwd);
 }
+function pythonVersionText(spec, cwd) {
+  const r = trySpawn(spec.cmd, [...spec.prefix, "--version"], cwd);
+  return (r.stdout || r.stderr).trim();
+}
 function pythonVersionOk(spec, cwd) {
-  return runPython(
-    spec,
-    ["-c", `import sys; raise SystemExit(0 if sys.version_info>=(${MIN_MAJOR}, ${MIN_MINOR}) else 1)`],
-    cwd
-  ).ok;
+  const text = pythonVersionText(spec, cwd);
+  if (!text) {
+    return false;
+  }
+  const parsed = parsePythonVersionText(text);
+  return parsed !== null && versionMeetsMinimum(parsed.major, parsed.minor);
 }
 function windowsProgramFilesPythons() {
   const roots = [];
@@ -119,11 +140,12 @@ function buildCandidates(customPath) {
 }
 function resolvePythonCommand(customPath, cwd) {
   for (const spec of buildCandidates(customPath)) {
-    const versionProbe = runPython(spec, ["--version"], cwd);
-    if (!versionProbe.ok) {
+    const text = pythonVersionText(spec, cwd);
+    if (!text) {
       continue;
     }
-    if (!pythonVersionOk(spec, cwd)) {
+    const parsed = parsePythonVersionText(text);
+    if (!parsed || !versionMeetsMinimum(parsed.major, parsed.minor)) {
       continue;
     }
     return spec;
@@ -135,10 +157,15 @@ function isPyLauncherSpec(spec) {
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  MIN_MAJOR,
+  MIN_MINOR,
   buildCandidates,
   isPyLauncherSpec,
+  parsePythonVersionText,
   pythonVersionOk,
+  pythonVersionText,
   resolvePythonCommand,
-  runPython
+  runPython,
+  versionMeetsMinimum
 });
 //# sourceMappingURL=pythonCommand.js.map

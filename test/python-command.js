@@ -1,7 +1,24 @@
 const assert = require("assert");
-const { buildCandidates, resolvePythonCommand } = require("../tools/pythonCommand");
+const {
+	buildCandidates,
+	parsePythonVersionText,
+	resolvePythonCommand,
+	versionMeetsMinimum,
+} = require("../tools/pythonCommand");
 
 describe("python command resolution", () => {
+	it("parsePythonVersionText accepts Python 3.12.4", () => {
+		const parsed = parsePythonVersionText("Python 3.12.4");
+		assert.deepStrictEqual(parsed, { major: 3, minor: 12, patch: 4 });
+		assert.strictEqual(versionMeetsMinimum(parsed.major, parsed.minor), true);
+	});
+
+	it("parsePythonVersionText rejects Python 3.11", () => {
+		const parsed = parsePythonVersionText("Python 3.11.9");
+		assert.ok(parsed);
+		assert.strictEqual(versionMeetsMinimum(parsed.major, parsed.minor), false);
+	});
+
 	it("Windows candidates prefer py -3.13 and py -3.12 before py -3", function () {
 		if (process.platform !== "win32") {
 			this.skip();

@@ -64,7 +64,7 @@ async function runBridgeOnce(action, config, pythonPath, log) {
   return new Promise((resolve, reject) => {
     const proc = (0, import_node_child_process.spawn)(spec.cmd, args, {
       windowsHide: true,
-      shell: process.platform === "win32",
+      shell: false,
       env: (0, import_pythonPaths.buildPythonEnv)()
     });
     let stdout = "";

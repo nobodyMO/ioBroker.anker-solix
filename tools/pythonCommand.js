@@ -11,11 +11,26 @@ const { spawnSync } = require("node:child_process");
 const MIN_MAJOR = 3;
 const MIN_MINOR = 12;
 
+/** @param {string} text stdout/stderr from `python --version` */
+function parsePythonVersionText(text) {
+	const m = (text || "").match(/Python\s+(\d+)\.(\d+)(?:\.(\d+))?/i);
+	if (!m) {
+		return null;
+	}
+	return { major: Number(m[1]), minor: Number(m[2]), patch: Number(m[3] || 0) };
+}
+
+/** @param {number} major @param {number} minor */
+function versionMeetsMinimum(major, minor) {
+	return major > MIN_MAJOR || (major === MIN_MAJOR && minor >= MIN_MINOR);
+}
+
 function trySpawn(cmd, args, cwd) {
 	const result = spawnSync(cmd, args, {
 		cwd,
 		encoding: "utf8",
-		shell: process.platform === "win32",
+		shell: false,
+		windowsHide: true,
 	});
 	return {
 		ok: result.status === 0,
@@ -38,11 +53,12 @@ function runPython(spec, extra, cwd) {
  * @param {string} [cwd]
  */
 function pythonVersionOk(spec, cwd) {
-	return runPython(
-		spec,
-		["-c", `import sys; raise SystemExit(0 if sys.version_info>=(${MIN_MAJOR}, ${MIN_MINOR}) else 1)`],
-		cwd,
-	).ok;
+	const text = pythonVersionText(spec, cwd);
+	if (!text) {
+		return false;
+	}
+	const parsed = parsePythonVersionText(text);
+	return parsed !== null && versionMeetsMinimum(parsed.major, parsed.minor);
 }
 
 /**
@@ -125,11 +141,12 @@ function buildCandidates(customPath) {
  */
 function resolvePythonCommand(customPath, cwd) {
 	for (const spec of buildCandidates(customPath)) {
-		const versionProbe = runPython(spec, ["--version"], cwd);
-		if (!versionProbe.ok) {
+		const text = pythonVersionText(spec, cwd);
+		if (!text) {
 			continue;
 		}
-		if (!pythonVersionOk(spec, cwd)) {
+		const parsed = parsePythonVersionText(text);
+		if (!parsed || !versionMeetsMinimum(parsed.major, parsed.minor)) {
 			continue;
 		}
 		return spec;
@@ -174,5 +191,7 @@ module.exports = {
 	runPython,
 	pythonVersionOk,
 	pythonVersionText,
+	parsePythonVersionText,
+	versionMeetsMinimum,
 	isPyLauncherSpec,
 };

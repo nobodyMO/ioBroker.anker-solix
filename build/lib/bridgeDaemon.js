@@ -70,7 +70,7 @@ class BridgeDaemon {
       var _a2;
       const proc = (0, import_node_child_process.spawn)(spec.cmd, args, {
         windowsHide: true,
-        shell: process.platform === "win32",
+        shell: false,
         env: (0, import_pythonPaths.buildPythonEnv)(),
         stdio: ["pipe", "pipe", "pipe"]
       });

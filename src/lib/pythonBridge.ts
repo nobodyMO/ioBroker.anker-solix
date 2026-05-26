@@ -79,7 +79,7 @@ async function runBridgeOnce(
 	return new Promise((resolve, reject) => {
 		const proc = spawn(spec.cmd, args, {
 			windowsHide: true,
-			shell: process.platform === "win32",
+			shell: false,
 			env: buildPythonEnv(),
 		});
 
