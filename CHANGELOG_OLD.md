@@ -1,6 +1,8 @@
 # Older changelog entries (moved from io-package.json common.news)
 
-Current releases **0.10.6 and newer** are documented in [README.md](README.md#changelog).
+Current releases **0.10.63 and newer** (except the latest seven messagebox news entries) are documented in [README.md](README.md#changelog).
+
+Removed from `common.news` when trimming to the ioBroker repository limit of **7** entries: 0.10.63 and older (see README), plus versions never published to npm (e.g. 0.10.50–0.10.53, 0.10.58).
 
 ## 0.9.5 – 0.9.0
 

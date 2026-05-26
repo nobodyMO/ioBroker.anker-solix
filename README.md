@@ -299,6 +299,38 @@ Tab **Abregelungsvermeidung** / **Curtailment avoidance**: requires the [ioBroke
 
 ## Changelog
 
+### 0.10.70
+
+- **Repository / CI:** `common.news` capped at 7 npm-published versions; workflow concurrency per ioBroker.example; admin header `size` ≤ 5; automated checks in `test/io-package-policy.js`; `CHANGELOG_OLD.md` excluded from npm package
+
+### 0.10.69
+
+- **Curtailment:** after midnight (Europe/Berlin) phase `inactive` until solarprognose forecast signature changes; then safe `modeAfter` release (no export while waiting)
+
+### 0.10.68
+
+- **Admin:** Python install button at bottom of **Options** tab
+
+### 0.10.67
+
+- **Admin:** removed **Devices** tab and cloud device reload; device filter on **Objects**; **Login cache** tab rightmost
+
+### 0.10.66
+
+- **Admin:** device list and login-cache status via `useNative` responses
+
+### 0.10.65
+
+- **Login cache** tab: backup/restore; auto-backup after first login
+
+### 0.10.64
+
+- **Curtailment admin:** hint text; combiner vs standalone field toggle fix
+
+### 0.10.63
+
+- **Fix** `bat_discharge_power`; admin: terms under **Account**, **Objects** tab, curtailment UI (combiner / solarprognose link)
+
 ### 0.10.31
 
 - **Week/month/year statistics:** fetched once per day after **23:00 / 23:15 / 23:30** (Europe/Berlin) on the next detail poll, not every detail refresh
@@ -493,6 +525,14 @@ Older release notes: [CHANGELOG_OLD.md](CHANGELOG_OLD.md) and git history.
 ## Publishing (npm & ioBroker catalog)
 
 **npm:** Release via git tag (`v*`) and CI deploy after [adapter check](https://adaptercheck.iobroker.in/) is green. Register in [ioBroker.repositories](https://github.com/ioBroker/ioBroker.repositories) once the package is on npm.
+
+**Before each release** (enforced by `npm run test:package` → `test/io-package-policy.js`):
+
+1. Bump `version` in `package.json` and `io-package.json` (must match).
+2. Add a `### x.y.z` section to this README changelog (E6006).
+3. Add **one** new `common.news` entry for that version; keep **at most 7** news keys — only versions already on npm (except the version you are about to publish). Move removed text to [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
+4. Admin `jsonConfig.json`: header `size` must be **≤ 5** (use `5` for smallest heading).
+5. Do not add root files to npm `files` unless needed (`CHANGELOG_OLD.md` stays out of the package).
 
 ---
 

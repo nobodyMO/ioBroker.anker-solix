@@ -1,6 +1,6 @@
 {
   "name": "iobroker.anker-solix",
-  "version": "0.10.69",
+  "version": "0.10.70",
   "description": "ioBroker adapter for Anker Solix (based on ha-anker-solix)",
   "author": {
     "name": "MatthiasUlrich1",
@@ -59,7 +59,8 @@
     "tools/",
     "www/",
     "io-package.json",
-    "LICENSE"
+    "LICENSE",
+    "!CHANGELOG_OLD.md"
   ],
   "scripts": {
     "prebuild": "rimraf build",

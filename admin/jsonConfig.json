@@ -553,7 +553,7 @@
 				"_curtailment_standalone_header": {
 					"type": "header",
 					"text": "curtailment_standalone_header",
-					"size": 6,
+					"size": 5,
 					"hidden": "!data.enableCurtailmentAvoidance || data.curtailmentHasCombiner",
 					"xs": 12,
 					"sm": 12,
@@ -603,7 +603,7 @@
 				"_curtailment_combiner_header": {
 					"type": "header",
 					"text": "curtailment_combiner_header",
-					"size": 6,
+					"size": 5,
 					"hidden": "!data.enableCurtailmentAvoidance || !data.curtailmentHasCombiner",
 					"xs": 12,
 					"sm": 12,
