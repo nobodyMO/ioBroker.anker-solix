@@ -77,8 +77,7 @@ function tryCommand(cmd, args, env) {
 	};
 }
 
-const BRIDGE_DEPS_CHECK =
-	"import aiohttp; from zoneinfo import ZoneInfo; ZoneInfo('Europe/Berlin')";
+const BRIDGE_DEPS_CHECK = "import aiohttp; from zoneinfo import ZoneInfo; ZoneInfo('Europe/Berlin')";
 
 function canRunPythonBridge(pythonExe, env) {
 	const check = tryCommand(pythonExe, ["-c", BRIDGE_DEPS_CHECK], env);
