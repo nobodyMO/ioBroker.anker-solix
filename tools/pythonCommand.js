@@ -4,8 +4,6 @@
  * @module
  */
 
-const fs = require("node:fs");
-const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 
 const MIN_MAJOR = 3;
@@ -39,6 +37,28 @@ function trySpawn(cmd, args, cwd) {
 	};
 }
 
+function windowsPyLauncherPaths(cwd) {
+	const result = spawnSync("py", ["-0p"], {
+		cwd,
+		encoding: "utf8",
+		shell: false,
+		windowsHide: true,
+	});
+	if (result.status !== 0) {
+		return [];
+	}
+	const text = `${result.stdout || ""}\n${result.stderr || ""}`;
+	const paths = text
+		.split(/\r?\n/)
+		.map(line => line.trim())
+		.map(line => {
+			const m = line.match(/([A-Za-z]:\\[^*"]*python(?:\.exe)?)/i);
+			return m ? m[1] : "";
+		})
+		.filter(Boolean);
+	return [...new Set(paths)];
+}
+
 /**
  * @param {PythonCommand} spec
  * @param {string[]} extra
@@ -70,37 +90,11 @@ function pythonVersionText(spec, cwd) {
 	return (r.stdout || r.stderr).trim();
 }
 
-function windowsProgramFilesPythons() {
-	const roots = [];
-	if (process.env.LOCALAPPDATA) {
-		roots.push(path.join(process.env.LOCALAPPDATA, "Programs", "Python"));
-	}
-	if (process.env.ProgramFiles) {
-		roots.push(path.join(process.env.ProgramFiles, "Python"));
-	}
-	if (process.env["ProgramFiles(x86)"]) {
-		roots.push(path.join(process.env["ProgramFiles(x86)"], "Python"));
-	}
-	const exes = [];
-	for (const root of roots) {
-		if (!fs.existsSync(root)) {
-			continue;
-		}
-		for (const minor of [13, 12]) {
-			const exe = path.join(root, `Python3${minor}`, "python.exe");
-			if (fs.existsSync(exe)) {
-				exes.push(exe);
-			}
-		}
-	}
-	return exes;
-}
-
 /**
  * @param {string} [customPath] Admin pythonPath or installer --python
  * @returns {PythonCommand[]}
  */
-function buildCandidates(customPath) {
+function buildCandidates(customPath, cwd) {
 	const list = [];
 
 	if (customPath?.trim()) {
@@ -113,7 +107,7 @@ function buildCandidates(customPath) {
 			list.push({ cmd: "py", prefix: [`-${MIN_MAJOR}.${minor}`], label: `py -${MIN_MAJOR}.${minor}` });
 		}
 		list.push({ cmd: "py", prefix: ["-3"], label: "py -3" });
-		for (const exe of windowsProgramFilesPythons()) {
+		for (const exe of windowsPyLauncherPaths(cwd)) {
 			list.push({ cmd: exe, prefix: [], label: exe });
 		}
 		list.push({ cmd: "python", prefix: [], label: "python" });
@@ -140,7 +134,7 @@ function buildCandidates(customPath) {
  * @returns {PythonCommand | null}
  */
 function resolvePythonCommand(customPath, cwd) {
-	for (const spec of buildCandidates(customPath)) {
+	for (const spec of buildCandidates(customPath, cwd)) {
 		const text = pythonVersionText(spec, cwd);
 		if (!text) {
 			continue;
@@ -161,7 +155,7 @@ function resolvePythonCommand(customPath, cwd) {
  */
 function describePythonProbe(customPath, cwd) {
 	const lines = [];
-	for (const spec of buildCandidates(customPath)) {
+	for (const spec of buildCandidates(customPath, cwd)) {
 		const ver = runPython(spec, ["--version"], cwd);
 		if (!ver.ok) {
 			lines.push(`${spec.label}: not found`);

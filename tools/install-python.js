@@ -57,9 +57,9 @@ function venvPython() {
 
 function pipEnv(extra = {}) {
 	if (process.platform === "win32") {
-		return { ...process.env, ...extra };
+		return Object.keys(extra).length ? extra : undefined;
 	}
-	return { ...process.env, PIP_BREAK_SYSTEM_PACKAGES: "1", ...extra };
+	return { PIP_BREAK_SYSTEM_PACKAGES: "1", ...extra };
 }
 
 function tryCommand(cmd, args, env) {
@@ -68,7 +68,7 @@ function tryCommand(cmd, args, env) {
 		encoding: "utf8",
 		shell: false,
 		windowsHide: true,
-		env: env || process.env,
+		env,
 	});
 	return {
 		ok: result.status === 0,
