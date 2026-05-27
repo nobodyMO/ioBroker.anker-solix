@@ -1,9 +1,7 @@
 "use strict";
-var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __export = (target, all) => {
   for (var name in all)
@@ -17,14 +15,6 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var pythonCommand_exports = {};
 __export(pythonCommand_exports, {
@@ -41,8 +31,6 @@ __export(pythonCommand_exports, {
 });
 module.exports = __toCommonJS(pythonCommand_exports);
 var import_node_child_process = require("node:child_process");
-var fs = __toESM(require("node:fs"));
-var path = __toESM(require("node:path"));
 const MIN_MAJOR = 3;
 const MIN_MINOR = 12;
 function parsePythonVersionText(text) {
@@ -68,6 +56,24 @@ function trySpawn(cmd, args, cwd) {
     stderr: (result.stderr || "").trim()
   };
 }
+function windowsPyLauncherPaths(cwd) {
+  const result = (0, import_node_child_process.spawnSync)("py", ["-0p"], {
+    cwd,
+    encoding: "utf8",
+    shell: false,
+    windowsHide: true
+  });
+  if (result.status !== 0) {
+    return [];
+  }
+  const text = `${result.stdout || ""}
+${result.stderr || ""}`;
+  const paths = text.split(/\r?\n/).map((line) => line.trim()).map((line) => {
+    const m = line.match(/([A-Za-z]:\\[^*"]*python(?:\.exe)?)/i);
+    return m ? m[1] : "";
+  }).filter(Boolean);
+  return [...new Set(paths)];
+}
 function runPython(spec, extra, cwd) {
   return trySpawn(spec.cmd, [...spec.prefix, ...extra], cwd);
 }
@@ -83,32 +89,7 @@ function pythonVersionOk(spec, cwd) {
   const parsed = parsePythonVersionText(text);
   return parsed !== null && versionMeetsMinimum(parsed.major, parsed.minor);
 }
-function windowsProgramFilesPythons() {
-  const roots = [];
-  if (process.env.LOCALAPPDATA) {
-    roots.push(path.join(process.env.LOCALAPPDATA, "Programs", "Python"));
-  }
-  if (process.env.ProgramFiles) {
-    roots.push(path.join(process.env.ProgramFiles, "Python"));
-  }
-  if (process.env["ProgramFiles(x86)"]) {
-    roots.push(path.join(process.env["ProgramFiles(x86)"], "Python"));
-  }
-  const exes = [];
-  for (const root of roots) {
-    if (!fs.existsSync(root)) {
-      continue;
-    }
-    for (const minor of [13, 12]) {
-      const exe = path.join(root, `Python3${minor}`, "python.exe");
-      if (fs.existsSync(exe)) {
-        exes.push(exe);
-      }
-    }
-  }
-  return exes;
-}
-function buildCandidates(customPath) {
+function buildCandidates(customPath, cwd) {
   const list = [];
   if (customPath == null ? void 0 : customPath.trim()) {
     const p = customPath.trim();
@@ -119,7 +100,7 @@ function buildCandidates(customPath) {
       list.push({ cmd: "py", prefix: [`-${MIN_MAJOR}.${minor}`], label: `py -${MIN_MAJOR}.${minor}` });
     }
     list.push({ cmd: "py", prefix: ["-3"], label: "py -3" });
-    for (const exe of windowsProgramFilesPythons()) {
+    for (const exe of windowsPyLauncherPaths(cwd)) {
       list.push({ cmd: exe, prefix: [], label: exe });
     }
     list.push({ cmd: "python", prefix: [], label: "python" });
@@ -139,7 +120,7 @@ function buildCandidates(customPath) {
   });
 }
 function resolvePythonCommand(customPath, cwd) {
-  for (const spec of buildCandidates(customPath)) {
+  for (const spec of buildCandidates(customPath, cwd)) {
     const text = pythonVersionText(spec, cwd);
     if (!text) {
       continue;
