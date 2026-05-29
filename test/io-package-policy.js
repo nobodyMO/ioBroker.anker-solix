@@ -9,7 +9,9 @@ const path = require("path");
 const assert = require("assert");
 
 const root = path.join(__dirname, "..");
+const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 const ioPackage = JSON.parse(fs.readFileSync(path.join(__dirname, "../io-package.json"), "utf8"));
+const workflow = fs.readFileSync(path.join(root, ".github/workflows/test-and-release.yml"), "utf8");
 const readme = fs.readFileSync(path.join(root, "README.md"), "utf8");
 const jsonConfig = JSON.parse(fs.readFileSync(path.join(root, "admin/jsonConfig.json"), "utf8"));
 
@@ -71,5 +73,32 @@ describe("io-package policy", () => {
 			}
 		};
 		walk(jsonConfig.items);
+	});
+
+	it("package.json os matches CI adapter-tests matrix (E3027)", () => {
+		const osField = pkg.os;
+		assert.ok(osField && typeof osField === "object", "package.json must declare os (E3027)");
+		const matrixOs = [...workflow.matchAll(/os:\s*\[([^\]]+)\]/g)]
+			.flatMap(m =>
+				m[1]
+					.split(",")
+					.map(s => s.trim().replace(/^['"]|['"]$/g, ""))
+					.filter(Boolean),
+			);
+		assert.ok(matrixOs.length > 0, "Could not parse os matrix from test-and-release.yml");
+		const ghToNpm = {
+			"ubuntu-latest": "linux",
+			"windows-latest": "win32",
+			"macos-latest": "darwin",
+		};
+		const tested = new Set(matrixOs.map(o => ghToNpm[o]).filter(Boolean));
+		for (const npmOs of tested) {
+			assert.ok(osField[npmOs], `package.json os.${npmOs} must be set (CI tests on ${npmOs})`);
+		}
+		for (const npmOs of Object.keys(osField)) {
+			if (!tested.has(npmOs)) {
+				assert.fail(`package.json declares os.${npmOs} but CI does not test it (E3027)`);
+			}
+		}
 	});
 });

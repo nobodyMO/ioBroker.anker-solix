@@ -7,6 +7,9 @@ tests.packageFiles(path.join(__dirname, ".."));
 // ioBroker adapter-check / repository rules (news count, npm versions, README version, admin schema)
 require("./io-package-policy");
 
+// Admin translations vs en.json (W5604 / W5605)
+require("./i18n-policy");
+
 // Python install profile detection (tools/pythonInstallEnv.js)
 require("./python-install-env");
 

@@ -82,11 +82,17 @@ python3 -m venv python/.venv && python/.venv/bin/pip install -r python/requireme
 
 ### Home Assistant (ioBroker add-on)
 
-The official **ioBroker** app on Home Assistant OS often has `python3` but **no `pip`** and **no `python3-venv`**. The adapter installer detects this profile and tries:
+The official **ioBroker** app on Home Assistant OS often has `python3` but **no `pip`** and **no `python3-venv`**. The adapter installer (since GitHub `main`, not yet on every npm release) detects this profile and tries:
 
 1. virtualenv in `python/.venv` (or `--without-pip` + pip inside venv)  
 2. `get-pip.py` with `--break-system-packages` when system Python is PEP 668  
 3. `pip install --target python/site-packages` as fallback  
+
+**Install from GitHub** while testing:
+
+```bash
+iobroker url https://github.com/MatthiasUlrich1/ioBroker.anker-solix --host "PC(SmartHome)"
+```
 
 Then in the instance admin: **Options** → **Install Python dependencies**, or restart the instance with **autoInstallPython** enabled.
 
@@ -99,6 +105,8 @@ iobroker restart anker-solix.0
 ```
 
 Copy **`authcache/<email>.json`** from a working Anker setup (e.g. ha-anker-solix) into `iobroker-data/anker-solix.0/authcache/` to avoid captcha on first login.
+
+**Revert** to the previous installer: install a fixed commit, e.g. `iobroker url https://github.com/MatthiasUlrich1/ioBroker.anker-solix#9f78195`.
 
 ---
 
@@ -318,6 +326,11 @@ Tab **Abregelungsvermeidung** / **Curtailment avoidance**: requires the [ioBroke
 ---
 
 ## Changelog
+
+### 0.10.72
+
+- **Repository checker:** admin i18n synced for all languages (W5604/W5605); `package.json` `os` aligned with Linux CI (E3027); TypeScript 6
+- **Tests:** `test/i18n-policy.js` and E3027 check in `test/io-package-policy.js`
 
 ### 0.10.71
 
@@ -561,6 +574,7 @@ Older release notes: [CHANGELOG_OLD.md](CHANGELOG_OLD.md) and git history.
 3. Add **one** new `common.news` entry for that version; keep **at most 7** news keys — only versions already on npm (except the version you are about to publish). Move removed text to [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
 4. Admin `jsonConfig.json`: header `size` must be **≤ 5** (use `5` for smallest heading).
 5. Do not add root files to npm `files` unless needed (`CHANGELOG_OLD.md` stays out of the package).
+6. `package.json` `os` must match the OS matrix in `test-and-release.yml` (E3027). Keep admin `i18n/*.json` in sync with `en.json` (W5604/W5605).
 
 ---
 

@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.71",
+		"version": "0.10.72",
 		"messagebox": true,
 		"news": {
+			"0.10.72": {
+				"en": "Repository checker: admin i18n sync, package.json os aligned with CI, TypeScript 6",
+				"de": "Repository-Checker: Admin-i18n synchronisiert, package.json os an CI angepasst, TypeScript 6",
+				"ru": "Repository checker fixes and admin i18n",
+				"pt": "Repository checker fixes and admin i18n",
+				"nl": "Repository checker fixes and admin i18n",
+				"fr": "Repository checker fixes and admin i18n",
+				"it": "Repository checker fixes and admin i18n",
+				"es": "Repository checker fixes and admin i18n",
+				"pl": "Repository checker fixes and admin i18n",
+				"uk": "Repository checker fixes and admin i18n",
+				"zh-cn": "仓库检查修复与 admin 多语言同步"
+			},
 			"0.10.71": {
 				"en": "Python install: HA PEP 668 venv-first, Windows py -3.12/3.13 + tzdata, profile-based pip bootstrap",
 				"de": "Python-Installation: HA PEP 668 venv-first, Windows py -3.12/3.13 + tzdata, profilbasierter pip-Bootstrap",
@@ -81,19 +94,6 @@
 				"pl": "Fix admin device list and auth cache status display",
 				"uk": "Fix admin device list and auth cache status display",
 				"zh-cn": "修复管理界面设备列表与登录缓存状态显示"
-			},
-			"0.10.65": {
-				"en": "Login cache tab with backup/restore; auto-backup after first login; fix device list display in admin",
-				"de": "Reiter Login-Cache mit Sicherung/Wiederherstellung; Auto-Backup nach erstem Login; Geräteliste in Admin wieder sichtbar",
-				"ru": "Login cache backup tab and device list admin fix",
-				"pt": "Login cache backup tab and device list admin fix",
-				"nl": "Login cache backup tab and device list admin fix",
-				"fr": "Login cache backup tab and device list admin fix",
-				"it": "Login cache backup tab and device list admin fix",
-				"es": "Login cache backup tab and device list admin fix",
-				"pl": "Login cache backup tab and device list admin fix",
-				"uk": "Login cache backup tab and device list admin fix",
-				"zh-cn": "登录缓存备份标签页；修复设备列表显示"
 			}
 		},
 		"titleLang": {

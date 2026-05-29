@@ -33,6 +33,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Pinned tag required: floating @v2 is not published on GitHub (adapter-check S3042).
       - uses: ioBroker/testing-action-check@v2.0.0
         with:
           node-version: "24.x"
@@ -86,10 +87,9 @@ jobs:
       contents: write
 
     steps:
+      # Pinned tag required: floating @v1 is not published on GitHub (adapter-check S3044).
       - uses: ioBroker/testing-action-deploy@v1.5.0
         with:
           node-version: "24.x"
           build: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-
