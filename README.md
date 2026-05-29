@@ -329,7 +329,7 @@ Tab **Abregelungsvermeidung** / **Curtailment avoidance**: requires the [ioBroke
 
 ### 0.10.72
 
-- **Repository checker:** admin i18n synced for all languages (W5604/W5605); `package.json` `os` aligned with Linux CI (E3027); TypeScript 6
+- **Repository checker:** admin i18n synced for all languages (W5604/W5605); `package.json` `os` aligned with Linux CI (E3027)
 - **Tests:** `test/i18n-policy.js` and E3027 check in `test/io-package-policy.js`
 
 ### 0.10.71

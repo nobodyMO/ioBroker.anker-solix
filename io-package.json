@@ -5,8 +5,8 @@
 		"messagebox": true,
 		"news": {
 			"0.10.72": {
-				"en": "Repository checker: admin i18n sync, package.json os aligned with CI, TypeScript 6",
-				"de": "Repository-Checker: Admin-i18n synchronisiert, package.json os an CI angepasst, TypeScript 6",
+				"en": "Repository checker: admin i18n sync, package.json os aligned with CI, policy tests",
+				"de": "Repository-Checker: Admin-i18n synchronisiert, package.json os an CI angepasst, Policy-Tests",
 				"ru": "Repository checker fixes and admin i18n",
 				"pt": "Repository checker fixes and admin i18n",
 				"nl": "Repository checker fixes and admin i18n",
