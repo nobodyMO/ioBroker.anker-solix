@@ -53,7 +53,7 @@ Poll interval should be **60–180 s** (same recommendation as HA). Site list is
 
 - ioBroker **js-controller >= 6**, **admin >= 7.6**
 - **Node.js >= 22**
-- **Python 3.12+** on the ioBroker host (`python3-venv` + `python3-pip` recommended on Debian/Ubuntu). **Windows:** the installer tries `py -3.13`, `py -3.12`, then typical `Program Files\\Python\\Python3xx\\python.exe` paths (not only generic `py -3`). The `tzdata` package is installed automatically (required for `Europe/Berlin` time zones on Windows).
+- **Python 3.12+** on the ioBroker host (`python3-venv` + `python3-pip` recommended on Debian/Ubuntu). Production targets are **Linux** (Docker, HA add-on, typical ioBroker hosts); `package.json` declares `"os": ["linux"]` accordingly (adapter-check S3031). **Windows** (dev/testing): installer tries `py -3.13`, `py -3.12`, then `py -0p` paths; installs **`tzdata`** for `Europe/Berlin`.
 
 Python dependencies install into the adapter folder (`python/.venv` or `python/site-packages`). Since v0.2.0: automatic on start (**Options** → `autoInstallPython`) or button **Install Python dependencies**.
 
@@ -318,6 +318,12 @@ Tab **Abregelungsvermeidung** / **Curtailment avoidance**: requires the [ioBroke
 ---
 
 ## Changelog
+
+### 0.10.74
+
+- **TypeScript 6** (W0083); `tsconfig.json` adds mocha types for `tsc --noEmit`
+- **CI:** `testing-action-adapter` and `testing-action-deploy` use `@v1` (S3043/S3044); `testing-action-check` stays `@v2.0.0` (no floating `@v2` tag)
+- **Tests:** `npm pack` must exclude `CHANGELOG_OLD.md` (S9508)
 
 ### 0.10.73
 

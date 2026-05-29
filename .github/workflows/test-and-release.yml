@@ -58,7 +58,7 @@ jobs:
         os: [ubuntu-latest]
 
     steps:
-      - uses: ioBroker/testing-action-adapter@v1.1.1
+      - uses: ioBroker/testing-action-adapter@v1
         with:
           node-version: ${{ matrix.node-version }}
           os: ${{ matrix.os }}
@@ -87,8 +87,7 @@ jobs:
       contents: write
 
     steps:
-      # Pinned tag required: floating @v1 is not published on GitHub (adapter-check S3044).
-      - uses: ioBroker/testing-action-deploy@v1.5.0
+      - uses: ioBroker/testing-action-deploy@v1
         with:
           node-version: "24.x"
           build: true

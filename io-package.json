@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.73",
+		"version": "0.10.74",
 		"messagebox": true,
 		"news": {
+			"0.10.74": {
+				"en": "TypeScript 6, workflow actions @v1, npm pack policy test (adapter-check cleanup)",
+				"de": "TypeScript 6, Workflow-Actions @v1, npm-pack-Policy-Test (Adapter-Check)",
+				"ru": "TypeScript 6 and repo-check cleanup",
+				"pt": "TypeScript 6 and repo-check cleanup",
+				"nl": "TypeScript 6 and repo-check cleanup",
+				"fr": "TypeScript 6 and repo-check cleanup",
+				"it": "TypeScript 6 and repo-check cleanup",
+				"es": "TypeScript 6 and repo-check cleanup",
+				"pl": "TypeScript 6 and repo-check cleanup",
+				"uk": "TypeScript 6 and repo-check cleanup",
+				"zh-cn": "TypeScript 6 与仓库检查项清理"
+			},
 			"0.10.73": {
 				"en": "README: remove GitHub URL install hints (adapter-check E6013)",
 				"de": "README: GitHub-URL-Installation entfernt (Adapter-Check E6013)",
@@ -81,19 +94,6 @@
 				"pl": "Admin: installPython on Options tab",
 				"uk": "Admin: installPython on Options tab",
 				"zh-cn": "管理界面：Python 安装按钮移至选项页底部"
-			},
-			"0.10.67": {
-				"en": "Admin: remove Devices tab and load-devices; Python install on Account; device filter on Objects; Login-Cache last",
-				"de": "Admin: Tab Geräte entfernt; Python-Install unter Konto; Gerätefilter unter Objekte; Login-Cache ganz rechts",
-				"ru": "Admin UI simplification",
-				"pt": "Admin UI simplification",
-				"nl": "Admin UI simplification",
-				"fr": "Admin UI simplification",
-				"it": "Admin UI simplification",
-				"es": "Admin UI simplification",
-				"pl": "Admin UI simplification",
-				"uk": "Admin UI simplification",
-				"zh-cn": "简化管理界面：移除设备标签页"
 			}
 		},
 		"titleLang": {

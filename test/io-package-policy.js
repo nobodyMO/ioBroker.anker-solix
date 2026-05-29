@@ -113,4 +113,20 @@ describe("io-package policy", () => {
 			}
 		}
 	});
+
+	it("npm pack excludes CHANGELOG_OLD.md (S9508)", function () {
+		this.timeout(60_000);
+		const packJson = JSON.parse(
+			execSync("npm pack --dry-run --json", { cwd: root, encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] }),
+		);
+		const files = (packJson[0]?.files ?? []).map(f => f.path);
+		assert.ok(
+			!files.some(p => p === "CHANGELOG_OLD.md" || p.endsWith("/CHANGELOG_OLD.md")),
+			`npm pack must not include CHANGELOG_OLD.md (S9508); got: ${files.filter(p => p.includes("CHANGELOG")).join(", ")}`,
+		);
+		assert.ok(
+			pkg.files.some(f => f.includes("CHANGELOG_OLD")),
+			'package.json files must negate CHANGELOG_OLD.md (e.g. "!CHANGELOG_OLD.md")',
+		);
+	});
 });
