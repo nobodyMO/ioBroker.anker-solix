@@ -27,13 +27,7 @@
   "engines": {
     "node": ">= 22"
   },
-  "os": {
-    "linux": {
-      "x64": true,
-      "arm": true,
-      "arm64": true
-    }
-  },
+  "os": ["linux"],
   "dependencies": {
     "@iobroker/adapter-core": "^3.3.2"
   },

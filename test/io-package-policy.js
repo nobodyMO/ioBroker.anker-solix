@@ -77,7 +77,11 @@ describe("io-package policy", () => {
 
 	it("package.json os matches CI adapter-tests matrix (E3027)", () => {
 		const osField = pkg.os;
-		assert.ok(osField && typeof osField === "object", "package.json must declare os (E3027)");
+		assert.ok(osField, "package.json must declare os (E3027)");
+		const declared = new Set(
+			Array.isArray(osField) ? osField : typeof osField === "object" ? Object.keys(osField) : [],
+		);
+		assert.ok(declared.size > 0, "package.json os must list at least one platform");
 		const matrixOs = [...workflow.matchAll(/os:\s*\[([^\]]+)\]/g)]
 			.flatMap(m =>
 				m[1]
@@ -93,11 +97,11 @@ describe("io-package policy", () => {
 		};
 		const tested = new Set(matrixOs.map(o => ghToNpm[o]).filter(Boolean));
 		for (const npmOs of tested) {
-			assert.ok(osField[npmOs], `package.json os.${npmOs} must be set (CI tests on ${npmOs})`);
+			assert.ok(declared.has(npmOs), `package.json os must include "${npmOs}" (CI tests on ${npmOs})`);
 		}
-		for (const npmOs of Object.keys(osField)) {
+		for (const npmOs of declared) {
 			if (!tested.has(npmOs)) {
-				assert.fail(`package.json declares os.${npmOs} but CI does not test it (E3027)`);
+				assert.fail(`package.json declares os "${npmOs}" but CI does not test it (E3027)`);
 			}
 		}
 	});
