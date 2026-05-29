@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.72",
+		"version": "0.10.73",
 		"messagebox": true,
 		"news": {
+			"0.10.73": {
+				"en": "README: remove GitHub URL install hints (adapter-check E6013)",
+				"de": "README: GitHub-URL-Installation entfernt (Adapter-Check E6013)",
+				"ru": "README E6013 fix",
+				"pt": "README E6013 fix",
+				"nl": "README E6013 fix",
+				"fr": "README E6013 fix",
+				"it": "README E6013 fix",
+				"es": "README E6013 fix",
+				"pl": "README E6013 fix",
+				"uk": "README E6013 fix",
+				"zh-cn": "README 移除 GitHub 安装说明 (E6013)"
+			},
 			"0.10.72": {
 				"en": "Repository checker: admin i18n sync, package.json os aligned with CI, policy tests",
 				"de": "Repository-Checker: Admin-i18n synchronisiert, package.json os an CI angepasst, Policy-Tests",
@@ -81,19 +94,6 @@
 				"pl": "Admin UI simplification",
 				"uk": "Admin UI simplification",
 				"zh-cn": "简化管理界面：移除设备标签页"
-			},
-			"0.10.66": {
-				"en": "Fix admin: device list and login-cache status display (useNative response)",
-				"de": "Fix Admin: Geräteliste und Login-Cache-Status werden wieder angezeigt (useNative)",
-				"ru": "Fix admin device list and auth cache status display",
-				"pt": "Fix admin device list and auth cache status display",
-				"nl": "Fix admin device list and auth cache status display",
-				"fr": "Fix admin device list and auth cache status display",
-				"it": "Fix admin device list and auth cache status display",
-				"es": "Fix admin device list and auth cache status display",
-				"pl": "Fix admin device list and auth cache status display",
-				"uk": "Fix admin device list and auth cache status display",
-				"zh-cn": "修复管理界面设备列表与登录缓存状态显示"
 			}
 		},
 		"titleLang": {

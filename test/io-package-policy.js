@@ -54,6 +54,14 @@ describe("io-package policy", () => {
 		assert.ok(readme.includes(version), `README.md must mention version ${version}`);
 	});
 
+	it("README.md does not suggest GitHub URL install (E6013)", () => {
+		const installSection = readme.split("## Changelog")[0];
+		assert.ok(
+			!/iobroker\s+url\s+https?:\/\/github\.com/i.test(installSection),
+			"README install sections must not contain iobroker url https://github.com/... (E6013)",
+		);
+	});
+
 	it("admin jsonConfig header size is at most 5 (E5512)", () => {
 		const walk = (items, pathPrefix = "") => {
 			if (!items || typeof items !== "object") {
