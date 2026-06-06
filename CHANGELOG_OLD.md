@@ -2,7 +2,12 @@
 
 Current releases **0.10.63 and newer** (except the latest seven messagebox news entries) are documented in [README.md](README.md#changelog).
 
-Removed from `common.news` when trimming to the ioBroker repository limit of **7** entries: 0.10.63 and older (see README), plus versions never published to npm (e.g. 0.10.50–0.10.53, 0.10.58).
+Removed from `common.news` when trimming to the ioBroker repository limit of **7** entries: 0.10.63 and older (see README), plus versions never published to npm (e.g. 0.10.50–0.10.53, 0.10.58), and **0.10.69**.
+
+## 0.10.69
+
+- **en:** Curtailment: midnight inactive reset until solarprognose forecast refresh; safe modeAfter release
+- **de:** Abregelung: Mitternacht inactive bis Prognose-Update; Nutzungsmodus wird sicher zurückgesetzt
 
 ## 0.9.5 – 0.9.0
 

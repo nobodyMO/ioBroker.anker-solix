@@ -94,19 +94,6 @@
 				"pl": "Repository validation fixes and policy tests",
 				"uk": "Repository validation fixes and policy tests",
 				"zh-cn": "仓库校验修复与策略测试"
-			},
-			"0.10.69": {
-				"en": "Curtailment: midnight inactive reset until solarprognose forecast refresh; safe modeAfter release",
-				"de": "Abregelung: Mitternacht inactive bis Prognose-Update; Nutzungsmodus wird sicher zurückgesetzt",
-				"ru": "Curtailment midnight inactive reset",
-				"pt": "Curtailment midnight inactive reset",
-				"nl": "Curtailment midnight inactive reset",
-				"fr": "Curtailment midnight inactive reset",
-				"it": "Curtailment midnight inactive reset",
-				"es": "Curtailment midnight inactive reset",
-				"pl": "Curtailment midnight inactive reset",
-				"uk": "Curtailment midnight inactive reset",
-				"zh-cn": "Abregelung 午夜 inactive 直至预报更新"
 			}
 		},
 		"titleLang": {
