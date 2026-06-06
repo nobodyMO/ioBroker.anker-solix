@@ -191,11 +191,9 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 		const typePart = sanitizeIdPart(device.info.type || "device");
 
 		await hierarchy.ensureFolder(`${adapter.namespace}.${typePart}`, hierarchy.deviceTypeLabel(typePart));
-		await hierarchy.ensureDevice(
-			channelPath,
-			`${device.info.name} (${device.info.type})`,
-			{ ...(device.info as unknown as Record<string, unknown>) },
-		);
+		await hierarchy.ensureDevice(channelPath, `${device.info.name} (${device.info.type})`, {
+			...(device.info as unknown as Record<string, unknown>),
+		});
 
 		await hierarchy.ensureChannel(`${channelPath}.info`, "Info");
 		await adapter.setObjectNotExistsAsync(`${channelPath}.info.model`, {
