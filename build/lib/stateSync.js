@@ -170,11 +170,9 @@ async function syncDevices(adapter, devices) {
     const channelPath = `${adapter.namespace}.${base}`;
     const typePart = sanitizeIdPart(device.info.type || "device");
     await hierarchy.ensureFolder(`${adapter.namespace}.${typePart}`, hierarchy.deviceTypeLabel(typePart));
-    await hierarchy.ensureDevice(
-      channelPath,
-      `${device.info.name} (${device.info.type})`,
-      { ...device.info }
-    );
+    await hierarchy.ensureDevice(channelPath, `${device.info.name} (${device.info.type})`, {
+      ...device.info
+    });
     await hierarchy.ensureChannel(`${channelPath}.info`, "Info");
     await adapter.setObjectNotExistsAsync(`${channelPath}.info.model`, {
       type: "state",

@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.75",
+		"version": "0.10.76",
 		"messagebox": true,
 		"news": {
+			"0.10.76": {
+				"en": "Object structure: list controls use role state (max_total_ac_output, EV charger modes; E1008/E1009)",
+				"de": "Objektstruktur: Listen-Controls mit Rolle state (max_total_ac_output, EV-Lader-Modi; E1008/E1009)",
+				"ru": "List control role fixes for repository review",
+				"pt": "List control role fixes for repository review",
+				"nl": "List control role fixes for repository review",
+				"fr": "List control role fixes for repository review",
+				"it": "List control role fixes for repository review",
+				"es": "List control role fixes for repository review",
+				"pl": "List control role fixes for repository review",
+				"uk": "List control role fixes for repository review",
+				"zh-cn": "列表控件角色修复（仓库审查）"
+			},
 			"0.10.75": {
 				"en": "Object structure: folder/device/channel hierarchy (E3009), valid state roles/types, release-script 5.2.1",
 				"de": "Objektstruktur: folder/device/channel-Hierarchie (E3009), gültige State-Rollen/Typen, release-script 5.2.1",
