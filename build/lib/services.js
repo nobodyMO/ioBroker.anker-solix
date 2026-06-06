@@ -36,7 +36,7 @@ const SERVICE_STATES = {
 async function setupServiceStates(adapter) {
   const base = `${adapter.namespace}.services`;
   await adapter.setObjectNotExistsAsync("services", {
-    type: "channel",
+    type: "device",
     common: { name: "Services (HA-compatible)" },
     native: {}
   });

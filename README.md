@@ -319,6 +319,11 @@ Tab **Abregelungsvermeidung** / **Curtailment avoidance**: requires the [ioBroke
 
 ## Changelog
 
+### 0.10.75
+
+- **Object structure (PR review):** folder → device → channel hierarchy before states (E3009); valid ioBroker roles/types (E1008/E1009/E1011)
+- **Dev:** `@alcalzone/release-script` 5.2.1 (E0036)
+
 ### 0.10.74
 
 - **TypeScript 6** (W0083); `tsconfig.json` adds mocha types for `tsc --noEmit`

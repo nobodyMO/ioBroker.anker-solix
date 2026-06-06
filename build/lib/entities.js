@@ -171,7 +171,7 @@ const SENSOR_ENTITIES = [
   {
     id: "ev_charger_mode_status",
     kind: "sensor",
-    role: "value.mode",
+    role: "state",
     states: EV_CHARGER_MODE_STATES
   },
   { id: "ev_charger_plug_status", kind: "sensor", role: "indicator" },
@@ -205,11 +205,11 @@ const SENSOR_ENTITIES = [
 const CONTROL_ENTITIES = [
   { id: "allow_grid_export", kind: "switch", role: "switch" },
   { id: "preset_allow_export", kind: "switch", role: "switch" },
-  { id: "set_output_power", kind: "number", role: "level.power", unit: "W", min: 0, max: 4800 },
+  { id: "set_output_power", kind: "number", role: "level", unit: "W", min: 0, max: 4800 },
   {
     id: "ac_output_limit",
     kind: "number",
-    role: "level.power",
+    role: "level",
     unit: "W",
     min: 0,
     max: 4800
@@ -217,14 +217,14 @@ const CONTROL_ENTITIES = [
   {
     id: "max_total_ac_output",
     kind: "list",
-    role: "level.power",
+    role: "level",
     unit: "W"
   },
   { id: "min_soc", kind: "number", role: "level.battery", unit: "%", min: 0, max: 100 },
   {
     id: "pv_input_limit",
     kind: "number",
-    role: "level.power",
+    role: "level",
     unit: "W",
     min: 0,
     max: 4e3
@@ -232,7 +232,7 @@ const CONTROL_ENTITIES = [
   {
     id: "ac_charge_limit",
     kind: "number",
-    role: "level.power",
+    role: "level",
     unit: "W",
     min: 0,
     max: 4e3
@@ -240,7 +240,7 @@ const CONTROL_ENTITIES = [
   {
     id: "grid_export_limit",
     kind: "number",
-    role: "level.power",
+    role: "level",
     unit: "W",
     min: 0,
     max: 1e5
@@ -248,7 +248,7 @@ const CONTROL_ENTITIES = [
   {
     id: "preset_usage_mode",
     kind: "list",
-    role: "value.mode",
+    role: "state",
     states: USAGE_MODE_STATES
   },
   { id: "ac_fast_charge_switch", kind: "switch", role: "switch" },
@@ -275,7 +275,7 @@ const CONTROL_ENTITIES = [
   {
     id: "ev_charger_solar_mode",
     kind: "list",
-    role: "value.mode",
+    role: "state",
     states: EV_CHARGER_SOLAR_MODE_STATES
   },
   {
@@ -289,7 +289,7 @@ const CONTROL_ENTITIES = [
   {
     id: "ev_charger_phase_mode",
     kind: "list",
-    role: "value.mode",
+    role: "state",
     states: EV_CHARGER_PHASE_MODE_STATES
   },
   { id: "ev_charger_auto_phase_switch", kind: "switch", role: "switch" },
@@ -321,26 +321,26 @@ const CONTROL_ENTITIES = [
   {
     id: "ev_charger_smart_touch_mode",
     kind: "list",
-    role: "value.mode",
+    role: "state",
     states: EV_CHARGER_SMART_TOUCH_MODE_STATES
   },
   { id: "ev_charger_modbus_switch", kind: "switch", role: "switch" },
   {
     id: "ev_charger_wipe_up_mode",
     kind: "list",
-    role: "value.mode",
+    role: "state",
     states: EV_CHARGER_SWIPE_MODE_STATES
   },
   {
     id: "ev_charger_wipe_down_mode",
     kind: "list",
-    role: "value.mode",
+    role: "state",
     states: EV_CHARGER_SWIPE_MODE_STATES
   },
   { id: "preset_discharge_priority", kind: "switch", role: "switch" },
   { id: "preset_backup_option", kind: "switch", role: "switch" },
   { id: "preset_charge_priority", kind: "number", role: "level", unit: "%", min: 0, max: 100 },
-  { id: "preset_device_output_power", kind: "number", role: "level.power", unit: "W", min: 0, max: 1200 },
+  { id: "preset_device_output_power", kind: "number", role: "level", unit: "W", min: 0, max: 1200 },
   { id: "max_soc", kind: "number", role: "level.battery", unit: "%", min: 0, max: 100 },
   { id: "backup_soc", kind: "number", role: "level.battery", unit: "%", min: 0, max: 100 },
   { id: "auto_upgrade", kind: "switch", role: "switch" },
@@ -388,7 +388,7 @@ function buildPeriodStatisticsEntities() {
     entities.push({
       id: `${period}_energy_period`,
       kind: "statistics",
-      role: "value.date"
+      role: "text"
     });
     for (const suffix of PERIOD_METRIC_SUFFIXES) {
       entities.push({
@@ -409,7 +409,7 @@ const LIFETIME_STATISTICS_ENTITIES = [
 ];
 const STATISTICS_ENTITIES = [
   ...LIFETIME_STATISTICS_ENTITIES,
-  { id: "energy_statistics_date", kind: "statistics", role: "value.date" },
+  { id: "energy_statistics_date", kind: "statistics", role: "text" },
   { id: "daily_solar_production", kind: "statistics", role: "value.energy", unit: "kWh" },
   { id: "daily_charge_energy", kind: "statistics", role: "value.energy", unit: "kWh" },
   { id: "daily_discharge_energy", kind: "statistics", role: "value.energy", unit: "kWh" },

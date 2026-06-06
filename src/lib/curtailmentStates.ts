@@ -16,7 +16,7 @@ export const CURTAILMENT_STATE_IDS = {
 
 export async function setupCurtailmentStates(adapter: ioBroker.Adapter): Promise<void> {
 	await adapter.setObjectNotExistsAsync(CURTAILMENT_CHANNEL, {
-		type: "channel",
+		type: "device",
 		common: { name: "Curtailment avoidance" },
 		native: {},
 	});

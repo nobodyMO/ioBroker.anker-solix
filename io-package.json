@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.74",
+		"version": "0.10.75",
 		"messagebox": true,
 		"news": {
+			"0.10.75": {
+				"en": "Object structure: folder/device/channel hierarchy (E3009), valid state roles/types, release-script 5.2.1",
+				"de": "Objektstruktur: folder/device/channel-Hierarchie (E3009), gültige State-Rollen/Typen, release-script 5.2.1",
+				"ru": "Object hierarchy and role fixes for repository review",
+				"pt": "Object hierarchy and role fixes for repository review",
+				"nl": "Object hierarchy and role fixes for repository review",
+				"fr": "Object hierarchy and role fixes for repository review",
+				"it": "Object hierarchy and role fixes for repository review",
+				"es": "Object hierarchy and role fixes for repository review",
+				"pl": "Object hierarchy and role fixes for repository review",
+				"uk": "Object hierarchy and role fixes for repository review",
+				"zh-cn": "对象结构层级与角色修复（仓库审查）"
+			},
 			"0.10.74": {
 				"en": "TypeScript 6, workflow actions @v1, npm pack policy test (adapter-check cleanup)",
 				"de": "TypeScript 6, Workflow-Actions @v1, npm-pack-Policy-Test (Adapter-Check)",
@@ -81,19 +94,6 @@
 				"pl": "Curtailment midnight inactive reset",
 				"uk": "Curtailment midnight inactive reset",
 				"zh-cn": "Abregelung 午夜 inactive 直至预报更新"
-			},
-			"0.10.68": {
-				"en": "Admin: move Install Python dependencies to bottom of Options tab",
-				"de": "Admin: Python-Abhängigkeiten installieren ans Ende des Tabs Optionen",
-				"ru": "Admin: installPython on Options tab",
-				"pt": "Admin: installPython on Options tab",
-				"nl": "Admin: installPython on Options tab",
-				"fr": "Admin: installPython on Options tab",
-				"it": "Admin: installPython on Options tab",
-				"es": "Admin: installPython on Options tab",
-				"pl": "Admin: installPython on Options tab",
-				"uk": "Admin: installPython on Options tab",
-				"zh-cn": "管理界面：Python 安装按钮移至选项页底部"
 			}
 		},
 		"titleLang": {

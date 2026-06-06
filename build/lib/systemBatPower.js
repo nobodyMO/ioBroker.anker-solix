@@ -30,6 +30,7 @@ __export(systemBatPower_exports, {
   systemChannelPath: () => systemChannelPath
 });
 module.exports = __toCommonJS(systemBatPower_exports);
+var import_objectHierarchy = require("./objectHierarchy");
 const SYSTEM_BAT_POWER_IDS = ["bat_charge_power", "bat_discharge_power"];
 const SYSTEM_BAT_POWER_LABELS = {
   bat_charge_power: "Batterie-Ladeleistung gesamt (Summe Solarbanken)",
@@ -64,7 +65,11 @@ function systemChannelPath(namespace, siteId) {
   return `${namespace}.system.${siteId}`;
 }
 async function ensureSystemBatPowerStates(adapter, siteId) {
+  const hierarchy = new import_objectHierarchy.ObjectHierarchy(adapter);
   const base = systemChannelPath(adapter.namespace, siteId);
+  await hierarchy.ensureFolder(`${adapter.namespace}.system`, "System");
+  await hierarchy.ensureDevice(base, `System ${siteId}`, { site_id: siteId });
+  await hierarchy.ensureChannel(`${base}.sensors`, "Sensors");
   for (const entityId of SYSTEM_BAT_POWER_IDS) {
     const stateId = `${base}.sensors.${entityId}`;
     await adapter.setObjectNotExistsAsync(stateId, {

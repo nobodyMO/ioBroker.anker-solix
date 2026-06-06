@@ -14,7 +14,7 @@ export const SERVICE_STATES = {
 export async function setupServiceStates(adapter: ioBroker.Adapter): Promise<void> {
 	const base = `${adapter.namespace}.services`;
 	await adapter.setObjectNotExistsAsync("services", {
-		type: "channel",
+		type: "device",
 		common: { name: "Services (HA-compatible)" },
 		native: {},
 	});

@@ -1,3 +1,5 @@
+import { ObjectHierarchy } from "./objectHierarchy";
+
 /** System bat charge/discharge = sum of per-solarbank sensors (updated each poll and on SB state change). */
 
 export const SYSTEM_BAT_POWER_IDS = ["bat_charge_power", "bat_discharge_power"] as const;
@@ -43,7 +45,11 @@ export function systemChannelPath(namespace: string, siteId: string): string {
 }
 
 export async function ensureSystemBatPowerStates(adapter: ioBroker.Adapter, siteId: string): Promise<void> {
+	const hierarchy = new ObjectHierarchy(adapter);
 	const base = systemChannelPath(adapter.namespace, siteId);
+	await hierarchy.ensureFolder(`${adapter.namespace}.system`, "System");
+	await hierarchy.ensureDevice(base, `System ${siteId}`, { site_id: siteId });
+	await hierarchy.ensureChannel(`${base}.sensors`, "Sensors");
 	for (const entityId of SYSTEM_BAT_POWER_IDS) {
 		const stateId = `${base}.sensors.${entityId}`;
 		await adapter.setObjectNotExistsAsync(stateId, {

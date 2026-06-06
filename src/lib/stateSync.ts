@@ -21,6 +21,7 @@ import { isEntityEnabled } from "./entityGroups";
 import { isPvGenerationSensor, readPvFromEntities } from "./curtailmentPower";
 import type { BridgeDevice, SolarbankInfoPayload } from "./types";
 import { pruneCombinerBatPowerStates, pruneSolarbankInfoPowerStates } from "./systemBatPower";
+import { ObjectHierarchy } from "./objectHierarchy";
 
 const SOLARBANK_INFO_LABELS: Record<string, string> = {
 	battery_energy: "Batterie-Energie (Wh)",
@@ -44,7 +45,15 @@ function resolveStateType(meta: EntityMeta | undefined, value: unknown): ioBroke
 		return "string";
 	}
 	if (meta?.kind === "statistics") {
-		return meta.role === "value.date" ? "string" : "number";
+		return meta.role === "text" ? "string" : "number";
+	}
+	if (meta?.kind === "sensor") {
+		if (meta.role === "text") {
+			return "string";
+		}
+		if (meta.unit || /^value\.(power|energy|current|voltage|battery|interval)/.test(meta.role)) {
+			return "number";
+		}
 	}
 	if (typeof value === "boolean") {
 		return "boolean";
@@ -53,6 +62,16 @@ function resolveStateType(meta: EntityMeta | undefined, value: unknown): ioBroke
 		return "number";
 	}
 	return "string";
+}
+
+function resolveEntityRole(meta: EntityMeta | undefined, writable: boolean): string {
+	if (!meta) {
+		return "value";
+	}
+	if (meta.kind === "switch") {
+		return writable ? "switch" : "indicator";
+	}
+	return meta.role;
 }
 
 function coerceStateValue(type: ioBroker.CommonType, value: unknown): ioBroker.StateValue {
@@ -118,6 +137,7 @@ function solarbankInfoEnabled(config: ioBroker.Adapter["config"]): boolean {
 
 async function syncSolarbankInfo(
 	adapter: ioBroker.Adapter,
+	hierarchy: ObjectHierarchy,
 	channelPath: string,
 	info: SolarbankInfoPayload | undefined,
 ): Promise<void> {
@@ -125,11 +145,7 @@ async function syncSolarbankInfo(
 		return;
 	}
 	const base = `${channelPath}.solarbank_info`;
-	await adapter.setObjectNotExistsAsync(base, {
-		type: "channel",
-		common: { name: "Solarbank-Info (Gesamtsystem)" },
-		native: {},
-	});
+	await hierarchy.ensureChannel(base, "Solarbank-Info (Gesamtsystem)");
 
 	const siteId = channelPath.split(".").pop() || "";
 	if (siteId) {
@@ -141,19 +157,11 @@ async function syncSolarbankInfo(
 		return;
 	}
 	const listBase = `${base}.solarbank_list`;
-	await adapter.setObjectNotExistsAsync(listBase, {
-		type: "channel",
-		common: { name: "Solarbank-Liste" },
-		native: {},
-	});
+	await hierarchy.ensureChannel(listBase, "Solarbank-Liste");
 	for (const [sn, entry] of Object.entries(list)) {
 		const snPart = sanitizeIdPart(sn);
 		const bankBase = `${listBase}.${snPart}`;
-		await adapter.setObjectNotExistsAsync(bankBase, {
-			type: "channel",
-			common: { name: `Solarbank ${sn}` },
-			native: { device_sn: sn },
-		});
+		await hierarchy.ensureChannel(bankBase, `Solarbank ${sn}`, { device_sn: sn });
 		if (entry.battery_energy === null || entry.battery_energy === undefined) {
 			continue;
 		}
@@ -176,24 +184,26 @@ async function syncSolarbankInfo(
 
 export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevice[]): Promise<void> {
 	const curtailmentHost = adapter as CurtailmentPvSyncHost;
+	const hierarchy = new ObjectHierarchy(adapter);
 	for (const device of devices) {
 		const base = channelForDevice(device.info);
 		const channelPath = `${adapter.namespace}.${base}`;
+		const typePart = sanitizeIdPart(device.info.type || "device");
 
-		await adapter.setObjectNotExistsAsync(channelPath, {
-			type: "channel",
-			common: {
-				name: `${device.info.name} (${device.info.type})`,
-			},
-			native: device.info,
-		});
+		await hierarchy.ensureFolder(`${adapter.namespace}.${typePart}`, hierarchy.deviceTypeLabel(typePart));
+		await hierarchy.ensureDevice(
+			channelPath,
+			`${device.info.name} (${device.info.type})`,
+			{ ...(device.info as unknown as Record<string, unknown>) },
+		);
 
+		await hierarchy.ensureChannel(`${channelPath}.info`, "Info");
 		await adapter.setObjectNotExistsAsync(`${channelPath}.info.model`, {
 			type: "state",
 			common: {
 				name: "Model",
 				type: "string",
-				role: "info",
+				role: "text",
 				read: true,
 				write: false,
 			},
@@ -238,6 +248,22 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 				: kind === "statistics"
 					? statisticsStatePath(channelPath, entityId)
 					: `${channelPath}.${kind === "sensor" ? "sensors" : "control"}.${entityId}`;
+
+			if (isSystemLifetimeStatistic(entityId, device.info.type) || kind === "sensor") {
+				await hierarchy.ensureChannel(`${channelPath}.sensors`, "Sensors");
+			} else if (kind === "statistics") {
+				await hierarchy.ensureChannel(`${channelPath}.statistics`, "Statistics");
+				const periodMatch = /^(week|month|year)_/.exec(entityId);
+				if (periodMatch) {
+					await hierarchy.ensureFolder(
+						`${channelPath}.statistics.${periodMatch[1]}`,
+						hierarchy.periodFolderLabel(periodMatch[1]),
+					);
+				}
+			} else {
+				await hierarchy.ensureChannel(`${channelPath}.control`, "Control");
+			}
+
 			const stateType = resolveStateType(meta, value);
 			const hasValue = value !== null && value !== undefined;
 			const stateVal = hasValue
@@ -253,7 +279,7 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 			const common: ioBroker.StateCommon = {
 				name: STATISTICS_LABELS[entityId] || entityId,
 				type: stateType,
-				role: meta?.role ?? "value",
+				role: resolveEntityRole(meta, writable),
 				read: true,
 				write: writable,
 			};
@@ -380,7 +406,7 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 		}
 
 		if (device.info.type === "system" || device.info.type === "site" || device.solarbankInfo) {
-			await syncSolarbankInfo(adapter, channelPath, device.solarbankInfo);
+			await syncSolarbankInfo(adapter, hierarchy, channelPath, device.solarbankInfo);
 		}
 	}
 }

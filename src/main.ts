@@ -780,16 +780,20 @@ class AnkerSolix extends utils.Adapter {
 		this.cleanupLegacyInstallSymlink();
 
 		await this.setObjectNotExistsAsync("account", {
-			type: "channel",
+			type: "device",
 			common: { name: "Account" },
 			native: {},
 		});
+		const accountObj = await this.getObjectAsync("account");
+		if (accountObj?.type === "channel") {
+			await this.extendObject("account", { type: "device" });
+		}
 		await this.setObjectNotExistsAsync("account.nickname", {
 			type: "state",
 			common: {
 				name: "Account nickname",
 				type: "string",
-				role: "info",
+				role: "text",
 				read: true,
 				write: false,
 			},

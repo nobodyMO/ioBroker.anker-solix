@@ -28,6 +28,7 @@ var import_entities = require("./entities");
 var import_entityGroups = require("./entityGroups");
 var import_curtailmentPower = require("./curtailmentPower");
 var import_systemBatPower = require("./systemBatPower");
+var import_objectHierarchy = require("./objectHierarchy");
 const SOLARBANK_INFO_LABELS = {
   battery_energy: "Batterie-Energie (Wh)"
 };
@@ -42,7 +43,15 @@ function resolveStateType(meta, value) {
     return "string";
   }
   if ((meta == null ? void 0 : meta.kind) === "statistics") {
-    return meta.role === "value.date" ? "string" : "number";
+    return meta.role === "text" ? "string" : "number";
+  }
+  if ((meta == null ? void 0 : meta.kind) === "sensor") {
+    if (meta.role === "text") {
+      return "string";
+    }
+    if (meta.unit || /^value\.(power|energy|current|voltage|battery|interval)/.test(meta.role)) {
+      return "number";
+    }
   }
   if (typeof value === "boolean") {
     return "boolean";
@@ -51,6 +60,15 @@ function resolveStateType(meta, value) {
     return "number";
   }
   return "string";
+}
+function resolveEntityRole(meta, writable) {
+  if (!meta) {
+    return "value";
+  }
+  if (meta.kind === "switch") {
+    return writable ? "switch" : "indicator";
+  }
+  return meta.role;
 }
 function coerceStateValue(type, value) {
   if (type === "number") {
@@ -104,16 +122,12 @@ function channelForDevice(info) {
 function solarbankInfoEnabled(config) {
   return !!config.enableSystemOverview || !!config.enablePowerFlows;
 }
-async function syncSolarbankInfo(adapter, channelPath, info) {
+async function syncSolarbankInfo(adapter, hierarchy, channelPath, info) {
   if (!info || !solarbankInfoEnabled(adapter.config)) {
     return;
   }
   const base = `${channelPath}.solarbank_info`;
-  await adapter.setObjectNotExistsAsync(base, {
-    type: "channel",
-    common: { name: "Solarbank-Info (Gesamtsystem)" },
-    native: {}
-  });
+  await hierarchy.ensureChannel(base, "Solarbank-Info (Gesamtsystem)");
   const siteId = channelPath.split(".").pop() || "";
   if (siteId) {
     await (0, import_systemBatPower.pruneSolarbankInfoPowerStates)(adapter, siteId);
@@ -123,19 +137,11 @@ async function syncSolarbankInfo(adapter, channelPath, info) {
     return;
   }
   const listBase = `${base}.solarbank_list`;
-  await adapter.setObjectNotExistsAsync(listBase, {
-    type: "channel",
-    common: { name: "Solarbank-Liste" },
-    native: {}
-  });
+  await hierarchy.ensureChannel(listBase, "Solarbank-Liste");
   for (const [sn, entry] of Object.entries(list)) {
     const snPart = sanitizeIdPart(sn);
     const bankBase = `${listBase}.${snPart}`;
-    await adapter.setObjectNotExistsAsync(bankBase, {
-      type: "channel",
-      common: { name: `Solarbank ${sn}` },
-      native: { device_sn: sn }
-    });
+    await hierarchy.ensureChannel(bankBase, `Solarbank ${sn}`, { device_sn: sn });
     if (entry.battery_energy === null || entry.battery_energy === void 0) {
       continue;
     }
@@ -156,24 +162,26 @@ async function syncSolarbankInfo(adapter, channelPath, info) {
   }
 }
 async function syncDevices(adapter, devices) {
-  var _a, _b, _c, _d, _e, _f;
+  var _a, _b, _c, _d, _e;
   const curtailmentHost = adapter;
+  const hierarchy = new import_objectHierarchy.ObjectHierarchy(adapter);
   for (const device of devices) {
     const base = channelForDevice(device.info);
     const channelPath = `${adapter.namespace}.${base}`;
-    await adapter.setObjectNotExistsAsync(channelPath, {
-      type: "channel",
-      common: {
-        name: `${device.info.name} (${device.info.type})`
-      },
-      native: device.info
-    });
+    const typePart = sanitizeIdPart(device.info.type || "device");
+    await hierarchy.ensureFolder(`${adapter.namespace}.${typePart}`, hierarchy.deviceTypeLabel(typePart));
+    await hierarchy.ensureDevice(
+      channelPath,
+      `${device.info.name} (${device.info.type})`,
+      { ...device.info }
+    );
+    await hierarchy.ensureChannel(`${channelPath}.info`, "Info");
     await adapter.setObjectNotExistsAsync(`${channelPath}.info.model`, {
       type: "state",
       common: {
         name: "Model",
         type: "string",
-        role: "info",
+        role: "text",
         read: true,
         write: false
       },
@@ -215,13 +223,27 @@ async function syncDevices(adapter, devices) {
       const writable = meta ? (0, import_entities.isWritable)(entityId, device.writable) : false;
       const kind = (_a = meta == null ? void 0 : meta.kind) != null ? _a : "sensor";
       const stateId = isSystemLifetimeStatistic(entityId, device.info.type) ? lifetimeStatisticsStatePath(channelPath, entityId) : kind === "statistics" ? statisticsStatePath(channelPath, entityId) : `${channelPath}.${kind === "sensor" ? "sensors" : "control"}.${entityId}`;
+      if (isSystemLifetimeStatistic(entityId, device.info.type) || kind === "sensor") {
+        await hierarchy.ensureChannel(`${channelPath}.sensors`, "Sensors");
+      } else if (kind === "statistics") {
+        await hierarchy.ensureChannel(`${channelPath}.statistics`, "Statistics");
+        const periodMatch = /^(week|month|year)_/.exec(entityId);
+        if (periodMatch) {
+          await hierarchy.ensureFolder(
+            `${channelPath}.statistics.${periodMatch[1]}`,
+            hierarchy.periodFolderLabel(periodMatch[1])
+          );
+        }
+      } else {
+        await hierarchy.ensureChannel(`${channelPath}.control`, "Control");
+      }
       const stateType = resolveStateType(meta, value);
       const hasValue = value !== null && value !== void 0;
       const stateVal = hasValue ? coerceStateValue(stateType, value) : (meta == null ? void 0 : meta.kind) === "switch" ? false : (meta == null ? void 0 : meta.kind) === "statistics" ? null : (meta == null ? void 0 : meta.kind) === "number" ? (_b = meta.min) != null ? _b : 0 : "";
       const common = {
         name: import_entities.STATISTICS_LABELS[entityId] || entityId,
         type: stateType,
-        role: (_c = meta == null ? void 0 : meta.role) != null ? _c : "value",
+        role: resolveEntityRole(meta, writable),
         read: true,
         write: writable
       };
@@ -232,7 +254,7 @@ async function syncDevices(adapter, devices) {
         common.states = import_entities.EV_CHARGER_MODE_STATES;
       }
       if ((meta == null ? void 0 : meta.kind) === "list") {
-        if (entityId === "max_total_ac_output" && ((_d = device.max_total_ac_output_options) == null ? void 0 : _d.length)) {
+        if (entityId === "max_total_ac_output" && ((_c = device.max_total_ac_output_options) == null ? void 0 : _c.length)) {
           const states = {};
           for (const w of device.max_total_ac_output_options) {
             states[String(w)] = `${w} W`;
@@ -255,7 +277,7 @@ async function syncDevices(adapter, devices) {
         } else if (entityId === "ev_charger_ocpp_connect_status") {
           common.states = import_entities.EV_CHARGER_OCPP_STATES;
         } else if (entityId === "ev_charger_mode") {
-          const opts = ((_e = device.ev_charger_mode_options) == null ? void 0 : _e.length) ? device.ev_charger_mode_options : Object.keys(import_entities.EV_CHARGER_MODE_ACTION_STATES);
+          const opts = ((_d = device.ev_charger_mode_options) == null ? void 0 : _d.length) ? device.ev_charger_mode_options : Object.keys(import_entities.EV_CHARGER_MODE_ACTION_STATES);
           const states = {};
           for (const key of opts) {
             if (import_entities.EV_CHARGER_MODE_ACTION_STATES[key]) {
@@ -268,7 +290,7 @@ async function syncDevices(adapter, devices) {
             common.states = meta.states;
           }
         } else {
-          const opts = ((_f = device.usage_mode_options) == null ? void 0 : _f.length) ? device.usage_mode_options : Object.keys(import_entities.USAGE_MODE_STATES);
+          const opts = ((_e = device.usage_mode_options) == null ? void 0 : _e.length) ? device.usage_mode_options : Object.keys(import_entities.USAGE_MODE_STATES);
           const states = {};
           for (const key of opts) {
             if (import_entities.USAGE_MODE_STATES[key]) {
@@ -330,7 +352,7 @@ async function syncDevices(adapter, devices) {
       }
     }
     if (device.info.type === "system" || device.info.type === "site" || device.solarbankInfo) {
-      await syncSolarbankInfo(adapter, channelPath, device.solarbankInfo);
+      await syncSolarbankInfo(adapter, hierarchy, channelPath, device.solarbankInfo);
     }
   }
 }

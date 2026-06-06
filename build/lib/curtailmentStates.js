@@ -39,7 +39,7 @@ const CURTAILMENT_STATE_IDS = {
 };
 async function setupCurtailmentStates(adapter) {
   await adapter.setObjectNotExistsAsync(CURTAILMENT_CHANNEL, {
-    type: "channel",
+    type: "device",
     common: { name: "Curtailment avoidance" },
     native: {}
   });
