@@ -272,6 +272,27 @@ async function syncDevices(adapter, devices) {
                 else if (entityId === "ev_charger_ocpp_connect_status") {
                     common.states = entities_1.EV_CHARGER_OCPP_STATES;
                 }
+                else if (entityId === "pps_ac_output_mode") {
+                    common.states = entities_1.PPS_AC_OUTPUT_MODE_STATES;
+                }
+                else if (entityId === "pps_dc_12v_output_mode") {
+                    common.states = entities_1.PPS_DC_12V_OUTPUT_MODE_STATES;
+                }
+                else if (entityId === "pps_device_timeout_minutes") {
+                    common.states = entities_1.PPS_DEVICE_TIMEOUT_MINUTES_STATES;
+                }
+                else if (entityId === "pps_display_timeout_seconds") {
+                    common.states = entities_1.PPS_DISPLAY_TIMEOUT_SECONDS_STATES;
+                }
+                else if (entityId === "pps_display_mode") {
+                    common.states = entities_1.PPS_DISPLAY_MODE_STATES;
+                }
+                else if (entityId === "pps_temp_unit_fahrenheit_mode") {
+                    common.states = entities_1.PPS_TEMP_UNIT_FAHRENHEIT_STATES;
+                }
+                else if (entityId === "pps_usb_status") {
+                    common.states = entities_1.PPS_USB_STATUS_STATES;
+                }
                 else if (entityId === "ev_charger_mode") {
                     const opts = device.ev_charger_mode_options?.length
                         ? device.ev_charger_mode_options
