@@ -289,6 +289,13 @@ EXTENDED_SENSOR_ENTITIES: list[dict[str, Any]] = [
         "groups": [GROUP_PPS],
     },
     {
+        "id": "pps_battery_soh",
+        "keys": ["battery_soh", "state_of_health"],
+        "unit": "%",
+        "role": "value.battery",
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    {
         "id": "pps_input_power",
         "keys": ["input_power", "ac_input_power"],
         "unit": "W",
@@ -304,6 +311,213 @@ EXTENDED_SENSOR_ENTITIES: list[dict[str, Any]] = [
         "types": ["pps", "solarbank_pps", "powerbank"],
         "groups": [GROUP_PPS],
     },
+    {
+        "id": "pps_device_sn",
+        "keys": ["device_sn"],
+        "role": "text",
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },
+    {
+        "id": "pps_input_limit_max",
+        "keys": ["ac_input_limit_max"],
+        "unit": "W",
+        "role": "value.power",
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    {
+        "id": "pps_output_timeout_seconds", # disable (0), min:0, max: 86400, step 300
+        "keys": ["ac_output_timeout_seconds"],
+        "unit": "s",
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    {
+        "id": "pps_ac_input_limit", # AC charge limit: 100-1200 W, step: 100
+        "keys": ["ac_input_limit"],
+        "unit": "W",
+        "role": "value.power",
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    {
+        "id": "pps_ac_frequency", # 60 / 50 Hz
+        "keys": ["ac_frequency"],
+        "unit": "Hz",
+        "role": "value.power",
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    {
+        "id": "pps_ac_output_mode", # Normal (0), Smart (1) - auto-off below 14W
+        "keys": ["ac_output_mode"],
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    {
+        "id": "pps_dc_output_timeout_seconds", # disable (0), min:0, max: 86400, step 300
+        "keys": ["dc_output_timeout_seconds"],
+        "unit": "s",
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    {
+        "id": "pps_dc_12v_output_mode", # Normal (0), Smart (1) - auto-off below 3W
+        "keys": ["dc_12v_output_mode"],
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    {
+        "id": "pps_device_timeout_minutes", # 0 (Never), 30, 60, 120, 240, 360, 720, 1440
+        "keys": ["device_timeout_minutes"],
+        "unit": "m",
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    {
+        "id": "pps_display_timeout_seconds", # 0 (Never), 10, 30, 60, 300, 1800
+        "keys": ["display_timeout_seconds"],
+        "unit": "s",
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    {
+        "id": "pps_display_mode", # Low (1), Medium (2), High (3)
+        "keys": ["display_mode"],
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    {
+        "id": "pps_temp_unit_fahrenheit", # Celsius (0) or Fahrenheit (1)
+        "keys": ["temp_unit_fahrenheit"],
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    {
+        "id": "pps_ac_fast_charge_switch", # Ultrafast Charge switch: Disabled (0) or Enabled (1)
+        "keys": ["ac_fast_charge_switch"],
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    {
+        "id": "pps_display_switch", # Off (0), On (1)
+        "keys": ["ac_display_switch"],
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    {
+        "id": "pps_port_memory_switch", # Output Port Memory switch: Disabled (0) or Enabled (1)
+        "keys": ["port_memory_switch"],
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    {
+        "id": "pps_temperature",
+        "keys": ["temperature"],
+        "unit": "°",
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    {
+        "id": "pps_output_power_total",
+        "keys": ["output_power_total"],
+        "unit": "W",
+        "role": "value.power",
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    {
+        "id": "pps_ac_output_power_switch", # Off (0), On (1)
+        "keys": ["ac_output_power_switch"],
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    {
+        "id": "pps_dc_input_power_switch", # Off (0), On (1)
+        "keys": ["dc_input_power_switch"],
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    {
+        "id": "pps_dc_input_power_total", # DC input power (solar + car charging)
+        "keys": ["dc_input_power_total"],
+        "unit": "W",
+        "role": "value.power",
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    {
+        "id": "pps_usbc_1_status", # USB-C 1 status: Inactive (0), Discharging (1), Charging (2)
+        "keys": ["usbc_1_status"],
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    {
+        "id": "pps_usbc_1_power",
+        "keys": ["usbc_1_power"],
+        "unit": "W",
+        "role": "value.power",
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    }, 
+    {
+        "id": "pps_usbc_2_status",  # USB-C 2 status: Inactive (0), Discharging (1), Charging (2)
+        "keys": ["usbc_2_status"],
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    {
+        "id": "pps_usbc_2_power",
+        "keys": ["usbc_2_power"],
+        "unit": "W",
+        "role": "value.power",
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    {
+        "id": "pps_usbc_3_status",  # USB-C 3 status: Inactive (0), Discharging (1), Charging (2)
+        "keys": ["usbc_3_status"],
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    {
+        "id": "pps_usbc_3_power",
+        "keys": ["usbc_3_power"],
+        "unit": "W",
+        "role": "value.power",
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    {
+        "id": "pps_usba_1_status",  # USB-A 1 status: Inactive (0), Discharging (1), Charging (2)
+        "keys": ["usba_1_status"],
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    {
+        "id": "pps_usba_1_power",
+        "keys": ["usba_1_power"],
+        "unit": "W",
+        "role": "value.power",
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    {
+        "id": "pps_dc_output_power_switch", # Off (0), On (1)
+        "keys": ["dc_output_power_switch"],
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    {
+        "id": "pps_dc_output_power_total", # Total Watt DC
+        "keys": ["dc_output_power_total"],
+        "unit": "W",
+        "role": "value.power",
+        "types": ["pps", "solarbank_pps", "powerbank"],
+        "groups": [GROUP_PPS],
+    },    
+    
     # Smart plug
     {
         "id": "smartplug_power",

@@ -12,6 +12,9 @@ export interface EntityMeta {
 	states?: Record<string, string>;
 }
 
+
+
+
 /** All EV charger mode keys (status sensor + labels). */
 export const EV_CHARGER_MODE_STATES: Record<string, string> = {
 	start_charge: "Laden starten",
@@ -78,6 +81,53 @@ export const EV_CHARGER_OCPP_STATES: Record<string, string> = {
 	0: "Getrennt",
 	1: "Verbindet",
 	2: "Verbunden",
+};
+
+
+export const PPS_AC_OUTPUT_MODE_STATES: Record<string, string> = {
+  0: "Normal",
+  1: "Smart - auto-off below 14W"
+};	
+
+export const PPS_DC_12V_OUTPUT_MODE_STATES: Record<string, string> = {
+  0: "Normal",
+  1: "Smart - auto-off below 3W"
+};	
+
+export const PPS_DEVICE_TIMEOUT_MINUTES_STATES: Record<string, string> = {
+  0: "Never",
+  30: "30 Minuten",
+  60: "60 Minuten",
+  120: "120 Minuten",
+  240: "240 Minuten",
+  360: "350 Minuten",
+  720: "720 Minuten",
+  1440: "1440 Minuten"
+};	
+
+export const PPS_DISPLAY_TIMEOUT_SECONDS_STATES: Record<string, string> = {
+  0: "Never",
+  10: "10 Sekunden",
+  30: "30 Sekunden",
+  300: "300 Sekunden",
+  1800: "1800 DSekunden"
+};
+
+export const PPS_DISPLAY_MODE_STATES: Record<string, string> = {
+  1: "Low",
+  2: "Medium",
+  3: "High" 
+};
+
+export const PPS_TEMP_UNIT_FAHRENHEIT_STATES: Record<string, string> = {
+  0: "Celsius",
+  1: "Fahrenheit"
+};	
+
+export const PPS_USB_STATUS_STATES: Record<string, string> = {
+  0: "Inactive",
+  1: "Discharging",
+  2: "Charging"
 };
 
 /** HA de.json labels for preset_usage_mode */
@@ -149,9 +199,39 @@ const SENSOR_ENTITIES: EntityMeta[] = [
 	{ id: "smart_plugs_power", kind: "sensor", role: "value.power", unit: "W" },
 	{ id: "dynamic_price_total", kind: "sensor", role: "value", unit: "€/kWh" },
 	{ id: "spot_price_mwh", kind: "sensor", role: "value", unit: "€/MWh" },
+	
 	{ id: "pps_battery_soc", kind: "sensor", role: "value.battery", unit: "%" },
-	{ id: "pps_input_power", kind: "sensor", role: "value.power", unit: "W" },
+  	{ id: "pps_battery_soh", kind: "sensor", role: "value.battery", unit: "%" },
+  	{ id: "pps_input_power", kind: "sensor", role: "value.power", unit: "W" },
 	{ id: "pps_output_power", kind: "sensor", role: "value.power", unit: "W" },
+	{ id: "pps_device_sn", kind: "sensor", role: "text" },  
+	{ id: "pps_input_limit_max", kind: "sensor", role: "value.power", unit: "W" },
+	{ id: "pps_output_timeout_seconds", kind: "sensor", role: "value.interval", unit: "s" },
+	{ id: "pps_ac_input_limit", kind: "sensor", role: "value.power", unit: "W" },
+	{ id: "pps_ac_frequency", kind: "sensor", role: "value.power", unit: "Hz" },
+	{ id: "pps_ac_output_mode", kind: "sensor", role: "value", states: PPS_AC_OUTPUT_MODE_STATES },
+	{ id: "pps_dc_output_timeout_seconds", kind: "sensor", role: "value.interval", unit: "s" , min: 0, max: 86400},
+	{ id: "pps_dc_12v_output_mode", kind: "sensor", role: "value", states: PPS_DC_12V_OUTPUT_MODE_STATES },
+	{ id: "pps_device_timeout_minutes", kind: "sensor", role: "value", unit: "m", states: PPS_DEVICE_TIMEOUT_MINUTES_STATES },
+	{ id: "pps_display_timeout_seconds", kind: "sensor", role: "value", unit: "s", states: PPS_DISPLAY_TIMEOUT_SECONDS_STATES },
+	{ id: "pps_display_mode", kind: "sensor", role: "value", states: PPS_DISPLAY_MODE_STATES },
+	{ id: "pps_temp_unit_fahrenheit", kind: "sensor", role: "value", states: PPS_TEMP_UNIT_FAHRENHEIT_STATES },
+	{ id: "pps_temperature", kind: "sensor", role: "value.temperature", unit: "\xB0C" },
+	
+	{ id: "pps_output_power_total", kind: "sensor", role: "value.power", unit: "W" },
+	{ id: "pps_dc_input_power_total", kind: "sensor", role: "value.power", unit: "W" },
+	{ id: "pps_dc_output_power_total", kind: "sensor", role: "value.power", unit: "W" },
+
+	{ id: "pps_usbc_1_status", kind: "sensor", role: "value", states: PPS_USB_STATUS_STATES },
+	{ id: "pps_usbc_2_status", kind: "sensor", role: "value", states: PPS_USB_STATUS_STATES },
+	{ id: "pps_usbc_3_status", kind: "sensor", role: "value", states: PPS_USB_STATUS_STATES },
+	{ id: "pps_usba_1_status", kind: "sensor", role: "value", states: PPS_USB_STATUS_STATES },
+
+	{ id: "pps_usbc_1_power", kind: "sensor", role: "value.power", unit: "W" },
+	{ id: "pps_usbc_2_power", kind: "sensor", role: "value.power", unit: "W" },
+	{ id: "pps_usbc_3_power", kind: "sensor", role: "value.power", unit: "W" },
+	{ id: "pps_usba_1_power", kind: "sensor", role: "value.power", unit: "W" },
+	
 	{ id: "smartplug_power", kind: "sensor", role: "value.power", unit: "W" },
 	{ id: "smartplug_energy_today", kind: "sensor", role: "value.energy", unit: "kWh" },
 	{ id: "evcharger_power", kind: "sensor", role: "value.power", unit: "W" },
