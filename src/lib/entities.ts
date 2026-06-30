@@ -13,8 +13,6 @@ export interface EntityMeta {
 }
 
 
-
-
 /** All EV charger mode keys (status sensor + labels). */
 export const EV_CHARGER_MODE_STATES: Record<string, string> = {
 	start_charge: "Laden starten",

@@ -1,0 +1,307 @@
+/** Entity feature groups (mirror python/entity_groups.py). */
+export const ENTITY_GROUP_CORE = "core";
+export const ENTITY_GROUP_ENERGY_STATISTICS = "energy_statistics";
+export const ENTITY_GROUP_ENERGY_STATISTICS_WEEK = "energy_statistics_week";
+export const ENTITY_GROUP_ENERGY_STATISTICS_MONTH = "energy_statistics_month";
+export const ENTITY_GROUP_ENERGY_STATISTICS_YEAR = "energy_statistics_year";
+export const ENTITY_GROUP_ENERGY_DETAIL = "energy_detail";
+export const ENTITY_GROUP_POWER_FLOWS = "power_flows";
+export const ENTITY_GROUP_DIAGNOSTICS = "diagnostics";
+export const ENTITY_GROUP_BINARY = "binary";
+export const ENTITY_GROUP_ADVANCED_CONTROLS = "advanced_controls";
+export const ENTITY_GROUP_SYSTEM_OVERVIEW = "system_overview";
+export const ENTITY_GROUP_SITE_PRICE = "site_price";
+export const ENTITY_GROUP_ACCOUNT = "account";
+export const ENTITY_GROUP_SOLARBANK_META = "solarbank_meta";
+export const ENTITY_GROUP_SMARTPLUG = "smartplug";
+export const ENTITY_GROUP_PPS = "pps";
+export const ENTITY_GROUP_EV_CHARGER = "ev_charger";
+export const ENTITY_GROUP_VEHICLE = "vehicle";
+export const ENTITY_GROUP_HES = "hes";
+export const ENTITY_GROUP_POWER_PANEL = "powerpanel";
+export const ENTITY_GROUP_INVERTER = "inverter";
+const CONFIG_TO_GROUP = [
+    ["enableCoreEntities", ENTITY_GROUP_CORE],
+    ["enableEnergyStatistics", ENTITY_GROUP_ENERGY_STATISTICS],
+    ["enableEnergyStatisticsWeek", ENTITY_GROUP_ENERGY_STATISTICS_WEEK],
+    ["enableEnergyStatisticsMonth", ENTITY_GROUP_ENERGY_STATISTICS_MONTH],
+    ["enableEnergyStatisticsYear", ENTITY_GROUP_ENERGY_STATISTICS_YEAR],
+    ["enableEnergyDetail", ENTITY_GROUP_ENERGY_DETAIL],
+    ["enablePowerFlows", ENTITY_GROUP_POWER_FLOWS],
+    ["enableDiagnostics", ENTITY_GROUP_DIAGNOSTICS],
+    ["enableBinaryIndicators", ENTITY_GROUP_BINARY],
+    ["enableAdvancedControls", ENTITY_GROUP_ADVANCED_CONTROLS],
+    ["enableSystemOverview", ENTITY_GROUP_SYSTEM_OVERVIEW],
+    ["enableSitePrice", ENTITY_GROUP_SITE_PRICE],
+    ["enableAccountInfo", ENTITY_GROUP_ACCOUNT],
+    ["enableSolarbankMeta", ENTITY_GROUP_SOLARBANK_META],
+    ["enableSmartplug", ENTITY_GROUP_SMARTPLUG],
+    ["enablePps", ENTITY_GROUP_PPS],
+    ["enableEvCharger", ENTITY_GROUP_EV_CHARGER],
+    ["enableVehicle", ENTITY_GROUP_VEHICLE],
+    ["enableHes", ENTITY_GROUP_HES],
+    ["enablePowerPanel", ENTITY_GROUP_POWER_PANEL],
+    ["enableInverter", ENTITY_GROUP_INVERTER],
+];
+const PERIOD_METRIC_SUFFIXES = [
+    "solar_production",
+    "charge_energy",
+    "discharge_energy",
+    "home_usage",
+    "solar_to_home",
+    "solar_to_battery",
+    "battery_to_home",
+    "grid_to_home",
+    "grid_to_battery",
+    "3rd_party_pv_to_bat",
+    "ev_charge",
+    "grid_import",
+    "grid_export",
+];
+function buildPeriodEntityGroups() {
+    const map = {};
+    const periodGroups = {
+        week: ENTITY_GROUP_ENERGY_STATISTICS_WEEK,
+        month: ENTITY_GROUP_ENERGY_STATISTICS_MONTH,
+        year: ENTITY_GROUP_ENERGY_STATISTICS_YEAR,
+    };
+    for (const period of ["week", "month", "year"]) {
+        const group = periodGroups[period];
+        map[`${period}_energy_period`] = [group];
+        for (const suffix of PERIOD_METRIC_SUFFIXES) {
+            map[`${period}_${suffix}`] = [group];
+        }
+    }
+    return map;
+}
+/** Entity id → groups (for state creation filter). */
+export const ENTITY_ID_GROUPS = {
+    // core — default on
+    input_power: [ENTITY_GROUP_CORE],
+    total_pv_power: [ENTITY_GROUP_CORE],
+    dc_output_power: [ENTITY_GROUP_CORE],
+    output_power_total: [ENTITY_GROUP_CORE],
+    preset_system_output_power: [ENTITY_GROUP_CORE],
+    battery_power: [ENTITY_GROUP_CORE],
+    grid_power: [ENTITY_GROUP_CORE],
+    home_power: [ENTITY_GROUP_CORE],
+    state_of_charge: [ENTITY_GROUP_CORE],
+    total_state_of_charge: [ENTITY_GROUP_CORE],
+    set_output_power: [ENTITY_GROUP_CORE],
+    pv_input_limit: [ENTITY_GROUP_CORE],
+    ac_charge_limit: [ENTITY_GROUP_CORE],
+    all_ac_input_limit: [ENTITY_GROUP_CORE],
+    cloud_state: [ENTITY_GROUP_CORE],
+    wifi_state: [ENTITY_GROUP_CORE],
+    grid_to_home_power: [ENTITY_GROUP_CORE],
+    grid_status_desc: [ENTITY_GROUP_CORE],
+    grid_import_energy: [ENTITY_GROUP_CORE],
+    grid_export_energy: [ENTITY_GROUP_CORE],
+    daily_grid_import: [ENTITY_GROUP_CORE],
+    daily_grid_export: [ENTITY_GROUP_CORE],
+    phase: [ENTITY_GROUP_CORE],
+    smartmeter_list: [ENTITY_GROUP_CORE],
+    allow_grid_export: [ENTITY_GROUP_CORE],
+    preset_allow_export: [ENTITY_GROUP_CORE],
+    ac_output_limit: [ENTITY_GROUP_CORE],
+    max_total_ac_output: [ENTITY_GROUP_CORE],
+    min_soc: [ENTITY_GROUP_CORE],
+    grid_export_limit: [ENTITY_GROUP_CORE],
+    preset_usage_mode: [ENTITY_GROUP_CORE],
+    ac_fast_charge_switch: [ENTITY_GROUP_CORE],
+    // power flows
+    solar_power_total: [ENTITY_GROUP_POWER_FLOWS],
+    grid_power_signed: [ENTITY_GROUP_POWER_FLOWS],
+    battery_power_signed: [ENTITY_GROUP_POWER_FLOWS],
+    home_load_power: [ENTITY_GROUP_POWER_FLOWS, ENTITY_GROUP_SYSTEM_OVERVIEW],
+    pv_to_home_power: [ENTITY_GROUP_POWER_FLOWS],
+    pv_to_battery_power: [ENTITY_GROUP_POWER_FLOWS],
+    battery_to_home_power: [ENTITY_GROUP_POWER_FLOWS],
+    grid_to_battery_power: [ENTITY_GROUP_POWER_FLOWS],
+    photovoltaic_to_grid_power: [ENTITY_GROUP_POWER_FLOWS],
+    ac_input_power: [ENTITY_GROUP_POWER_FLOWS],
+    ac_output_power: [ENTITY_GROUP_POWER_FLOWS],
+    bat_charge_power: [ENTITY_GROUP_POWER_FLOWS],
+    bat_discharge_power: [ENTITY_GROUP_POWER_FLOWS],
+    heating_power: [ENTITY_GROUP_POWER_FLOWS],
+    // diagnostics
+    status_desc: [ENTITY_GROUP_DIAGNOSTICS],
+    charging_status_desc: [ENTITY_GROUP_DIAGNOSTICS],
+    sw_version: [ENTITY_GROUP_DIAGNOSTICS],
+    device_temperature: [ENTITY_GROUP_DIAGNOSTICS],
+    err_code: [ENTITY_GROUP_DIAGNOSTICS],
+    device_tag: [ENTITY_GROUP_DIAGNOSTICS],
+    inverter_info: [ENTITY_GROUP_DIAGNOSTICS],
+    // binary
+    wifi_connection: [ENTITY_GROUP_BINARY],
+    mqtt_connection: [ENTITY_GROUP_BINARY],
+    ota_update_available: [ENTITY_GROUP_BINARY],
+    heating_active: [ENTITY_GROUP_BINARY],
+    protection_active: [ENTITY_GROUP_BINARY],
+    // system
+    solarbank_list: [ENTITY_GROUP_SYSTEM_OVERVIEW],
+    other_loads_power: [ENTITY_GROUP_SYSTEM_OVERVIEW],
+    smart_plugs_power: [ENTITY_GROUP_SYSTEM_OVERVIEW],
+    total_energy: [ENTITY_GROUP_SYSTEM_OVERVIEW, ENTITY_GROUP_ENERGY_STATISTICS],
+    total_co2_savings: [ENTITY_GROUP_SYSTEM_OVERVIEW, ENTITY_GROUP_ENERGY_STATISTICS],
+    total_money_savings: [ENTITY_GROUP_SYSTEM_OVERVIEW, ENTITY_GROUP_ENERGY_STATISTICS],
+    dynamic_price_total: [ENTITY_GROUP_SITE_PRICE],
+    spot_price_mwh: [ENTITY_GROUP_SITE_PRICE],
+    // devices
+    pps_battery_soc: [ENTITY_GROUP_PPS],
+    pps_input_power: [ENTITY_GROUP_PPS],
+    pps_output_power: [ENTITY_GROUP_PPS],
+    pps_device_sn: [ENTITY_GROUP_PPS],
+    pps_input_limit_max: [ENTITY_GROUP_PPS],
+    pps_output_timeout_seconds: [ENTITY_GROUP_PPS],
+    pps_ac_input_limit: [ENTITY_GROUP_PPS],
+    pps_ac_frequency: [ENTITY_GROUP_PPS],
+    pps_ac_output_mode: [ENTITY_GROUP_PPS],
+    pps_dc_output_timeout_seconds: [ENTITY_GROUP_PPS],
+    pps_dc_12v_output_mode: [ENTITY_GROUP_PPS],
+    pps_device_timeout_minutes: [ENTITY_GROUP_PPS],
+    pps_display_timeout_seconds: [ENTITY_GROUP_PPS],
+    pps_display_mode: [ENTITY_GROUP_PPS],
+    pps_temp_unit_fahrenheit: [ENTITY_GROUP_PPS],
+    pps_temperature: [ENTITY_GROUP_PPS],
+    pps_output_power_total: [ENTITY_GROUP_PPS],
+    pps_dc_input_power_total: [ENTITY_GROUP_PPS],
+    pps_dc_output_power_total: [ENTITY_GROUP_PPS],
+    pps_usbc_1_status: [ENTITY_GROUP_PPS],
+    pps_usbc_2_status: [ENTITY_GROUP_PPS],
+    pps_usbc_3_status: [ENTITY_GROUP_PPS],
+    pps_usba_1_status: [ENTITY_GROUP_PPS],
+    pps_usbc_1_power: [ENTITY_GROUP_PPS],
+    pps_usbc_2_power: [ENTITY_GROUP_PPS],
+    pps_usbc_3_power: [ENTITY_GROUP_PPS],
+    pps_usba_1_power: [ENTITY_GROUP_PPS],
+    smartplug_power: [ENTITY_GROUP_SMARTPLUG],
+    smartplug_energy_today: [ENTITY_GROUP_SMARTPLUG, ENTITY_GROUP_ENERGY_DETAIL],
+    evcharger_power: [ENTITY_GROUP_EV_CHARGER],
+    evcharger_status_desc: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_mode_status: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_mode: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_schedule_switch: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_schedule_mode: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_week_start_time: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_week_end_time: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_weekend_start_time: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_weekend_end_time: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_weekend_mode: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_auto_start_switch: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_auto_charge_restart_switch: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_random_delay_switch: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_max_current: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_solar_switch: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_solar_mode: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_solar_min_current: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_phase_mode: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_auto_phase_switch: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_load_balance_switch: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_main_breaker_limit: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_load_balance_monitor_device: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_solar_monitor_switch: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_solar_monitor_device: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_plug_status: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_status: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_boost_status: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_bat_charge_power: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_charging_energy: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_voltage_l1: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_voltage_l2: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_voltage_l3: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_current_l1: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_current_l2: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_current_l3: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_power_l1: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_power_l2: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_power_l3: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_charging_energy_l1: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_charging_energy_l2: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_charging_energy_l3: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_plug_countdown_seconds: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_start_countdown_seconds: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_charging_duration_seconds: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_charging_window_seconds: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_ocpp_connect_status: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_cp_signal_status: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_sw_version: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_hw_version: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_restart: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_plug_lock_switch: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_light_brightness: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_light_off_schedule_switch: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_light_off_start_time: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_light_off_end_time: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_smart_touch_mode: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_modbus_switch: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_wipe_up_mode: [ENTITY_GROUP_EV_CHARGER],
+    ev_charger_wipe_down_mode: [ENTITY_GROUP_EV_CHARGER],
+    hes_grid_power: [ENTITY_GROUP_HES],
+    powerpanel_avg_power: [ENTITY_GROUP_POWER_PANEL],
+    // advanced (read-only in bridge)
+    preset_discharge_priority: [ENTITY_GROUP_ADVANCED_CONTROLS],
+    preset_backup_option: [ENTITY_GROUP_ADVANCED_CONTROLS],
+    preset_charge_priority: [ENTITY_GROUP_ADVANCED_CONTROLS],
+    preset_device_output_power: [ENTITY_GROUP_ADVANCED_CONTROLS],
+    max_soc: [ENTITY_GROUP_ADVANCED_CONTROLS],
+    backup_soc: [ENTITY_GROUP_ADVANCED_CONTROLS],
+    auto_upgrade: [ENTITY_GROUP_ADVANCED_CONTROLS],
+    pps_ac_fast_charge_switch: [ENTITY_GROUP_PPS],
+    pps_display_switch: [ENTITY_GROUP_PPS],
+    pps_ac_output_power_switch: [ENTITY_GROUP_PPS],
+    pps_dc_input_power_switch: [ENTITY_GROUP_PPS],
+    pps_port_memory_switch: [ENTITY_GROUP_PPS],
+    pps_dc_output_power_switch: [ENTITY_GROUP_PPS],
+    // energy statistics
+    energy_statistics_date: [ENTITY_GROUP_ENERGY_STATISTICS],
+    daily_solar_production: [ENTITY_GROUP_ENERGY_STATISTICS],
+    daily_charge_energy: [ENTITY_GROUP_ENERGY_STATISTICS],
+    daily_discharge_energy: [ENTITY_GROUP_ENERGY_STATISTICS],
+    daily_home_usage: [ENTITY_GROUP_ENERGY_STATISTICS],
+    daily_solar_to_home: [ENTITY_GROUP_ENERGY_STATISTICS],
+    daily_solar_to_battery: [ENTITY_GROUP_ENERGY_STATISTICS],
+    daily_battery_to_home: [ENTITY_GROUP_ENERGY_STATISTICS],
+    daily_grid_to_home: [ENTITY_GROUP_ENERGY_STATISTICS],
+    daily_grid_to_battery: [ENTITY_GROUP_ENERGY_STATISTICS],
+    daily_3rd_party_pv_to_bat: [ENTITY_GROUP_ENERGY_STATISTICS],
+    daily_ev_charge: [ENTITY_GROUP_ENERGY_STATISTICS],
+    yesterday_solar_production: [ENTITY_GROUP_ENERGY_STATISTICS],
+    yesterday_charge_energy: [ENTITY_GROUP_ENERGY_STATISTICS],
+    yesterday_discharge_energy: [ENTITY_GROUP_ENERGY_STATISTICS],
+    yesterday_home_usage: [ENTITY_GROUP_ENERGY_STATISTICS],
+    // week / month / year statistics (see entities.ts PERIOD_STATISTICS_ENTITIES)
+    ...buildPeriodEntityGroups(),
+    // energy detail
+    daily_solar_to_grid: [ENTITY_GROUP_ENERGY_DETAIL],
+    daily_solar_production_pv1: [ENTITY_GROUP_ENERGY_DETAIL],
+    daily_solar_production_pv2: [ENTITY_GROUP_ENERGY_DETAIL],
+    daily_solar_production_pv3: [ENTITY_GROUP_ENERGY_DETAIL],
+    daily_solar_production_pv4: [ENTITY_GROUP_ENERGY_DETAIL],
+    daily_solar_production_inverter: [ENTITY_GROUP_ENERGY_DETAIL],
+    daily_solar_share: [ENTITY_GROUP_ENERGY_DETAIL],
+    daily_battery_share: [ENTITY_GROUP_ENERGY_DETAIL],
+    daily_grid_share: [ENTITY_GROUP_ENERGY_DETAIL],
+    daily_ac_socket: [ENTITY_GROUP_ENERGY_DETAIL],
+    daily_smartplugs_total: [ENTITY_GROUP_ENERGY_DETAIL, ENTITY_GROUP_SMARTPLUG],
+};
+export function enabledEntityGroups(config) {
+    const groups = new Set();
+    for (const [cfgKey, group] of CONFIG_TO_GROUP) {
+        const val = config[cfgKey];
+        if (cfgKey === "enableCoreEntities") {
+            if (val !== false) {
+                groups.add(group);
+            }
+        }
+        else if (val) {
+            groups.add(group);
+        }
+    }
+    return groups;
+}
+export function isEntityEnabled(entityId, config) {
+    const groups = ENTITY_ID_GROUPS[entityId] ?? [ENTITY_GROUP_CORE];
+    const enabled = enabledEntityGroups(config);
+    return groups.some(g => enabled.has(g));
+}

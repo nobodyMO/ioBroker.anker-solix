@@ -14,7 +14,9 @@
 
 		"noEmitOnError": true,
 		"outDir": "./build/",
-		"removeComments": false,
+		"rootDir": "./src", 
+        "removeComments": false,
+		
 
 		// This is necessary for the automatic typing of the adapter config
 		"resolveJsonModule": true,
