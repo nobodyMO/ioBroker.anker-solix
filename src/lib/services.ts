@@ -117,6 +117,6 @@ export async function runServiceAction(
 	pythonPath: string,
 ): Promise<unknown> {
 	const serviceConfig: BridgeServiceConfig = { ...config, service: action, params };
-	const result = await runBridge("service", serviceConfig, pythonPath, adapter.log);
+	const result = await runBridge("service", serviceConfig, pythonPath, adapter.log, { adapter });
 	return result;
 }

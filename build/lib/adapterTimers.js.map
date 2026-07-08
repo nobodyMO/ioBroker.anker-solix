@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../src/lib/adapterTimers.ts"],
+  "sourcesContent": ["/** ioBroker adapter timers (adapter-check E5005 \u2014 no plain setTimeout). */\n\nexport type AdapterTimer = ReturnType<ioBroker.Adapter[\"setTimeout\"]>;\n\nexport function adapterDelay(adapter: ioBroker.Adapter, ms: number): Promise<void> {\n\treturn new Promise(resolve => {\n\t\tadapter.setTimeout(() => resolve(), ms);\n\t});\n}\n"],
+  "mappings": ";;;;;;;;;;;;;;;;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAIO,SAAS,aAAa,SAA2B,IAA2B;AAClF,SAAO,IAAI,QAAQ,aAAW;AAC7B,YAAQ,WAAW,MAAM,QAAQ,GAAG,EAAE;AAAA,EACvC,CAAC;AACF;",
+  "names": []
+}

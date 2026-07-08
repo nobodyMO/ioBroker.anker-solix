@@ -1,5 +1,7 @@
 /** Serializes adapter control writes to avoid Anker API 429 rate limits. */
 
+import { adapterDelay, type AdapterTimer } from "./adapterTimers";
+
 export const CONTROL_DEBOUNCE_MS = 1200;
 /** Minimum spacing between any two control API/MQTT bridge runs. */
 export const CONTROL_MIN_INTERVAL_MS = 4000;
@@ -10,21 +12,23 @@ export interface QueuedControlJob {
 }
 
 export class ControlQueue {
-	private readonly debounceTimers = new Map<string, NodeJS.Timeout>();
+	private readonly debounceTimers = new Map<string, AdapterTimer>();
 	private queue: QueuedControlJob[] = [];
 	private running = false;
 	private lastRunAt = 0;
 
+	constructor(private readonly adapter: ioBroker.Adapter) {}
+
 	enqueue(job: QueuedControlJob): void {
 		const existing = this.debounceTimers.get(job.stateId);
-		if (existing) {
-			clearTimeout(existing);
+		if (existing !== undefined) {
+			this.adapter.clearTimeout(existing);
 		}
 		this.queue = this.queue.filter(entry => entry.stateId !== job.stateId);
 		this.queue.push(job);
 		this.debounceTimers.set(
 			job.stateId,
-			setTimeout(() => {
+			this.adapter.setTimeout(() => {
 				this.debounceTimers.delete(job.stateId);
 				void this.pump();
 			}, CONTROL_DEBOUNCE_MS),
@@ -40,7 +44,7 @@ export class ControlQueue {
 			while (this.queue.length > 0) {
 				const waitMs = CONTROL_MIN_INTERVAL_MS - (Date.now() - this.lastRunAt);
 				if (waitMs > 0) {
-					await new Promise(resolve => setTimeout(resolve, waitMs));
+					await adapterDelay(this.adapter, waitMs);
 				}
 				const job = this.queue.shift();
 				if (!job) {

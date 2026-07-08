@@ -102,8 +102,8 @@ async function setupServiceStates(adapter) {
     }
 }
 async function runServiceAction(adapter, config, action, params, pythonPath) {
-    const serviceConfig = { ...config, service: action, params };
-    const result = await (0, pythonBridge_1.runBridge)("service", serviceConfig, pythonPath, adapter.log);
-    return result;
+  const serviceConfig = { ...config, service: action, params };
+  const result = await (0, import_pythonBridge.runBridge)("service", serviceConfig, pythonPath, adapter.log, { adapter });
+  return result;
 }
 //# sourceMappingURL=services.js.map

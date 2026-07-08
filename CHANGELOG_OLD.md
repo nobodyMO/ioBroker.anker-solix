@@ -2,7 +2,17 @@
 
 Current releases **0.10.63 and newer** (except the latest seven messagebox news entries) are documented in [README.md](README.md#changelog).
 
-Removed from `common.news` when trimming to the ioBroker repository limit of **7** entries: 0.10.63 and older (see README), plus versions never published to npm (e.g. 0.10.50–0.10.53, 0.10.58), and **0.10.69**.
+Removed from `common.news` when trimming to the ioBroker repository limit of **7** entries: 0.10.63 and older (see README), plus versions never published to npm (e.g. 0.10.50–0.10.53, 0.10.58), **0.10.69**, **0.10.70**, and **0.10.71**.
+
+## 0.10.71
+
+- **en:** Python install: HA PEP 668 venv-first, Windows py -3.12/3.13 + tzdata, profile-based pip bootstrap
+- **de:** Python-Installation: HA PEP 668 venv-first, Windows py -3.12/3.13 + tzdata, profilbasierter pip-Bootstrap
+
+## 0.10.70
+
+- **en:** Repository checks: max 7 news, npm-only versions, CI concurrency, admin schema; automated policy tests
+- **de:** Repository-Prüfungen: max. 7 News, nur npm-Versionen, CI-Concurrency, Admin-Schema; automatische Policy-Tests
 
 ## 0.10.69
 

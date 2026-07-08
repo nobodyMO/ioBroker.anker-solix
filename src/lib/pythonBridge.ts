@@ -6,6 +6,7 @@ import * as path from "node:path";
 import { getBridgeDaemon, stopBridgeDaemon } from "./bridgeDaemon";
 
 export { stopBridgeDaemon };
+import { adapterDelay } from "./adapterTimers";
 import { buildPythonEnv, pythonSpawnArgs, resolvePythonSpawn } from "./pythonPaths";
 import type { BridgeConfig, BridgePollResult, BridgeServiceConfig, BridgeSetConfig } from "./types";
 
@@ -172,7 +173,7 @@ export async function runBridge(
 	config: BridgeConfig | BridgeSetConfig | BridgeServiceConfig,
 	pythonPath: string,
 	log?: ioBroker.Logger,
-	options?: { useDaemon?: boolean },
+	options?: { useDaemon?: boolean; adapter?: ioBroker.Adapter },
 ): Promise<BridgePollResult> {
 	const useDaemon = options?.useDaemon !== false;
 
@@ -188,7 +189,11 @@ export async function runBridge(
 
 		if (daemon.isRunning && isTransientApiError(msg)) {
 			log?.warn(`Bridge daemon API error (${msg}) – retrying once after 15s…`);
-			await new Promise(r => setTimeout(r, 15_000));
+			if (options?.adapter) {
+				await adapterDelay(options.adapter, 15_000);
+			} else {
+				throw new Error("Bridge daemon retry requires adapter instance (E5005)");
+			}
 			try {
 				return await runBridgeDaemon(action, config, pythonPath, log);
 			} catch (retryErr) {

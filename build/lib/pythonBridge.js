@@ -15,34 +15,14 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.stopBridgeDaemon = void 0;
-exports.ensureBridgeDaemon = ensureBridgeDaemon;
-exports.runBridge = runBridge;
-const node_child_process_1 = require("node:child_process");
-const fs = __importStar(require("node:fs"));
-const os = __importStar(require("node:os"));
-const path = __importStar(require("node:path"));
-const bridgeDaemon_1 = require("./bridgeDaemon");
-Object.defineProperty(exports, "stopBridgeDaemon", { enumerable: true, get: function () { return bridgeDaemon_1.stopBridgeDaemon; } });
-const pythonPaths_1 = require("./pythonPaths");
+module.exports = __toCommonJS(pythonBridge_exports);
+var import_node_child_process = require("node:child_process");
+var fs = __toESM(require("node:fs"));
+var os = __toESM(require("node:os"));
+var path = __toESM(require("node:path"));
+var import_bridgeDaemon = require("./bridgeDaemon");
+var import_adapterTimers = require("./adapterTimers");
+var import_pythonPaths = require("./pythonPaths");
 function bridgeScriptPath() {
     return path.join(__dirname, "..", "..", "python", "bridge.py");
 }
@@ -168,9 +148,28 @@ async function runBridgeDaemon(action, config, pythonPath, log) {
     return daemon.request(action, config);
 }
 async function runBridge(action, config, pythonPath, log, options) {
-    const useDaemon = options?.useDaemon !== false;
-    if (!useDaemon) {
-        return runBridgeOnce(action, config, pythonPath, log);
+  const useDaemon = (options == null ? void 0 : options.useDaemon) !== false;
+  if (!useDaemon) {
+    return runBridgeOnce(action, config, pythonPath, log);
+  }
+  try {
+    return await runBridgeDaemon(action, config, pythonPath, log);
+  } catch (error) {
+    const msg = error.message;
+    const daemon = (0, import_bridgeDaemon.getBridgeDaemon)(pythonPath, log);
+    if (daemon.isRunning && isTransientApiError(msg)) {
+      log == null ? void 0 : log.warn(`Bridge daemon API error (${msg}) \u2013 retrying once after 15s\u2026`);
+      if (options == null ? void 0 : options.adapter) {
+        await (0, import_adapterTimers.adapterDelay)(options.adapter, 15e3);
+      } else {
+        throw new Error("Bridge daemon retry requires adapter instance (E5005)");
+      }
+      try {
+        return await runBridgeDaemon(action, config, pythonPath, log);
+      } catch (retryErr) {
+        log == null ? void 0 : log.warn(`Daemon retry failed: ${retryErr.message}`);
+        throw retryErr;
+      }
     }
     try {
         return await runBridgeDaemon(action, config, pythonPath, log);

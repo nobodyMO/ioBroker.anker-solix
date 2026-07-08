@@ -319,6 +319,14 @@ Tab **Abregelungsvermeidung** / **Curtailment avoidance**: requires the [ioBroke
 
 ## Changelog
 
+### 0.10.78
+
+- **Adapter-check:** use `adapter.setTimeout` instead of plain `setTimeout` (E5005)
+
+### 0.10.77
+
+- **Repository review:** English-only log messages; English default state names and list labels (common.name/common.states)
+
 ### 0.10.76
 
 - **Object structure:** list controls use role `state` (`max_total_ac_output`, EV charger mode lists; E1008/E1009)

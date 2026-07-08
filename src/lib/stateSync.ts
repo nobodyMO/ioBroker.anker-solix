@@ -31,7 +31,7 @@ import { pruneCombinerBatPowerStates, pruneSolarbankInfoPowerStates } from "./sy
 import { ObjectHierarchy } from "./objectHierarchy";
 
 const SOLARBANK_INFO_LABELS: Record<string, string> = {
-	battery_energy: "Batterie-Energie (Wh)",
+	battery_energy: "Battery energy (Wh)",
 };
 
 /** Optional hooks on the adapter instance (see main.ts). */
@@ -152,7 +152,7 @@ async function syncSolarbankInfo(
 		return;
 	}
 	const base = `${channelPath}.solarbank_info`;
-	await hierarchy.ensureChannel(base, "Solarbank-Info (Gesamtsystem)");
+	await hierarchy.ensureChannel(base, "Solarbank info (system total)");
 
 	const siteId = channelPath.split(".").pop() || "";
 	if (siteId) {
@@ -164,7 +164,7 @@ async function syncSolarbankInfo(
 		return;
 	}
 	const listBase = `${base}.solarbank_list`;
-	await hierarchy.ensureChannel(listBase, "Solarbank-Liste");
+	await hierarchy.ensureChannel(listBase, "Solarbank list");
 	for (const [sn, entry] of Object.entries(list)) {
 		const snPart = sanitizeIdPart(sn);
 		const bankBase = `${listBase}.${snPart}`;

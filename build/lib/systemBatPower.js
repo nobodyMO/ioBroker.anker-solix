@@ -14,8 +14,8 @@ const objectHierarchy_1 = require("./objectHierarchy");
 /** System bat charge/discharge = sum of per-solarbank sensors (updated each poll and on SB state change). */
 exports.SYSTEM_BAT_POWER_IDS = ["bat_charge_power", "bat_discharge_power"];
 const SYSTEM_BAT_POWER_LABELS = {
-    bat_charge_power: "Batterie-Ladeleistung gesamt (Summe Solarbanken)",
-    bat_discharge_power: "Batterie-Entladeleistung gesamt (Summe Solarbanken)",
+  bat_charge_power: "Total battery charge power (sum of solarbanks)",
+  bat_discharge_power: "Total battery discharge power (sum of solarbanks)"
 };
 function parseSolarbankBatPowerStateId(namespace, stateId) {
     const prefix = `${namespace}.solarbank.`;

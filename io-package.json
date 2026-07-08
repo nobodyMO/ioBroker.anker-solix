@@ -1,9 +1,35 @@
 {
 	"common": {
 		"name": "anker-solix",
-		"version": "0.10.76",
+		"version": "0.10.78",
 		"messagebox": true,
 		"news": {
+			"0.10.78": {
+				"en": "Adapter-check: use adapter.setTimeout instead of plain setTimeout (E5005)",
+				"de": "Adapter-Check: adapter.setTimeout statt plain setTimeout (E5005)",
+				"ru": "E5005 adapter.setTimeout fix",
+				"pt": "E5005 adapter.setTimeout fix",
+				"nl": "E5005 adapter.setTimeout fix",
+				"fr": "E5005 adapter.setTimeout fix",
+				"it": "E5005 adapter.setTimeout fix",
+				"es": "E5005 adapter.setTimeout fix",
+				"pl": "E5005 adapter.setTimeout fix",
+				"uk": "E5005 adapter.setTimeout fix",
+				"zh-cn": "适配器检查：使用 adapter.setTimeout (E5005)"
+			},
+			"0.10.77": {
+				"en": "Repository review: English-only logs; English default state names and list labels",
+				"de": "Repository-Review: englische Logs; englische Standard-State-Namen und Listen-Labels",
+				"ru": "English logs and state labels for repository review",
+				"pt": "English logs and state labels for repository review",
+				"nl": "English logs and state labels for repository review",
+				"fr": "English logs and state labels for repository review",
+				"it": "English logs and state labels for repository review",
+				"es": "English logs and state labels for repository review",
+				"pl": "English logs and state labels for repository review",
+				"uk": "English logs and state labels for repository review",
+				"zh-cn": "仓库审查：英文日志与默认状态名称"
+			},
 			"0.10.76": {
 				"en": "Object structure: list controls use role state (max_total_ac_output, EV charger modes; E1008/E1009)",
 				"de": "Objektstruktur: Listen-Controls mit Rolle state (max_total_ac_output, EV-Lader-Modi; E1008/E1009)",
@@ -68,32 +94,6 @@
 				"pl": "Repository checker fixes and admin i18n",
 				"uk": "Repository checker fixes and admin i18n",
 				"zh-cn": "仓库检查修复与 admin 多语言同步"
-			},
-			"0.10.71": {
-				"en": "Python install: HA PEP 668 venv-first, Windows py -3.12/3.13 + tzdata, profile-based pip bootstrap",
-				"de": "Python-Installation: HA PEP 668 venv-first, Windows py -3.12/3.13 + tzdata, profilbasierter pip-Bootstrap",
-				"ru": "OS-aware Python install with tzdata on Windows",
-				"pt": "OS-aware Python install with tzdata on Windows",
-				"nl": "OS-aware Python install with tzdata on Windows",
-				"fr": "OS-aware Python install with tzdata on Windows",
-				"it": "OS-aware Python install with tzdata on Windows",
-				"es": "OS-aware Python install with tzdata on Windows",
-				"pl": "OS-aware Python install with tzdata on Windows",
-				"uk": "OS-aware Python install with tzdata on Windows",
-				"zh-cn": "按系统配置 Python 安装（HA/Windows），含 tzdata"
-			},
-			"0.10.70": {
-				"en": "Repository checks: max 7 news, npm-only versions, CI concurrency, admin schema; automated policy tests",
-				"de": "Repository-Prüfungen: max. 7 News, nur npm-Versionen, CI-Concurrency, Admin-Schema; automatische Policy-Tests",
-				"ru": "Repository validation fixes and policy tests",
-				"pt": "Repository validation fixes and policy tests",
-				"nl": "Repository validation fixes and policy tests",
-				"fr": "Repository validation fixes and policy tests",
-				"it": "Repository validation fixes and policy tests",
-				"es": "Repository validation fixes and policy tests",
-				"pl": "Repository validation fixes and policy tests",
-				"uk": "Repository validation fixes and policy tests",
-				"zh-cn": "仓库校验修复与策略测试"
 			}
 		},
 		"titleLang": {
