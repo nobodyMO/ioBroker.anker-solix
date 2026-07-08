@@ -199,41 +199,13 @@ class AnkerSolix extends utils.Adapter {
       });
       if (this.config.enableCurtailmentAvoidance) {
         this.refreshCurtailmentDeviceIds();
-        try {
-            await (0, curtailmentRunner_1.runCurtailmentAvoidance)(this.getCurtailmentHost(), this.getCurtailmentConfig());
-        }
-        catch (err) {
-            this.log.warn(`Curtailment avoidance: ${err.message}`);
-        }
-    }
-    schedulePollAfterControl() {
-        if (this.pollAfterControlTimer) {
-            clearTimeout(this.pollAfterControlTimer);
-        }
-        this.pollAfterControlTimer = setTimeout(() => {
-            this.pollAfterControlTimer = undefined;
-            void this.pollOnce();
-        }, 12_000);
-    }
-    async onStateChange(id, state) {
-        if (!state) {
-            return;
-        }
-        if (this.config.enableCurtailmentAvoidance) {
-            const n = Number(state.val);
-            if (Number.isFinite(n) && n >= 0) {
-                const systemPv = (0, curtailmentPower_1.parseSystemPvStateId)(this.namespace, id);
-                if (systemPv) {
-                    this.handleCurtailmentSystemPvUpdated(systemPv.siteId, n);
-                }
-                else {
-                    const pv = (0, curtailmentPower_1.parsePvSensorStateId)(this.namespace, id);
-                    if (pv) {
-                        this.handleCurtailmentPvUpdated(pv.deviceId, n);
-                    }
-                }
-            }
-        }
+      }
+      const pollDevices = result.devices;
+      if (pollDevices == null ? void 0 : pollDevices.length) {
+        this.rememberDeviceContexts(pollDevices);
+        this.rememberDeviceEntities(pollDevices);
+        this.siteSolarbanks = (0, import_systemBatPower.buildSiteSolarbankMap)(pollDevices);
+        await (0, import_stateSync.syncDevices)(this, pollDevices);
         if (this.batPowerAggregationEnabled()) {
           await (0, import_systemBatPower.refreshAllSystemBatPowerSums)(this, this.siteSolarbanks);
         }
@@ -595,77 +567,14 @@ class AnkerSolix extends utils.Adapter {
       stateId: id,
       execute: async () => {
         try {
-            if (obj.command === "authCacheStatus") {
-                const paths = this.getAuthCachePaths();
-                respondNative({ authCacheStatusLine: formatAuthCacheStatusLine(paths) });
-                return;
-            }
-            if (obj.command === "restoreAuthCache") {
-                const paths = this.getAuthCachePaths();
-                const result = (0, authCacheBackup_1.restoreAuthCacheFromBackup)(paths);
-                if (!result.ok) {
-                    respond({ error: result.error });
-                    return;
-                }
-                await (0, pythonBridge_1.stopBridgeDaemon)();
-                await (0, pythonBridge_1.ensureBridgeDaemon)(this.getBridgeConfig(), this.config.pythonPath || "", this.log);
-                this.log.info(`Anker login cache restored from backup: ${paths.backupFile}`);
-                const st = (0, authCacheBackup_1.authCacheStatus)(paths);
-                respondNative({
-                    authCacheStatusLine: `Restored from backup. Cache: ${st.cacheValid ? "OK" : "invalid"}`,
-                });
-                return;
-            }
-            if (obj.command === "clearAuthCache") {
-                const paths = this.getAuthCachePaths();
-                const cleared = (0, authCacheBackup_1.clearActiveAuthCacheFiles)(paths.cacheDir);
-                const st = (0, authCacheBackup_1.authCacheStatus)(paths);
-                await (0, pythonBridge_1.stopBridgeDaemon)();
-                await (0, pythonBridge_1.ensureBridgeDaemon)(this.getBridgeConfig(), this.config.pythonPath || "", this.log);
-                if (cleared > 0) {
-                    this.log.warn(`Anker login cache cleared (${cleared} file(s) in ${paths.cacheDir}). ` +
-                        "Backup in authcache/backup/ was kept. Use “Restore from backup” if login fails (captcha 100032).");
-                }
-                else {
-                    this.log.warn(`No active login cache in ${paths.cacheDir}. ${st.backupExists
-                        ? "Use “Restore from backup” to restore the saved login."
-                        : "Complete a successful login first to create cache and backup."}`);
-                }
-                respondNative({
-                    authCacheStatusLine: `Active cache cleared (${cleared} file(s)). Backup: ${st.backupValid ? "OK" : st.backupExists ? "invalid" : "none"}`,
-                }, { cleared });
-                return;
-            }
-            if (obj.command === "installPython") {
-                const ok = await this.ensurePythonDeps(true);
-                respond({ ok });
-                return;
-            }
-            respond({ error: `Unknown command ${obj.command}` });
-        }
-        catch (error) {
-            respond({ error: error.message });
-        }
-    }
-    async onReady() {
-        this.cleanupLegacyInstallSymlink();
-        await this.setObjectNotExistsAsync("account", {
-            type: "device",
-            common: { name: "Account" },
-            native: {},
-        });
-        const accountObj = await this.getObjectAsync("account");
-        if (accountObj?.type === "channel") {
-            await this.extendObject("account", { type: "device" });
-        }
-        await this.setObjectNotExistsAsync("account.nickname", {
-            type: "state",
-            common: {
-                name: "Account nickname",
-                type: "string",
-                role: "text",
-                read: true,
-                write: false,
+          await (0, import_pythonBridge.runBridge)(
+            "set",
+            {
+              ...this.getBridgeConfig(),
+              deviceId: control.deviceId,
+              control: control.control,
+              value,
+              deviceContext
             },
             this.config.pythonPath || "",
             this.log,
@@ -841,9 +750,8 @@ class AnkerSolix extends utils.Adapter {
   }
 }
 if (require.main !== module) {
-    module.exports = (options) => new AnkerSolix(options);
-}
-else {
-    (() => new AnkerSolix())();
+  module.exports = (options) => new AnkerSolix(options);
+} else {
+  (() => new AnkerSolix())();
 }
 //# sourceMappingURL=main.js.map

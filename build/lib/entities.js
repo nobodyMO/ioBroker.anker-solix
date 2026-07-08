@@ -1,23 +1,19 @@
 "use strict";
-/** HA-aligned entity metadata (ha-anker-solix sensor/switch/number). */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ENTITY_MAP = exports.STATISTICS_ENTITY_IDS = exports.DEVICE_STATISTICS_ENTITY_IDS = exports.LIFETIME_STATISTICS_ENTITY_IDS = exports.STATISTICS_LABELS = exports.STATISTICS_ENTITIES = exports.USAGE_MODE_STATES = exports.PPS_USB_STATUS_STATES = exports.PPS_TEMP_UNIT_FAHRENHEIT_STATES = exports.PPS_DISPLAY_MODE_STATES = exports.PPS_DISPLAY_TIMEOUT_SECONDS_STATES = exports.PPS_DEVICE_TIMEOUT_MINUTES_STATES = exports.PPS_DC_12V_OUTPUT_MODE_STATES = exports.PPS_AC_OUTPUT_MODE_STATES = exports.EV_CHARGER_OCPP_STATES = exports.EV_CHARGER_STATUS_STATES = exports.EV_CHARGER_SWIPE_MODE_STATES = exports.EV_CHARGER_SMART_TOUCH_MODE_STATES = exports.EV_CHARGER_PHASE_MODE_STATES = exports.EV_CHARGER_SOLAR_MODE_STATES = exports.EV_CHARGER_WEEKEND_MODE_STATES = exports.EV_CHARGER_SCHEDULE_MODE_STATES = exports.EV_CHARGER_MODE_ACTION_STATES = exports.EV_CHARGER_MODE_STATES = void 0;
-exports.isWritable = isWritable;
-/** All EV charger mode keys (status sensor + labels). */
-exports.EV_CHARGER_MODE_STATES = {
-    start_charge: "Laden starten",
-    stop_charge: "Laden stoppen",
-    skip_delay: "Verzögerung überspringen",
-    boost_charge: "Boost",
-    wait_plug: "Warte auf Stecker",
-    wait_start: "Warte auf Start",
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
 };
-/** MQTT-sendable modes only (control dropdown). */
-exports.EV_CHARGER_MODE_ACTION_STATES = {
-    start_charge: exports.EV_CHARGER_MODE_STATES.start_charge,
-    stop_charge: exports.EV_CHARGER_MODE_STATES.stop_charge,
-    skip_delay: exports.EV_CHARGER_MODE_STATES.skip_delay,
-    boost_charge: exports.EV_CHARGER_MODE_STATES.boost_charge,
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var entities_exports = {};
@@ -35,6 +31,13 @@ __export(entities_exports, {
   EV_CHARGER_SWIPE_MODE_STATES: () => EV_CHARGER_SWIPE_MODE_STATES,
   EV_CHARGER_WEEKEND_MODE_STATES: () => EV_CHARGER_WEEKEND_MODE_STATES,
   LIFETIME_STATISTICS_ENTITY_IDS: () => LIFETIME_STATISTICS_ENTITY_IDS,
+  PPS_AC_OUTPUT_MODE_STATES: () => PPS_AC_OUTPUT_MODE_STATES,
+  PPS_DC_12V_OUTPUT_MODE_STATES: () => PPS_DC_12V_OUTPUT_MODE_STATES,
+  PPS_DEVICE_TIMEOUT_MINUTES_STATES: () => PPS_DEVICE_TIMEOUT_MINUTES_STATES,
+  PPS_DISPLAY_MODE_STATES: () => PPS_DISPLAY_MODE_STATES,
+  PPS_DISPLAY_TIMEOUT_SECONDS_STATES: () => PPS_DISPLAY_TIMEOUT_SECONDS_STATES,
+  PPS_TEMP_UNIT_FAHRENHEIT_STATES: () => PPS_TEMP_UNIT_FAHRENHEIT_STATES,
+  PPS_USB_STATUS_STATES: () => PPS_USB_STATUS_STATES,
   STATISTICS_ENTITIES: () => STATISTICS_ENTITIES,
   STATISTICS_ENTITY_IDS: () => STATISTICS_ENTITY_IDS,
   STATISTICS_LABELS: () => STATISTICS_LABELS,
@@ -50,13 +53,15 @@ const EV_CHARGER_MODE_STATES = {
   wait_plug: "Waiting for plug",
   wait_start: "Waiting to start"
 };
-exports.EV_CHARGER_WEEKEND_MODE_STATES = {
-    same: "Wochenende wie Werktag",
-    different: "Wochenende anders",
+const EV_CHARGER_MODE_ACTION_STATES = {
+  start_charge: EV_CHARGER_MODE_STATES.start_charge,
+  stop_charge: EV_CHARGER_MODE_STATES.stop_charge,
+  skip_delay: EV_CHARGER_MODE_STATES.skip_delay,
+  boost_charge: EV_CHARGER_MODE_STATES.boost_charge
 };
-exports.EV_CHARGER_SOLAR_MODE_STATES = {
-    solar_grid: "Solar & Netz",
-    solar_only: "Nur Solar",
+const EV_CHARGER_SCHEDULE_MODE_STATES = {
+  normal: "Normal",
+  smart: "Smart"
 };
 const EV_CHARGER_WEEKEND_MODE_STATES = {
   same: "Weekend same as weekday",
@@ -96,6 +101,45 @@ const EV_CHARGER_OCPP_STATES = {
   1: "Connecting",
   2: "Connected"
 };
+const PPS_AC_OUTPUT_MODE_STATES = {
+  0: "Normal",
+  1: "Smart - auto-off below 14W"
+};
+const PPS_DC_12V_OUTPUT_MODE_STATES = {
+  0: "Normal",
+  1: "Smart - auto-off below 3W"
+};
+const PPS_DEVICE_TIMEOUT_MINUTES_STATES = {
+  0: "Never",
+  30: "30 Minuten",
+  60: "60 Minuten",
+  120: "120 Minuten",
+  240: "240 Minuten",
+  360: "350 Minuten",
+  720: "720 Minuten",
+  1440: "1440 Minuten"
+};
+const PPS_DISPLAY_TIMEOUT_SECONDS_STATES = {
+  0: "Never",
+  10: "10 Sekunden",
+  30: "30 Sekunden",
+  300: "300 Sekunden",
+  1800: "1800 DSekunden"
+};
+const PPS_DISPLAY_MODE_STATES = {
+  1: "Low",
+  2: "Medium",
+  3: "High"
+};
+const PPS_TEMP_UNIT_FAHRENHEIT_STATES = {
+  0: "Celsius",
+  1: "Fahrenheit"
+};
+const PPS_USB_STATUS_STATES = {
+  0: "Inactive",
+  1: "Discharging",
+  2: "Charging"
+};
 const USAGE_MODE_STATES = {
   manual: "Custom",
   smartmeter: "Self-consumption",
@@ -106,288 +150,288 @@ const USAGE_MODE_STATES = {
   backup: "Backup charging"
 };
 const SENSOR_ENTITIES = [
-    { id: "input_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "total_pv_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "dc_output_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "output_power_total", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "preset_system_output_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "battery_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "grid_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "home_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "state_of_charge", kind: "sensor", role: "value.battery", unit: "%" },
-    { id: "total_state_of_charge", kind: "sensor", role: "value.battery", unit: "%" },
-    { id: "set_output_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "pv_input_limit", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "ac_charge_limit", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "all_ac_input_limit", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "cloud_state", kind: "sensor", role: "indicator" },
-    { id: "wifi_state", kind: "sensor", role: "indicator" },
-    // Smart meter
-    { id: "grid_to_home_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "grid_status_desc", kind: "sensor", role: "text" },
-    { id: "grid_import_energy", kind: "sensor", role: "value.energy", unit: "kWh" },
-    { id: "grid_export_energy", kind: "sensor", role: "value.energy", unit: "kWh" },
-    { id: "daily_grid_import", kind: "sensor", role: "value.energy", unit: "kWh" },
-    { id: "daily_grid_export", kind: "sensor", role: "value.energy", unit: "kWh" },
-    { id: "phase", kind: "sensor", role: "text" },
-    { id: "smartmeter_list", kind: "sensor", role: "value" },
-    // Optional groups (see entityGroups.ts)
-    { id: "solar_power_total", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "grid_power_signed", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "battery_power_signed", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "home_load_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "pv_to_home_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "pv_to_battery_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "battery_to_home_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "grid_to_battery_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "photovoltaic_to_grid_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "ac_input_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "ac_output_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "bat_charge_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "bat_discharge_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "heating_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "status_desc", kind: "sensor", role: "text" },
-    { id: "charging_status_desc", kind: "sensor", role: "text" },
-    { id: "sw_version", kind: "sensor", role: "text" },
-    { id: "device_temperature", kind: "sensor", role: "value.temperature", unit: "°C" },
-    { id: "err_code", kind: "sensor", role: "value" },
-    { id: "device_tag", kind: "sensor", role: "text" },
-    { id: "inverter_info", kind: "sensor", role: "text" },
-    { id: "wifi_connection", kind: "sensor", role: "indicator.reachability" },
-    { id: "mqtt_connection", kind: "sensor", role: "indicator.reachability" },
-    { id: "ota_update_available", kind: "sensor", role: "indicator" },
-    { id: "heating_active", kind: "sensor", role: "indicator" },
-    { id: "protection_active", kind: "sensor", role: "indicator" },
-    { id: "solarbank_list", kind: "sensor", role: "text" },
-    { id: "other_loads_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "smart_plugs_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "dynamic_price_total", kind: "sensor", role: "value", unit: "€/kWh" },
-    { id: "spot_price_mwh", kind: "sensor", role: "value", unit: "€/MWh" },
-    { id: "pps_battery_soc", kind: "sensor", role: "value.battery", unit: "%" },
-    { id: "pps_battery_soh", kind: "sensor", role: "value.battery", unit: "%" },
-    { id: "pps_input_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "pps_output_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "pps_device_sn", kind: "sensor", role: "text" },
-    { id: "pps_input_limit_max", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "pps_output_timeout_seconds", kind: "sensor", role: "value.interval", unit: "s" },
-    { id: "pps_ac_input_limit", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "pps_ac_frequency", kind: "sensor", role: "value.power", unit: "Hz" },
-    { id: "pps_ac_output_mode", kind: "sensor", role: "value", states: exports.PPS_AC_OUTPUT_MODE_STATES },
-    { id: "pps_dc_output_timeout_seconds", kind: "sensor", role: "value.interval", unit: "s", min: 0, max: 86400 },
-    { id: "pps_dc_12v_output_mode", kind: "sensor", role: "value", states: exports.PPS_DC_12V_OUTPUT_MODE_STATES },
-    { id: "pps_device_timeout_minutes", kind: "sensor", role: "value", unit: "m", states: exports.PPS_DEVICE_TIMEOUT_MINUTES_STATES },
-    { id: "pps_display_timeout_seconds", kind: "sensor", role: "value", unit: "s", states: exports.PPS_DISPLAY_TIMEOUT_SECONDS_STATES },
-    { id: "pps_display_mode", kind: "sensor", role: "value", states: exports.PPS_DISPLAY_MODE_STATES },
-    { id: "pps_temp_unit_fahrenheit", kind: "sensor", role: "value", states: exports.PPS_TEMP_UNIT_FAHRENHEIT_STATES },
-    { id: "pps_temperature", kind: "sensor", role: "value.temperature", unit: "\xB0C" },
-    { id: "pps_output_power_total", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "pps_dc_input_power_total", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "pps_dc_output_power_total", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "pps_usbc_1_status", kind: "sensor", role: "value", states: exports.PPS_USB_STATUS_STATES },
-    { id: "pps_usbc_2_status", kind: "sensor", role: "value", states: exports.PPS_USB_STATUS_STATES },
-    { id: "pps_usbc_3_status", kind: "sensor", role: "value", states: exports.PPS_USB_STATUS_STATES },
-    { id: "pps_usba_1_status", kind: "sensor", role: "value", states: exports.PPS_USB_STATUS_STATES },
-    { id: "pps_usbc_1_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "pps_usbc_2_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "pps_usbc_3_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "pps_usba_1_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "smartplug_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "smartplug_energy_today", kind: "sensor", role: "value.energy", unit: "kWh" },
-    { id: "evcharger_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "evcharger_status_desc", kind: "sensor", role: "text" },
-    {
-        id: "ev_charger_mode_status",
-        kind: "sensor",
-        role: "state",
-        states: exports.EV_CHARGER_MODE_STATES,
-    },
-    { id: "ev_charger_plug_status", kind: "sensor", role: "indicator" },
-    { id: "ev_charger_status", kind: "sensor", role: "value", states: exports.EV_CHARGER_STATUS_STATES },
-    { id: "ev_charger_boost_status", kind: "sensor", role: "indicator" },
-    { id: "ev_charger_bat_charge_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "ev_charger_charging_energy", kind: "sensor", role: "value.energy", unit: "kWh" },
-    { id: "ev_charger_voltage_l1", kind: "sensor", role: "value.voltage", unit: "V" },
-    { id: "ev_charger_voltage_l2", kind: "sensor", role: "value.voltage", unit: "V" },
-    { id: "ev_charger_voltage_l3", kind: "sensor", role: "value.voltage", unit: "V" },
-    { id: "ev_charger_current_l1", kind: "sensor", role: "value.current", unit: "A" },
-    { id: "ev_charger_current_l2", kind: "sensor", role: "value.current", unit: "A" },
-    { id: "ev_charger_current_l3", kind: "sensor", role: "value.current", unit: "A" },
-    { id: "ev_charger_power_l1", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "ev_charger_power_l2", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "ev_charger_power_l3", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "ev_charger_charging_energy_l1", kind: "sensor", role: "value.energy", unit: "kWh" },
-    { id: "ev_charger_charging_energy_l2", kind: "sensor", role: "value.energy", unit: "kWh" },
-    { id: "ev_charger_charging_energy_l3", kind: "sensor", role: "value.energy", unit: "kWh" },
-    { id: "ev_charger_plug_countdown_seconds", kind: "sensor", role: "value.interval", unit: "s" },
-    { id: "ev_charger_start_countdown_seconds", kind: "sensor", role: "value.interval", unit: "s" },
-    { id: "ev_charger_charging_duration_seconds", kind: "sensor", role: "value.interval", unit: "s" },
-    { id: "ev_charger_charging_window_seconds", kind: "sensor", role: "value.interval", unit: "s" },
-    { id: "ev_charger_ocpp_connect_status", kind: "sensor", role: "value", states: exports.EV_CHARGER_OCPP_STATES },
-    { id: "ev_charger_cp_signal_status", kind: "sensor", role: "value" },
-    { id: "ev_charger_sw_version", kind: "sensor", role: "text" },
-    { id: "ev_charger_hw_version", kind: "sensor", role: "text" },
-    { id: "hes_grid_power", kind: "sensor", role: "value.power", unit: "W" },
-    { id: "powerpanel_avg_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "input_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "total_pv_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "dc_output_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "output_power_total", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "preset_system_output_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "battery_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "grid_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "home_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "state_of_charge", kind: "sensor", role: "value.battery", unit: "%" },
+  { id: "total_state_of_charge", kind: "sensor", role: "value.battery", unit: "%" },
+  { id: "set_output_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "pv_input_limit", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "ac_charge_limit", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "all_ac_input_limit", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "cloud_state", kind: "sensor", role: "indicator" },
+  { id: "wifi_state", kind: "sensor", role: "indicator" },
+  // Smart meter
+  { id: "grid_to_home_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "grid_status_desc", kind: "sensor", role: "text" },
+  { id: "grid_import_energy", kind: "sensor", role: "value.energy", unit: "kWh" },
+  { id: "grid_export_energy", kind: "sensor", role: "value.energy", unit: "kWh" },
+  { id: "daily_grid_import", kind: "sensor", role: "value.energy", unit: "kWh" },
+  { id: "daily_grid_export", kind: "sensor", role: "value.energy", unit: "kWh" },
+  { id: "phase", kind: "sensor", role: "text" },
+  { id: "smartmeter_list", kind: "sensor", role: "value" },
+  // Optional groups (see entityGroups.ts)
+  { id: "solar_power_total", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "grid_power_signed", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "battery_power_signed", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "home_load_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "pv_to_home_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "pv_to_battery_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "battery_to_home_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "grid_to_battery_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "photovoltaic_to_grid_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "ac_input_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "ac_output_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "bat_charge_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "bat_discharge_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "heating_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "status_desc", kind: "sensor", role: "text" },
+  { id: "charging_status_desc", kind: "sensor", role: "text" },
+  { id: "sw_version", kind: "sensor", role: "text" },
+  { id: "device_temperature", kind: "sensor", role: "value.temperature", unit: "\xB0C" },
+  { id: "err_code", kind: "sensor", role: "value" },
+  { id: "device_tag", kind: "sensor", role: "text" },
+  { id: "inverter_info", kind: "sensor", role: "text" },
+  { id: "wifi_connection", kind: "sensor", role: "indicator.reachability" },
+  { id: "mqtt_connection", kind: "sensor", role: "indicator.reachability" },
+  { id: "ota_update_available", kind: "sensor", role: "indicator" },
+  { id: "heating_active", kind: "sensor", role: "indicator" },
+  { id: "protection_active", kind: "sensor", role: "indicator" },
+  { id: "solarbank_list", kind: "sensor", role: "text" },
+  { id: "other_loads_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "smart_plugs_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "dynamic_price_total", kind: "sensor", role: "value", unit: "\u20AC/kWh" },
+  { id: "spot_price_mwh", kind: "sensor", role: "value", unit: "\u20AC/MWh" },
+  { id: "pps_battery_soc", kind: "sensor", role: "value.battery", unit: "%" },
+  { id: "pps_battery_soh", kind: "sensor", role: "value.battery", unit: "%" },
+  { id: "pps_input_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "pps_output_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "pps_device_sn", kind: "sensor", role: "text" },
+  { id: "pps_input_limit_max", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "pps_output_timeout_seconds", kind: "sensor", role: "value.interval", unit: "s" },
+  { id: "pps_ac_input_limit", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "pps_ac_frequency", kind: "sensor", role: "value.power", unit: "Hz" },
+  { id: "pps_ac_output_mode", kind: "sensor", role: "value", states: PPS_AC_OUTPUT_MODE_STATES },
+  { id: "pps_dc_output_timeout_seconds", kind: "sensor", role: "value.interval", unit: "s", min: 0, max: 86400 },
+  { id: "pps_dc_12v_output_mode", kind: "sensor", role: "value", states: PPS_DC_12V_OUTPUT_MODE_STATES },
+  { id: "pps_device_timeout_minutes", kind: "sensor", role: "value", unit: "m", states: PPS_DEVICE_TIMEOUT_MINUTES_STATES },
+  { id: "pps_display_timeout_seconds", kind: "sensor", role: "value", unit: "s", states: PPS_DISPLAY_TIMEOUT_SECONDS_STATES },
+  { id: "pps_display_mode", kind: "sensor", role: "value", states: PPS_DISPLAY_MODE_STATES },
+  { id: "pps_temp_unit_fahrenheit", kind: "sensor", role: "value", states: PPS_TEMP_UNIT_FAHRENHEIT_STATES },
+  { id: "pps_temperature", kind: "sensor", role: "value.temperature", unit: "\xB0C" },
+  { id: "pps_output_power_total", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "pps_dc_input_power_total", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "pps_dc_output_power_total", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "pps_usbc_1_status", kind: "sensor", role: "value", states: PPS_USB_STATUS_STATES },
+  { id: "pps_usbc_2_status", kind: "sensor", role: "value", states: PPS_USB_STATUS_STATES },
+  { id: "pps_usbc_3_status", kind: "sensor", role: "value", states: PPS_USB_STATUS_STATES },
+  { id: "pps_usba_1_status", kind: "sensor", role: "value", states: PPS_USB_STATUS_STATES },
+  { id: "pps_usbc_1_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "pps_usbc_2_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "pps_usbc_3_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "pps_usba_1_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "smartplug_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "smartplug_energy_today", kind: "sensor", role: "value.energy", unit: "kWh" },
+  { id: "evcharger_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "evcharger_status_desc", kind: "sensor", role: "text" },
+  {
+    id: "ev_charger_mode_status",
+    kind: "sensor",
+    role: "state",
+    states: EV_CHARGER_MODE_STATES
+  },
+  { id: "ev_charger_plug_status", kind: "sensor", role: "indicator" },
+  { id: "ev_charger_status", kind: "sensor", role: "value", states: EV_CHARGER_STATUS_STATES },
+  { id: "ev_charger_boost_status", kind: "sensor", role: "indicator" },
+  { id: "ev_charger_bat_charge_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "ev_charger_charging_energy", kind: "sensor", role: "value.energy", unit: "kWh" },
+  { id: "ev_charger_voltage_l1", kind: "sensor", role: "value.voltage", unit: "V" },
+  { id: "ev_charger_voltage_l2", kind: "sensor", role: "value.voltage", unit: "V" },
+  { id: "ev_charger_voltage_l3", kind: "sensor", role: "value.voltage", unit: "V" },
+  { id: "ev_charger_current_l1", kind: "sensor", role: "value.current", unit: "A" },
+  { id: "ev_charger_current_l2", kind: "sensor", role: "value.current", unit: "A" },
+  { id: "ev_charger_current_l3", kind: "sensor", role: "value.current", unit: "A" },
+  { id: "ev_charger_power_l1", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "ev_charger_power_l2", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "ev_charger_power_l3", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "ev_charger_charging_energy_l1", kind: "sensor", role: "value.energy", unit: "kWh" },
+  { id: "ev_charger_charging_energy_l2", kind: "sensor", role: "value.energy", unit: "kWh" },
+  { id: "ev_charger_charging_energy_l3", kind: "sensor", role: "value.energy", unit: "kWh" },
+  { id: "ev_charger_plug_countdown_seconds", kind: "sensor", role: "value.interval", unit: "s" },
+  { id: "ev_charger_start_countdown_seconds", kind: "sensor", role: "value.interval", unit: "s" },
+  { id: "ev_charger_charging_duration_seconds", kind: "sensor", role: "value.interval", unit: "s" },
+  { id: "ev_charger_charging_window_seconds", kind: "sensor", role: "value.interval", unit: "s" },
+  { id: "ev_charger_ocpp_connect_status", kind: "sensor", role: "value", states: EV_CHARGER_OCPP_STATES },
+  { id: "ev_charger_cp_signal_status", kind: "sensor", role: "value" },
+  { id: "ev_charger_sw_version", kind: "sensor", role: "text" },
+  { id: "ev_charger_hw_version", kind: "sensor", role: "text" },
+  { id: "hes_grid_power", kind: "sensor", role: "value.power", unit: "W" },
+  { id: "powerpanel_avg_power", kind: "sensor", role: "value.power", unit: "W" }
 ];
 const CONTROL_ENTITIES = [
-    { id: "allow_grid_export", kind: "switch", role: "switch" },
-    { id: "preset_allow_export", kind: "switch", role: "switch" },
-    { id: "set_output_power", kind: "number", role: "level", unit: "W", min: 0, max: 4800 },
-    {
-        id: "ac_output_limit",
-        kind: "number",
-        role: "level",
-        unit: "W",
-        min: 0,
-        max: 4800,
-    },
-    {
-        id: "max_total_ac_output",
-        kind: "list",
-        role: "state",
-        unit: "W",
-    },
-    { id: "min_soc", kind: "number", role: "level.battery", unit: "%", min: 0, max: 100 },
-    {
-        id: "pv_input_limit",
-        kind: "number",
-        role: "level",
-        unit: "W",
-        min: 0,
-        max: 4000,
-    },
-    {
-        id: "ac_charge_limit",
-        kind: "number",
-        role: "level",
-        unit: "W",
-        min: 0,
-        max: 4000,
-    },
-    {
-        id: "grid_export_limit",
-        kind: "number",
-        role: "level",
-        unit: "W",
-        min: 0,
-        max: 100000,
-    },
-    {
-        id: "preset_usage_mode",
-        kind: "list",
-        role: "state",
-        states: exports.USAGE_MODE_STATES,
-    },
-    { id: "ac_fast_charge_switch", kind: "switch", role: "switch" },
-    { id: "ev_charger_mode", kind: "list", role: "state", states: exports.EV_CHARGER_MODE_ACTION_STATES },
-    { id: "ev_charger_schedule_switch", kind: "switch", role: "switch" },
-    { id: "ev_charger_schedule_mode", kind: "list", role: "state", states: exports.EV_CHARGER_SCHEDULE_MODE_STATES },
-    { id: "ev_charger_week_start_time", kind: "text", role: "text" },
-    { id: "ev_charger_week_end_time", kind: "text", role: "text" },
-    { id: "ev_charger_weekend_start_time", kind: "text", role: "text" },
-    { id: "ev_charger_weekend_end_time", kind: "text", role: "text" },
-    { id: "ev_charger_weekend_mode", kind: "list", role: "state", states: exports.EV_CHARGER_WEEKEND_MODE_STATES },
-    { id: "ev_charger_auto_start_switch", kind: "switch", role: "switch" },
-    { id: "ev_charger_auto_charge_restart_switch", kind: "switch", role: "switch" },
-    { id: "ev_charger_random_delay_switch", kind: "switch", role: "switch" },
-    {
-        id: "ev_charger_max_current",
-        kind: "number",
-        role: "level.current",
-        unit: "A",
-        min: 6,
-        max: 32,
-    },
-    { id: "ev_charger_solar_switch", kind: "switch", role: "switch" },
-    {
-        id: "ev_charger_solar_mode",
-        kind: "list",
-        role: "state",
-        states: exports.EV_CHARGER_SOLAR_MODE_STATES,
-    },
-    {
-        id: "ev_charger_solar_min_current",
-        kind: "number",
-        role: "level.current",
-        unit: "A",
-        min: 6,
-        max: 32,
-    },
-    {
-        id: "ev_charger_phase_mode",
-        kind: "list",
-        role: "state",
-        states: exports.EV_CHARGER_PHASE_MODE_STATES,
-    },
-    { id: "ev_charger_auto_phase_switch", kind: "switch", role: "switch" },
-    { id: "ev_charger_load_balance_switch", kind: "switch", role: "switch" },
-    {
-        id: "ev_charger_main_breaker_limit",
-        kind: "number",
-        role: "level.current",
-        unit: "A",
-        min: 10,
-        max: 500,
-    },
-    { id: "ev_charger_load_balance_monitor_device", kind: "text", role: "text" },
-    { id: "ev_charger_solar_monitor_switch", kind: "switch", role: "switch" },
-    { id: "ev_charger_solar_monitor_device", kind: "text", role: "text" },
-    { id: "ev_charger_restart", kind: "switch", role: "switch" },
-    { id: "ev_charger_plug_lock_switch", kind: "switch", role: "switch" },
-    {
-        id: "ev_charger_light_brightness",
-        kind: "number",
-        role: "level",
-        unit: "%",
-        min: 0,
-        max: 100,
-    },
-    { id: "ev_charger_light_off_schedule_switch", kind: "switch", role: "switch" },
-    { id: "ev_charger_light_off_start_time", kind: "text", role: "text" },
-    { id: "ev_charger_light_off_end_time", kind: "text", role: "text" },
-    {
-        id: "ev_charger_smart_touch_mode",
-        kind: "list",
-        role: "state",
-        states: exports.EV_CHARGER_SMART_TOUCH_MODE_STATES,
-    },
-    { id: "ev_charger_modbus_switch", kind: "switch", role: "switch" },
-    {
-        id: "ev_charger_wipe_up_mode",
-        kind: "list",
-        role: "state",
-        states: exports.EV_CHARGER_SWIPE_MODE_STATES,
-    },
-    {
-        id: "ev_charger_wipe_down_mode",
-        kind: "list",
-        role: "state",
-        states: exports.EV_CHARGER_SWIPE_MODE_STATES,
-    },
-    { id: "preset_discharge_priority", kind: "switch", role: "switch" },
-    { id: "preset_backup_option", kind: "switch", role: "switch" },
-    { id: "preset_charge_priority", kind: "number", role: "level", unit: "%", min: 0, max: 100 },
-    { id: "preset_device_output_power", kind: "number", role: "level", unit: "W", min: 0, max: 1200 },
-    { id: "max_soc", kind: "number", role: "level.battery", unit: "%", min: 0, max: 100 },
-    { id: "backup_soc", kind: "number", role: "level.battery", unit: "%", min: 0, max: 100 },
-    { id: "auto_upgrade", kind: "switch", role: "switch" },
-    { id: "ac_output_power_switch", kind: "switch", role: "switch" },
-    { id: "ac_fast_charge_switch_pps", kind: "switch", role: "switch" },
+  { id: "allow_grid_export", kind: "switch", role: "switch" },
+  { id: "preset_allow_export", kind: "switch", role: "switch" },
+  { id: "set_output_power", kind: "number", role: "level", unit: "W", min: 0, max: 4800 },
+  {
+    id: "ac_output_limit",
+    kind: "number",
+    role: "level",
+    unit: "W",
+    min: 0,
+    max: 4800
+  },
+  {
+    id: "max_total_ac_output",
+    kind: "list",
+    role: "state",
+    unit: "W"
+  },
+  { id: "min_soc", kind: "number", role: "level.battery", unit: "%", min: 0, max: 100 },
+  {
+    id: "pv_input_limit",
+    kind: "number",
+    role: "level",
+    unit: "W",
+    min: 0,
+    max: 4e3
+  },
+  {
+    id: "ac_charge_limit",
+    kind: "number",
+    role: "level",
+    unit: "W",
+    min: 0,
+    max: 4e3
+  },
+  {
+    id: "grid_export_limit",
+    kind: "number",
+    role: "level",
+    unit: "W",
+    min: 0,
+    max: 1e5
+  },
+  {
+    id: "preset_usage_mode",
+    kind: "list",
+    role: "state",
+    states: USAGE_MODE_STATES
+  },
+  { id: "ac_fast_charge_switch", kind: "switch", role: "switch" },
+  { id: "ev_charger_mode", kind: "list", role: "state", states: EV_CHARGER_MODE_ACTION_STATES },
+  { id: "ev_charger_schedule_switch", kind: "switch", role: "switch" },
+  { id: "ev_charger_schedule_mode", kind: "list", role: "state", states: EV_CHARGER_SCHEDULE_MODE_STATES },
+  { id: "ev_charger_week_start_time", kind: "text", role: "text" },
+  { id: "ev_charger_week_end_time", kind: "text", role: "text" },
+  { id: "ev_charger_weekend_start_time", kind: "text", role: "text" },
+  { id: "ev_charger_weekend_end_time", kind: "text", role: "text" },
+  { id: "ev_charger_weekend_mode", kind: "list", role: "state", states: EV_CHARGER_WEEKEND_MODE_STATES },
+  { id: "ev_charger_auto_start_switch", kind: "switch", role: "switch" },
+  { id: "ev_charger_auto_charge_restart_switch", kind: "switch", role: "switch" },
+  { id: "ev_charger_random_delay_switch", kind: "switch", role: "switch" },
+  {
+    id: "ev_charger_max_current",
+    kind: "number",
+    role: "level.current",
+    unit: "A",
+    min: 6,
+    max: 32
+  },
+  { id: "ev_charger_solar_switch", kind: "switch", role: "switch" },
+  {
+    id: "ev_charger_solar_mode",
+    kind: "list",
+    role: "state",
+    states: EV_CHARGER_SOLAR_MODE_STATES
+  },
+  {
+    id: "ev_charger_solar_min_current",
+    kind: "number",
+    role: "level.current",
+    unit: "A",
+    min: 6,
+    max: 32
+  },
+  {
+    id: "ev_charger_phase_mode",
+    kind: "list",
+    role: "state",
+    states: EV_CHARGER_PHASE_MODE_STATES
+  },
+  { id: "ev_charger_auto_phase_switch", kind: "switch", role: "switch" },
+  { id: "ev_charger_load_balance_switch", kind: "switch", role: "switch" },
+  {
+    id: "ev_charger_main_breaker_limit",
+    kind: "number",
+    role: "level.current",
+    unit: "A",
+    min: 10,
+    max: 500
+  },
+  { id: "ev_charger_load_balance_monitor_device", kind: "text", role: "text" },
+  { id: "ev_charger_solar_monitor_switch", kind: "switch", role: "switch" },
+  { id: "ev_charger_solar_monitor_device", kind: "text", role: "text" },
+  { id: "ev_charger_restart", kind: "switch", role: "switch" },
+  { id: "ev_charger_plug_lock_switch", kind: "switch", role: "switch" },
+  {
+    id: "ev_charger_light_brightness",
+    kind: "number",
+    role: "level",
+    unit: "%",
+    min: 0,
+    max: 100
+  },
+  { id: "ev_charger_light_off_schedule_switch", kind: "switch", role: "switch" },
+  { id: "ev_charger_light_off_start_time", kind: "text", role: "text" },
+  { id: "ev_charger_light_off_end_time", kind: "text", role: "text" },
+  {
+    id: "ev_charger_smart_touch_mode",
+    kind: "list",
+    role: "state",
+    states: EV_CHARGER_SMART_TOUCH_MODE_STATES
+  },
+  { id: "ev_charger_modbus_switch", kind: "switch", role: "switch" },
+  {
+    id: "ev_charger_wipe_up_mode",
+    kind: "list",
+    role: "state",
+    states: EV_CHARGER_SWIPE_MODE_STATES
+  },
+  {
+    id: "ev_charger_wipe_down_mode",
+    kind: "list",
+    role: "state",
+    states: EV_CHARGER_SWIPE_MODE_STATES
+  },
+  { id: "preset_discharge_priority", kind: "switch", role: "switch" },
+  { id: "preset_backup_option", kind: "switch", role: "switch" },
+  { id: "preset_charge_priority", kind: "number", role: "level", unit: "%", min: 0, max: 100 },
+  { id: "preset_device_output_power", kind: "number", role: "level", unit: "W", min: 0, max: 1200 },
+  { id: "max_soc", kind: "number", role: "level.battery", unit: "%", min: 0, max: 100 },
+  { id: "backup_soc", kind: "number", role: "level.battery", unit: "%", min: 0, max: 100 },
+  { id: "auto_upgrade", kind: "switch", role: "switch" },
+  { id: "ac_output_power_switch", kind: "switch", role: "switch" },
+  { id: "ac_fast_charge_switch_pps", kind: "switch", role: "switch" }
 ];
 const PERIOD_METRIC_SUFFIXES = [
-    "solar_production",
-    "charge_energy",
-    "discharge_energy",
-    "home_usage",
-    "solar_to_home",
-    "solar_to_battery",
-    "battery_to_home",
-    "grid_to_home",
-    "grid_to_battery",
-    "3rd_party_pv_to_bat",
-    "ev_charge",
-    "grid_import",
-    "grid_export",
+  "solar_production",
+  "charge_energy",
+  "discharge_energy",
+  "home_usage",
+  "solar_to_home",
+  "solar_to_battery",
+  "battery_to_home",
+  "grid_to_home",
+  "grid_to_battery",
+  "3rd_party_pv_to_bat",
+  "ev_charge",
+  "grid_import",
+  "grid_export"
 ];
 const PERIOD_SUFFIX_LABELS = {
   solar_production: "Solar production",
@@ -410,64 +454,62 @@ const PERIOD_NAMES = {
   year: "Year"
 };
 function buildPeriodStatisticsEntities() {
-    const entities = [];
-    for (const period of ["week", "month", "year"]) {
-        entities.push({
-            id: `${period}_energy_period`,
-            kind: "statistics",
-            role: "text",
-        });
-        for (const suffix of PERIOD_METRIC_SUFFIXES) {
-            entities.push({
-                id: `${period}_${suffix}`,
-                kind: "statistics",
-                role: "value.energy",
-                unit: "kWh",
-            });
-        }
+  const entities = [];
+  for (const period of ["week", "month", "year"]) {
+    entities.push({
+      id: `${period}_energy_period`,
+      kind: "statistics",
+      role: "text"
+    });
+    for (const suffix of PERIOD_METRIC_SUFFIXES) {
+      entities.push({
+        id: `${period}_${suffix}`,
+        kind: "statistics",
+        role: "value.energy",
+        unit: "kWh"
+      });
     }
-    return entities;
+  }
+  return entities;
 }
 const PERIOD_STATISTICS_ENTITIES = buildPeriodStatisticsEntities();
-/** Lifetime site totals (Anker statistics[] types 1/2/3), polled via scene info each cycle */
 const LIFETIME_STATISTICS_ENTITIES = [
-    { id: "total_energy", kind: "statistics", role: "value.energy", unit: "kWh" },
-    { id: "total_co2_savings", kind: "statistics", role: "value", unit: "kg" },
-    { id: "total_money_savings", kind: "statistics", role: "value" },
+  { id: "total_energy", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "total_co2_savings", kind: "statistics", role: "value", unit: "kg" },
+  { id: "total_money_savings", kind: "statistics", role: "value" }
 ];
-/** Daily energy statistics (kWh), HA energy_details.today / last_period */
-exports.STATISTICS_ENTITIES = [
-    ...LIFETIME_STATISTICS_ENTITIES,
-    { id: "energy_statistics_date", kind: "statistics", role: "text" },
-    { id: "daily_solar_production", kind: "statistics", role: "value.energy", unit: "kWh" },
-    { id: "daily_charge_energy", kind: "statistics", role: "value.energy", unit: "kWh" },
-    { id: "daily_discharge_energy", kind: "statistics", role: "value.energy", unit: "kWh" },
-    { id: "daily_home_usage", kind: "statistics", role: "value.energy", unit: "kWh" },
-    { id: "daily_solar_to_home", kind: "statistics", role: "value.energy", unit: "kWh" },
-    { id: "daily_solar_to_battery", kind: "statistics", role: "value.energy", unit: "kWh" },
-    { id: "daily_battery_to_home", kind: "statistics", role: "value.energy", unit: "kWh" },
-    { id: "daily_grid_to_home", kind: "statistics", role: "value.energy", unit: "kWh" },
-    { id: "daily_grid_to_battery", kind: "statistics", role: "value.energy", unit: "kWh" },
-    { id: "daily_3rd_party_pv_to_bat", kind: "statistics", role: "value.energy", unit: "kWh" },
-    { id: "daily_ev_charge", kind: "statistics", role: "value.energy", unit: "kWh" },
-    { id: "daily_grid_import", kind: "statistics", role: "value.energy", unit: "kWh" },
-    { id: "daily_grid_export", kind: "statistics", role: "value.energy", unit: "kWh" },
-    { id: "yesterday_solar_production", kind: "statistics", role: "value.energy", unit: "kWh" },
-    { id: "yesterday_charge_energy", kind: "statistics", role: "value.energy", unit: "kWh" },
-    { id: "yesterday_discharge_energy", kind: "statistics", role: "value.energy", unit: "kWh" },
-    { id: "yesterday_home_usage", kind: "statistics", role: "value.energy", unit: "kWh" },
-    ...PERIOD_STATISTICS_ENTITIES,
-    { id: "daily_solar_to_grid", kind: "statistics", role: "value.energy", unit: "kWh" },
-    { id: "daily_solar_production_pv1", kind: "statistics", role: "value.energy", unit: "kWh" },
-    { id: "daily_solar_production_pv2", kind: "statistics", role: "value.energy", unit: "kWh" },
-    { id: "daily_solar_production_pv3", kind: "statistics", role: "value.energy", unit: "kWh" },
-    { id: "daily_solar_production_pv4", kind: "statistics", role: "value.energy", unit: "kWh" },
-    { id: "daily_solar_production_inverter", kind: "statistics", role: "value.energy", unit: "kWh" },
-    { id: "daily_solar_share", kind: "statistics", role: "value", unit: "%" },
-    { id: "daily_battery_share", kind: "statistics", role: "value", unit: "%" },
-    { id: "daily_grid_share", kind: "statistics", role: "value", unit: "%" },
-    { id: "daily_ac_socket", kind: "statistics", role: "value.energy", unit: "kWh" },
-    { id: "daily_smartplugs_total", kind: "statistics", role: "value.energy", unit: "kWh" },
+const STATISTICS_ENTITIES = [
+  ...LIFETIME_STATISTICS_ENTITIES,
+  { id: "energy_statistics_date", kind: "statistics", role: "text" },
+  { id: "daily_solar_production", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "daily_charge_energy", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "daily_discharge_energy", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "daily_home_usage", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "daily_solar_to_home", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "daily_solar_to_battery", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "daily_battery_to_home", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "daily_grid_to_home", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "daily_grid_to_battery", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "daily_3rd_party_pv_to_bat", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "daily_ev_charge", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "daily_grid_import", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "daily_grid_export", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "yesterday_solar_production", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "yesterday_charge_energy", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "yesterday_discharge_energy", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "yesterday_home_usage", kind: "statistics", role: "value.energy", unit: "kWh" },
+  ...PERIOD_STATISTICS_ENTITIES,
+  { id: "daily_solar_to_grid", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "daily_solar_production_pv1", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "daily_solar_production_pv2", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "daily_solar_production_pv3", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "daily_solar_production_pv4", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "daily_solar_production_inverter", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "daily_solar_share", kind: "statistics", role: "value", unit: "%" },
+  { id: "daily_battery_share", kind: "statistics", role: "value", unit: "%" },
+  { id: "daily_grid_share", kind: "statistics", role: "value", unit: "%" },
+  { id: "daily_ac_socket", kind: "statistics", role: "value.energy", unit: "kWh" },
+  { id: "daily_smartplugs_total", kind: "statistics", role: "value.energy", unit: "kWh" }
 ];
 const STATISTICS_LABELS = {
   total_energy: "Total energy (lifetime)",
@@ -579,12 +621,43 @@ const STATISTICS_LABELS = {
     })
   )
 };
-exports.LIFETIME_STATISTICS_ENTITY_IDS = LIFETIME_STATISTICS_ENTITIES.map(e => e.id);
-/** Daily/period kWh on combiner/solarbank when hasStatistics (excludes system lifetime totals). */
-exports.DEVICE_STATISTICS_ENTITY_IDS = exports.STATISTICS_ENTITIES.map(e => e.id).filter(id => !exports.LIFETIME_STATISTICS_ENTITY_IDS.includes(id));
-exports.STATISTICS_ENTITY_IDS = exports.STATISTICS_ENTITIES.map(e => e.id);
-exports.ENTITY_MAP = new Map([...SENSOR_ENTITIES, ...CONTROL_ENTITIES, ...exports.STATISTICS_ENTITIES].map(e => [e.id, e]));
+const LIFETIME_STATISTICS_ENTITY_IDS = LIFETIME_STATISTICS_ENTITIES.map((e) => e.id);
+const DEVICE_STATISTICS_ENTITY_IDS = STATISTICS_ENTITIES.map((e) => e.id).filter(
+  (id) => !LIFETIME_STATISTICS_ENTITY_IDS.includes(id)
+);
+const STATISTICS_ENTITY_IDS = STATISTICS_ENTITIES.map((e) => e.id);
+const ENTITY_MAP = new Map(
+  [...SENSOR_ENTITIES, ...CONTROL_ENTITIES, ...STATISTICS_ENTITIES].map((e) => [e.id, e])
+);
 function isWritable(entityId, writable) {
-    return writable.includes(entityId);
+  return writable.includes(entityId);
 }
+// Annotate the CommonJS export names for ESM import in node:
+0 && (module.exports = {
+  DEVICE_STATISTICS_ENTITY_IDS,
+  ENTITY_MAP,
+  EV_CHARGER_MODE_ACTION_STATES,
+  EV_CHARGER_MODE_STATES,
+  EV_CHARGER_OCPP_STATES,
+  EV_CHARGER_PHASE_MODE_STATES,
+  EV_CHARGER_SCHEDULE_MODE_STATES,
+  EV_CHARGER_SMART_TOUCH_MODE_STATES,
+  EV_CHARGER_SOLAR_MODE_STATES,
+  EV_CHARGER_STATUS_STATES,
+  EV_CHARGER_SWIPE_MODE_STATES,
+  EV_CHARGER_WEEKEND_MODE_STATES,
+  LIFETIME_STATISTICS_ENTITY_IDS,
+  PPS_AC_OUTPUT_MODE_STATES,
+  PPS_DC_12V_OUTPUT_MODE_STATES,
+  PPS_DEVICE_TIMEOUT_MINUTES_STATES,
+  PPS_DISPLAY_MODE_STATES,
+  PPS_DISPLAY_TIMEOUT_SECONDS_STATES,
+  PPS_TEMP_UNIT_FAHRENHEIT_STATES,
+  PPS_USB_STATUS_STATES,
+  STATISTICS_ENTITIES,
+  STATISTICS_ENTITY_IDS,
+  STATISTICS_LABELS,
+  USAGE_MODE_STATES,
+  isWritable
+});
 //# sourceMappingURL=entities.js.map
