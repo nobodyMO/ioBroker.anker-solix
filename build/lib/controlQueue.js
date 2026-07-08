@@ -60,25 +60,13 @@ class ControlQueue {
         if (waitMs > 0) {
           await (0, import_adapterTimers.adapterDelay)(this.adapter, waitMs);
         }
-        const job = this.queue.shift();
-        if (!job) {
-          break;
+        finally {
+            this.running = false;
+            if (this.queue.length > 0) {
+                void this.pump();
+            }
         }
-        await job.execute();
-        this.lastRunAt = Date.now();
-      }
-    } finally {
-      this.running = false;
-      if (this.queue.length > 0) {
-        void this.pump();
-      }
     }
-  }
 }
-// Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {
-  CONTROL_DEBOUNCE_MS,
-  CONTROL_MIN_INTERVAL_MS,
-  ControlQueue
-});
+exports.ControlQueue = ControlQueue;
 //# sourceMappingURL=controlQueue.js.map

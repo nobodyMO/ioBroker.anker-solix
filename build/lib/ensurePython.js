@@ -1,82 +1,80 @@
 "use strict";
-var __create = Object.create;
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var ensurePython_exports = {};
-__export(ensurePython_exports, {
-  runPythonInstaller: () => runPythonInstaller
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
 });
-module.exports = __toCommonJS(ensurePython_exports);
-var import_node_child_process = require("node:child_process");
-var fs = __toESM(require("node:fs"));
-var path = __toESM(require("node:path"));
-var import_spawnEnv = require("./spawnEnv");
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.runPythonInstaller = runPythonInstaller;
+const node_child_process_1 = require("node:child_process");
+const fs = __importStar(require("node:fs"));
+const path = __importStar(require("node:path"));
+const spawnEnv_1 = require("./spawnEnv");
 function adapterRoot() {
-  return path.join(__dirname, "..", "..");
+    return path.join(__dirname, "..", "..");
 }
 function runPythonInstaller(pythonPath, log) {
-  return new Promise((resolve) => {
-    const script = path.join(adapterRoot(), "tools", "install-python.js");
-    if (!fs.existsSync(script)) {
-      resolve({ ok: false, message: `Installer not found: ${script}` });
-      return;
-    }
-    const args = ["--python", pythonPath || ""];
-    const proc = (0, import_node_child_process.spawn)(process.execPath, [script, ...args], {
-      cwd: adapterRoot(),
-      env: (0, import_spawnEnv.minimalSpawnEnv)(),
-      windowsHide: true
+    return new Promise(resolve => {
+        const script = path.join(adapterRoot(), "tools", "install-python.js");
+        if (!fs.existsSync(script)) {
+            resolve({ ok: false, message: `Installer not found: ${script}` });
+            return;
+        }
+        const args = ["--python", pythonPath || ""];
+        const proc = (0, node_child_process_1.spawn)(process.execPath, [script, ...args], {
+            cwd: adapterRoot(),
+            env: (0, spawnEnv_1.minimalSpawnEnv)(),
+            windowsHide: true,
+        });
+        let stdout = "";
+        let stderr = "";
+        proc.stdout.on("data", (c) => {
+            stdout += c.toString();
+        });
+        proc.stderr.on("data", (c) => {
+            stderr += c.toString();
+        });
+        proc.on("close", code => {
+            const text = (stdout + stderr).trim();
+            if (text) {
+                log?.info?.(text);
+            }
+            resolve({
+                ok: code === 0,
+                message: code === 0 ? "Python dependencies OK" : text || `Installer exit ${code}`,
+            });
+        });
+        proc.on("error", err => {
+            resolve({ ok: false, message: err.message });
+        });
     });
-    let stdout = "";
-    let stderr = "";
-    proc.stdout.on("data", (c) => {
-      stdout += c.toString();
-    });
-    proc.stderr.on("data", (c) => {
-      stderr += c.toString();
-    });
-    proc.on("close", (code) => {
-      var _a;
-      const text = (stdout + stderr).trim();
-      if (text) {
-        (_a = log == null ? void 0 : log.info) == null ? void 0 : _a.call(log, text);
-      }
-      resolve({
-        ok: code === 0,
-        message: code === 0 ? "Python dependencies OK" : text || `Installer exit ${code}`
-      });
-    });
-    proc.on("error", (err) => {
-      resolve({ ok: false, message: err.message });
-    });
-  });
 }
-// Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {
-  runPythonInstaller
-});
 //# sourceMappingURL=ensurePython.js.map

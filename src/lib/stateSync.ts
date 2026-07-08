@@ -14,6 +14,13 @@ import {
 	EV_CHARGER_SWIPE_MODE_STATES,
 	EV_CHARGER_STATUS_STATES,
 	EV_CHARGER_OCPP_STATES,
+	PPS_AC_OUTPUT_MODE_STATES,
+	PPS_DC_12V_OUTPUT_MODE_STATES,
+	PPS_DEVICE_TIMEOUT_MINUTES_STATES,
+	PPS_DISPLAY_TIMEOUT_SECONDS_STATES,
+	PPS_DISPLAY_MODE_STATES,
+	PPS_TEMP_UNIT_FAHRENHEIT_STATES,
+	PPS_USB_STATUS_STATES,
 	USAGE_MODE_STATES,
 	type EntityMeta,
 } from "./entities";
@@ -310,6 +317,20 @@ export async function syncDevices(adapter: ioBroker.Adapter, devices: BridgeDevi
 					common.states = EV_CHARGER_STATUS_STATES;
 				} else if (entityId === "ev_charger_ocpp_connect_status") {
 					common.states = EV_CHARGER_OCPP_STATES;
+				} else if (entityId === "pps_ac_output_mode") {
+					common.states = PPS_AC_OUTPUT_MODE_STATES;
+				} else if (entityId === "pps_dc_12v_output_mode") {
+					common.states = PPS_DC_12V_OUTPUT_MODE_STATES;
+				} else if (entityId === "pps_device_timeout_minutes") {
+					common.states = PPS_DEVICE_TIMEOUT_MINUTES_STATES;
+				} else if (entityId === "pps_display_timeout_seconds") {
+					common.states = PPS_DISPLAY_TIMEOUT_SECONDS_STATES;
+				} else if (entityId === "pps_display_mode") {
+					common.states = PPS_DISPLAY_MODE_STATES;
+				} else if (entityId === "pps_temp_unit_fahrenheit_mode") {
+					common.states = PPS_TEMP_UNIT_FAHRENHEIT_STATES;
+				} else if (entityId === "pps_usb_status") {
+					common.states = PPS_USB_STATUS_STATES;
 				} else if (entityId === "ev_charger_mode") {
 					const opts = device.ev_charger_mode_options?.length
 						? device.ev_charger_mode_options

@@ -1,7 +1,1 @@
-{
-  "version": 3,
-  "sources": ["../../src/lib/configHelpers.ts"],
-  "sourcesContent": ["/** Parse selectedDeviceIds from admin text (comma/semicolon/space) or array. */\nexport function parseSelectedDeviceIds(value: string | string[] | undefined): string[] {\n\tif (Array.isArray(value)) {\n\t\treturn value.map(id => String(id).trim()).filter(Boolean);\n\t}\n\tif (!value || typeof value !== \"string\") {\n\t\treturn [];\n\t}\n\treturn value\n\t\t.split(/[,;\\s]+/)\n\t\t.map(id => id.trim())\n\t\t.filter(Boolean);\n}\n"],
-  "mappings": ";;;;;;;;;;;;;;;;;;AAAA;AAAA;AAAA;AAAA;AAAA;AACO,SAAS,uBAAuB,OAAgD;AACtF,MAAI,MAAM,QAAQ,KAAK,GAAG;AACzB,WAAO,MAAM,IAAI,QAAM,OAAO,EAAE,EAAE,KAAK,CAAC,EAAE,OAAO,OAAO;AAAA,EACzD;AACA,MAAI,CAAC,SAAS,OAAO,UAAU,UAAU;AACxC,WAAO,CAAC;AAAA,EACT;AACA,SAAO,MACL,MAAM,SAAS,EACf,IAAI,QAAM,GAAG,KAAK,CAAC,EACnB,OAAO,OAAO;AACjB;",
-  "names": []
-}
+{"version":3,"file":"configHelpers.js","sourceRoot":"","sources":["../../src/lib/configHelpers.ts"],"names":[],"mappings":";;AACA,wDAWC;AAZD,gFAAgF;AAChF,SAAgB,sBAAsB,CAAC,KAAoC;IAC1E,IAAI,KAAK,CAAC,OAAO,CAAC,KAAK,CAAC,EAAE,CAAC;QAC1B,OAAO,KAAK,CAAC,GAAG,CAAC,EAAE,CAAC,EAAE,CAAC,MAAM,CAAC,EAAE,CAAC,CAAC,IAAI,EAAE,CAAC,CAAC,MAAM,CAAC,OAAO,CAAC,CAAC;IAC3D,CAAC;IACD,IAAI,CAAC,KAAK,IAAI,OAAO,KAAK,KAAK,QAAQ,EAAE,CAAC;QACzC,OAAO,EAAE,CAAC;IACX,CAAC;IACD,OAAO,KAAK;SACV,KAAK,CAAC,SAAS,CAAC;SAChB,GAAG,CAAC,EAAE,CAAC,EAAE,CAAC,EAAE,CAAC,IAAI,EAAE,CAAC;SACpB,MAAM,CAAC,OAAO,CAAC,CAAC;AACnB,CAAC"}

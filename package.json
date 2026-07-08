@@ -27,9 +27,7 @@
   "engines": {
     "node": ">= 22"
   },
-  "os": [
-    "linux"
-  ],
+
   "dependencies": {
     "@iobroker/adapter-core": "^3.3.2"
   },
